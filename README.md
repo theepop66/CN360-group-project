@@ -69,15 +69,7 @@ The core orchestration logic, built as 4 main nodes:
 - **Features:**
   - Live video feed from the Raspberry Pi
   - Canvas-drawn bounding boxes (red/green) rendered over the video, driven by WebSocket data from n8n
-  - Prompt input box (e.g. `"scratch"`, `"hole"`, `"mold"`) with an **Update** button to push a new detection target back to n8n in real time
-
-## Project Roadmap (3 Months)
-
-| Month | Milestone | Key Tasks |
-|---|---|---|
-| **1** | Backend & AI Integration | Set up n8n (via Docker); integrate the NVIDIA LocateAnything API; test image + prompt submission and bounding box retrieval |
-| **2** | Hardware & Automation | Write ESP32 firmware for servo/relay control and webhook handling; set up the Raspberry Pi video stream + snapshot API; assemble a mock conveyor/inspection rig |
-| **3** | Pico 4 HUD & Integration | Build the Web HUD (video + canvas overlay); implement prompt updates from the HUD back to n8n; run end-to-end testing and collect data for the final presentation |
+  - Prompt input box (e.g. `"scratch"`, `"hole"`, `"mold"`) with an **Update** button to push a new detection target back to n8n in real time|
 
 ## Tech Stack
 

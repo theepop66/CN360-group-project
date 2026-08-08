@@ -6,7 +6,7 @@
 
 | Iteration | Topic | Documents & Slides | Presented |
 | :---: | :--- | :--- | :---: |
-| **1** | Concept Paper | | — |
+| **1** | Concept Paper |[📊 Slides](https://canva.link/oox7ncl6kj0m4so) | — |
 
 ---
 # Agile AI Quality Control HUD

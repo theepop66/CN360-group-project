@@ -1,0 +1,10 @@
+[project]
+name = "cn360-raspberry-pi-streaming"
+version = "0.1.0"
+description = "Shared-camera MJPEG and snapshot service for the CN360 quality-control project"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+pythonpath = ["."]

@@ -118,7 +118,7 @@ Use the checkbox in the **Done** column to update progress. Each task belongs to
 | Week | Task ID | Done | Task and Expected Output |
 | :---: | :--- | :---: | :--- |
 | **1** | `W01-M1-01` | [ ] | Collect and prioritize requirements; publish the reviewed requirements checklist. |
-| **1** | `W01-M1-02` | [ ] | Create the architecture and end-to-end data-flow diagram. |
+| **1** | `W01-M1-02` | [x] | Create the architecture and end-to-end data-flow diagram. |
 | **2** | `W02-M1-01` | [ ] | Define API fields, coordinate format, error codes, and module ownership in an interface specification. |
 | **2** | `W02-M1-02` | [ ] | Set up the project board, Git workflow, task labels, and Definition of Done. |
 | **3** | `W03-M1-01` | [ ] | Create the initial risk register and module-level test outline. |
@@ -234,20 +234,20 @@ Use the checkbox in the **Done** column to update progress. Each task belongs to
 | Week | Task ID | Done | Task and Expected Output |
 | :---: | :--- | :---: | :--- |
 | **1** | `W01-M5-01` | [ ] | Create desktop and Pico 4 HUD wireframes. |
-| **1** | `W01-M5-02` | [ ] | Define ready, inspecting, defect, no-defect, disconnected, and error states. |
-| **2** | `W02-M5-01` | [ ] | Build the responsive page layout and mock live-video area. |
+| **1** | `W01-M5-02` | [x] | Define ready, inspecting, defect, no-defect, disconnected, and error states. |
+| **2** | `W02-M5-01` | [x] | Build the responsive page layout and mock live-video area. |
 | **2** | `W02-M5-02` | [ ] | Verify basic layout and controls in desktop and Pico 4 browsers. |
 | **3** | `W03-M5-01` | [ ] | Add prompt, confidence, connection-status, and manual-test controls. |
 | **3** | `W03-M5-02` | [ ] | Connect the controls to mock state and validate user feedback. |
-| **4** | `W04-M5-01` | [ ] | Draw mock bounding boxes, labels, and confidence on the canvas overlay. |
-| **4** | `W04-M5-02` | [ ] | Test overlay scaling with different sample image dimensions. |
+| **4** | `W04-M5-01` | [x] | Draw mock bounding boxes, labels, and confidence on the canvas overlay. |
+| **4** | `W04-M5-02` | [x] | Test overlay scaling with different sample image dimensions. |
 | **5** | `W05-M5-01` | [ ] | Display the real Raspberry Pi MJPEG stream in the HUD. |
 | **5** | `W05-M5-02` | [ ] | Verify stream layout and controls on desktop and Pico 4. |
-| **6** | `W06-M5-01` | [ ] | Connect WebSocket events with heartbeat and automatic reconnection. |
+| **6** | `W06-M5-01` | [x] | Connect WebSocket events with heartbeat and automatic reconnection. |
 | **6** | `W06-M5-02` | [ ] | Send prompt and confidence changes to the backend and verify updates. |
-| **7** | `W07-M5-01` | [ ] | Map model coordinates to displayed-video coordinates. |
-| **7** | `W07-M5-02` | [ ] | Test overlay alignment across window sizes and video resolutions. |
-| **8** | `W08-M5-01` | [ ] | Add loading, disconnected, stale-data, no-defect, and error displays. |
+| **7** | `W07-M5-01` | [x] | Map model coordinates to displayed-video coordinates. |
+| **7** | `W07-M5-02` | [x] | Test overlay alignment across window sizes and video resolutions. |
+| **8** | `W08-M5-01` | [x] | Add loading, disconnected, stale-data, no-defect, and error displays. |
 | **8** | `W08-M5-02` | [ ] | Complete the HUD integration checklist using real events. |
 | **9** | `W09-M5-01` | [ ] | Improve Pico 4 readability, control sizing, contrast, and feedback. |
 | **9** | `W09-M5-02` | [ ] | Add inspection history, summary statistics, and warning indicators. |

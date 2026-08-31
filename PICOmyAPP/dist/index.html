@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#07110f" />
+    <title>VisionQC</title>
+    <link rel="manifest" href="./manifest.json" />
+    <link rel="icon" href="./icons/icon-192.png" type="image/png" />
+    <link rel="apple-touch-icon" href="./icons/icon-512.png" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./config.js"></script>
+    <script type="module" src="./js/app.js"></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Adaptive AI Quality Control HUD · LIVE INSPECTION</p>
+          <h1>Quality Control HUD</h1>
+        </div>
+        <div class="status-cluster" aria-label="Connection status">
+          <span id="stream-status" class="status status--idle">Camera: waiting</span>
+          <span id="socket-status" class="status status--idle">AI data: waiting</span>
+        </div>
+      </header>
+
+      <section class="viewer-card" aria-label="Live inspection video">
+        <div id="video-stage" class="video-stage">
+          <img id="live-stream" alt="Live Raspberry Pi camera stream" />
+          <canvas id="detection-overlay" aria-hidden="true"></canvas>
+          <div id="stream-placeholder" class="stream-placeholder">
+            <span class="pulse-dot"></span>
+            Waiting for the Raspberry Pi video stream
+          </div>
+          <div class="viewer-toolbar">
+            <span id="detection-summary">No recent detections</span>
+            <button id="fullscreen-button" class="icon-button" type="button">Fullscreen</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="control-grid">
+        <form id="prompt-form" class="panel prompt-panel">
+          <div>
+            <p class="eyebrow">DETECTION TARGET</p>
+            <h2>What should the AI find?</h2>
+          </div>
+          <label for="prompt-input">Prompt</label>
+          <div class="input-row">
+            <input
+              id="prompt-input"
+              name="prompt"
+              type="text"
+              maxlength="200"
+              placeholder="scratch, hole, mold…"
+              autocomplete="off"
+              required
+            />
+            <button id="prompt-submit" class="primary-button" type="submit">Update</button>
+          </div>
+          <p id="prompt-feedback" class="feedback" role="status" aria-live="polite">
+            Enter a target and send it to n8n.
+          </p>
+        </form>
+
+        <details class="panel settings-panel">
+          <summary>
+            <span>
+              <span class="eyebrow">SETUP</span>
+              <strong>Connection settings</strong>
+            </span>
+            <span aria-hidden="true">＋</span>
+          </summary>
+          <form id="settings-form" class="settings-form">
+            <label for="stream-url">Raspberry Pi MJPEG URL</label>
+            <input id="stream-url" name="streamUrl" type="url" inputmode="url" required />
+
+            <label for="health-url">Raspberry Pi health URL</label>
+            <input id="health-url" name="healthUrl" type="url" inputmode="url" required />
+
+            <label for="websocket-url">Detection WebSocket gateway URL</label>
+            <input id="websocket-url" name="websocketUrl" type="url" inputmode="url" required />
+
+            <label for="prompt-url">n8n prompt webhook URL</label>
+            <input id="prompt-url" name="promptUrl" type="url" inputmode="url" required />
+
+            <div class="settings-actions">
+              <button class="secondary-button" type="button" id="reset-settings">Use defaults</button>
+              <button class="primary-button" type="submit">Save &amp; reconnect</button>
+            </div>
+          </form>
+        </details>
+      </section>
+
+      <footer>
+        Bounding boxes expire automatically when AI updates stop, so stale results are not left on screen.
+        <p>CN360 - DIGITAL AND MICROCONTROLLER SYSTEM DEVELOPMENT</p>
+      </footer>
+    </main>
+  </body>
+</html>

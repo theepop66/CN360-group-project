@@ -1,0 +1,11 @@
+{
+  "name": "cn360-pico-webapp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "build": "node build.mjs",
+    "serve": "npm run build && npx --yes serve dist -l 5173"
+  }
+}

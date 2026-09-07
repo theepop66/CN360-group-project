@@ -1,0 +1,7 @@
+.DS_Store
+Thumbs.db
+secrets.h
+node_modules/
+.idea/
+.vscode/
+.pio/

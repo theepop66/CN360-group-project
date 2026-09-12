@@ -1,5 +1,8 @@
 // These defaults can be overridden from the HUD's Connection settings panel.
 window.HUD_CONFIG = Object.freeze({
+  // Use "local" while developing on a computer. Switch to "remote" on the
+  // PICO headset so it loads a LAN-reachable MJPEG/image source.
+  cameraSource: "local",
   raspberryPiStreamUrl: "http://raspberrypi.local:8000/stream.mjpg",
   raspberryPiHealthUrl: "http://raspberrypi.local:8000/health",
   // Stock n8n does not expose an arbitrary WebSocket broadcast route. Point

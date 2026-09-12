@@ -28,16 +28,19 @@ function readBox(candidate) {
   return [null, null, null, null];
 }
 
-export function getContainedImageRect(container, source) {
+function getFittedImageRect(container, source, fit) {
   if (container.width <= 0 || container.height <= 0 || source.width <= 0 || source.height <= 0) {
     return { x: 0, y: 0, width: 0, height: 0 };
   }
 
-  const scale = Math.min(container.width / source.width, container.height / source.height);
-  // Clamp the fitted dimensions to avoid tiny floating-point overflows such as
-  // 1000.0000000000001 pixels at the container edge.
-  const width = Math.min(container.width, source.width * scale);
-  const height = Math.min(container.height, source.height * scale);
+  const scaleOperation = fit === "cover" ? Math.max : Math.min;
+  const scale = scaleOperation(container.width / source.width, container.height / source.height);
+  const scaledWidth = source.width * scale;
+  const scaledHeight = source.height * scale;
+  // Contained images should never extend beyond the container. Cover images
+  // deliberately can, because object-fit crops the overflow at the edges.
+  const width = fit === "cover" ? scaledWidth : Math.min(container.width, scaledWidth);
+  const height = fit === "cover" ? scaledHeight : Math.min(container.height, scaledHeight);
 
   return {
     x: (container.width - width) / 2,
@@ -47,8 +50,16 @@ export function getContainedImageRect(container, source) {
   };
 }
 
-export function mapBoxToDisplay(box, source, container) {
-  const imageRect = getContainedImageRect(container, source);
+export function getContainedImageRect(container, source) {
+  return getFittedImageRect(container, source, "contain");
+}
+
+export function getCoveredImageRect(container, source) {
+  return getFittedImageRect(container, source, "cover");
+}
+
+export function mapBoxToDisplay(box, source, container, fit = "contain") {
+  const imageRect = getFittedImageRect(container, source, fit);
   const sourceWidth = box.normalized ? 1 : source.width;
   const sourceHeight = box.normalized ? 1 : source.height;
 
@@ -113,7 +124,7 @@ export function parseDetectionPayload(rawPayload) {
 
   return {
     // Normalized boxes do not require dimensions. When they are omitted, the
-    // renderer uses the MJPEG image's intrinsic size to preserve letterboxing.
+    // renderer uses the active camera's intrinsic size for object-fit mapping.
     source: hasSourceDimensions ? { width: sourceWidth, height: sourceHeight } : null,
     frameId: frame.id ?? payload.frameId ?? null,
     sessionId: frame.sessionId ?? payload.sessionId ?? null,

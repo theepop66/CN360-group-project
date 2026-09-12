@@ -1,7 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { getContainedImageRect, mapBoxToDisplay, parseDetectionPayload } from "../js/overlay.js";
+import {
+  getContainedImageRect,
+  getCoveredImageRect,
+  mapBoxToDisplay,
+  parseDetectionPayload
+} from "../js/overlay.js";
 
 test("parses the documented pixel-coordinate payload", () => {
   const result = parseDetectionPayload({
@@ -69,6 +74,22 @@ test("maps a pixel box onto the visible image instead of the full container", ()
   );
 
   assert.deepEqual(mapped, { x: 0, y: 218.75, width: 500, height: 281.25 });
+});
+
+test("maps boxes through the cropped area when the video uses object-fit cover", () => {
+  assert.deepEqual(
+    getCoveredImageRect({ width: 100, height: 100 }, { width: 200, height: 100 }),
+    { x: -50, y: 0, width: 200, height: 100 }
+  );
+
+  const mapped = mapBoxToDisplay(
+    { x1: 50, y1: 0, x2: 150, y2: 100, normalized: false },
+    { width: 200, height: 100 },
+    { width: 100, height: 100 },
+    "cover"
+  );
+
+  assert.deepEqual(mapped, { x: 0, y: 0, width: 100, height: 100 });
 });
 
 test("rejects pixel boxes when source dimensions are missing", () => {

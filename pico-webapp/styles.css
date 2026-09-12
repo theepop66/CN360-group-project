@@ -27,7 +27,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -137,6 +138,8 @@ h2 {
 }
 
 #live-stream,
+#n8n-frame,
+#local-webcam,
 #detection-overlay {
   position: absolute;
   inset: 0;
@@ -144,12 +147,15 @@ h2 {
   height: 100%;
 }
 
-#live-stream {
+.camera-feed {
   display: block;
-  object-fit: contain;
+  object-fit: cover;
+  object-position: center;
+  background: #030807;
 }
 
 #detection-overlay {
+  z-index: 1;
   pointer-events: none;
 }
 
@@ -160,6 +166,7 @@ h2 {
 .stream-placeholder {
   position: absolute;
   inset: 0;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -188,6 +195,7 @@ h2 {
 
 .viewer-toolbar {
   position: absolute;
+  z-index: 3;
   right: 14px;
   bottom: 14px;
   left: 14px;
@@ -204,12 +212,49 @@ h2 {
   font-size: 0.82rem;
 }
 
+.toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.mode-switcher {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.mode-button {
+  min-height: 28px;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.mode-button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--accent-dark);
+}
+
 .icon-button,
 .secondary-button,
 .primary-button {
   min-height: 40px;
   border-radius: 10px;
   font-weight: 800;
+}
+
+.icon-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .icon-button,
@@ -250,7 +295,8 @@ label {
   gap: 10px;
 }
 
-input {
+input,
+select {
   width: 100%;
   min-height: 46px;
   padding: 10px 13px;
@@ -261,7 +307,8 @@ input {
   color: #f5fffb;
 }
 
-input:focus {
+input:focus,
+select:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(104, 239, 179, 0.12);
 }
@@ -323,10 +370,185 @@ input:focus {
   gap: 8px;
 }
 
-.settings-form input {
+.settings-form input,
+.settings-form select {
   min-height: 40px;
   margin-bottom: 5px;
   font-size: 0.8rem;
+}
+
+.settings-hint {
+  margin: -1px 0 5px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+.settings-hint code {
+  color: var(--accent);
+}
+
+/*
+ * Fullscreen = AR passthrough mode: the app shell (not just the video
+ * stage) is the fullscreen element so the topbar/prompt panel stay in the
+ * DOM subtree and can be re-docked as floating HUD panels over an
+ * edge-to-edge camera feed, instead of vanishing when the video alone
+ * goes fullscreen.
+ */
+.app-shell:fullscreen,
+.app-shell:-webkit-full-screen {
+  width: 100vw;
+  max-width: none;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #000;
+}
+
+.app-shell:fullscreen .video-stage,
+.app-shell:-webkit-full-screen .video-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
+  border-radius: 0;
+}
+
+.app-shell:fullscreen .topbar,
+.app-shell:-webkit-full-screen .topbar {
+  position: fixed;
+  top: max(14px, env(safe-area-inset-top));
+  left: max(14px, env(safe-area-inset-left));
+  right: max(14px, env(safe-area-inset-right));
+  z-index: 10;
+  margin: 0;
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(2, 8, 6, 0.55);
+  backdrop-filter: blur(14px);
+}
+
+.app-shell:fullscreen .viewer-toolbar,
+.app-shell:-webkit-full-screen .viewer-toolbar {
+  flex-wrap: wrap;
+}
+
+/*
+ * The prompt form is reparented into .viewer-toolbar on fullscreen entry
+ * (see the fullscreenchange handler in app.js) so it shares one floating
+ * card with the detection summary/mode buttons instead of floating as a
+ * second card of its own. It wraps onto its own full-width row inside
+ * that shared card; its own panel chrome (border/background/padding) is
+ * stripped since .viewer-toolbar already provides that frame.
+ */
+.prompt-form--docked {
+  order: 3;
+  flex: 1 1 100%;
+  margin: 10px 0 0;
+  padding: 10px 0 0;
+  border: none;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.prompt-form--docked > div:first-child,
+.prompt-form--docked label {
+  display: none;
+}
+
+.prompt-form--docked .feedback {
+  margin: 8px 0 0;
+}
+
+.app-shell:fullscreen .settings-panel,
+.app-shell:-webkit-full-screen .settings-panel,
+.app-shell:fullscreen footer,
+.app-shell:-webkit-full-screen footer {
+  display: none;
+}
+
+/*
+ * AR passthrough mode: an "immersive-ar" WebXR session with a DOM Overlay
+ * shows the headset's own real-world passthrough camera natively, with
+ * this page's DOM composited on top. The page chrome has to turn
+ * transparent for the gaps to actually show the real world, and the
+ * camera panel shrinks to a small floating "monitor" instead of covering
+ * the whole view (it shows the QC camera's feed, not the wearer's own
+ * view, so filling the screen with it would defeat the point of AR).
+ * Toggled by app.js via a class instead of relying on the UA to apply
+ * `:fullscreen` to the DOM Overlay root, since that behavior isn't
+ * guaranteed across browsers.
+ */
+html.xr-ar-active,
+html.xr-ar-active body {
+  background: transparent !important;
+}
+
+html.xr-ar-active .app-shell {
+  width: 100vw;
+  max-width: none;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: transparent;
+}
+
+html.xr-ar-active .topbar {
+  position: fixed;
+  top: max(14px, env(safe-area-inset-top));
+  left: max(14px, env(safe-area-inset-left));
+  right: max(14px, env(safe-area-inset-right));
+  z-index: 10;
+  margin: 0;
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(2, 8, 6, 0.55);
+  backdrop-filter: blur(14px);
+}
+
+html.xr-ar-active .viewer-card {
+  position: fixed;
+  top: calc(74px + env(safe-area-inset-top));
+  right: max(14px, env(safe-area-inset-right));
+  z-index: 10;
+  width: min(360px, calc(100vw - 28px));
+  background: rgba(8, 20, 17, 0.72);
+}
+
+html.xr-ar-active .video-stage {
+  min-height: 0;
+  height: 210px;
+  background: rgba(3, 8, 7, 0.5);
+}
+
+html.xr-ar-active .control-grid {
+  position: fixed;
+  left: 50%;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  z-index: 10;
+  display: block;
+  width: min(420px, calc(100vw - 28px));
+  margin: 0;
+  transform: translateX(-50%);
+}
+
+html.xr-ar-active .control-grid .panel {
+  background: rgba(8, 20, 17, 0.72);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+}
+
+html.xr-ar-active .settings-panel,
+html.xr-ar-active footer {
+  display: none;
 }
 
 .settings-actions {

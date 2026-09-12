@@ -24,15 +24,44 @@
 
       <section class="viewer-card" aria-label="Live inspection video">
         <div id="video-stage" class="video-stage">
-          <img id="live-stream" alt="Live Raspberry Pi camera stream" />
-          <canvas id="detection-overlay" aria-hidden="true"></canvas>
+          <img
+            id="live-stream"
+            class="camera-feed video-feed--hidden"
+            alt="Live remote inspection camera stream"
+          />
+          <img
+            id="n8n-frame"
+            class="camera-feed video-feed--hidden"
+            alt="Analyzed inspection frame received from n8n"
+          />
+          <video
+            id="local-webcam"
+            class="camera-feed video-feed--hidden"
+            autoplay
+            muted
+            playsinline
+            aria-label="Live webcam preview"
+          ></video>
+          <canvas
+            id="detection-overlay"
+            class="video-feed--hidden"
+            aria-hidden="true"
+          ></canvas>
+          <canvas id="vr-composite-canvas" width="1280" height="720" hidden aria-hidden="true"></canvas>
           <div id="stream-placeholder" class="stream-placeholder">
             <span class="pulse-dot"></span>
-            Waiting for the Raspberry Pi video stream
+            <span id="stream-placeholder-message">Starting camera…</span>
           </div>
           <div class="viewer-toolbar">
             <span id="detection-summary">No recent detections</span>
-            <button id="fullscreen-button" class="icon-button" type="button">Fullscreen</button>
+            <div class="toolbar-actions">
+              <div class="mode-switcher" role="group" aria-label="View mode">
+                <button type="button" class="mode-button" data-mode="flat" aria-pressed="true">2D HUD</button>
+                <button type="button" class="mode-button" data-mode="ar" aria-pressed="false">AR passthrough</button>
+                <button type="button" class="mode-button" data-mode="vr" aria-pressed="false">VR cinema</button>
+              </div>
+              <button id="fullscreen-button" class="icon-button" type="button">Fullscreen</button>
+            </div>
           </div>
         </div>
       </section>
@@ -70,11 +99,21 @@
             <span aria-hidden="true">＋</span>
           </summary>
           <form id="settings-form" class="settings-form">
-            <label for="stream-url">Raspberry Pi MJPEG URL</label>
-            <input id="stream-url" name="streamUrl" type="url" inputmode="url" required />
+            <label for="camera-source">Camera source</label>
+            <select id="camera-source" name="cameraSource">
+              <option value="local">Local webcam (this device)</option>
+              <option value="remote">Remote stream / n8n source (PICO)</option>
+            </select>
+            <p class="settings-hint">
+              Local uses this browser's camera. Remote accepts an MJPEG/image URL or a
+              <code>camera.source</code> message from the n8n gateway.
+            </p>
 
-            <label for="health-url">Raspberry Pi health URL</label>
-            <input id="health-url" name="healthUrl" type="url" inputmode="url" required />
+            <label for="stream-url">Remote image or MJPEG URL</label>
+            <input id="stream-url" name="streamUrl" type="url" inputmode="url" />
+
+            <label for="health-url">Remote camera health URL (optional)</label>
+            <input id="health-url" name="healthUrl" type="url" inputmode="url" />
 
             <label for="websocket-url">Detection WebSocket gateway URL</label>
             <input id="websocket-url" name="websocketUrl" type="url" inputmode="url" required />

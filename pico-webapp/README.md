@@ -1,6 +1,16 @@
 # Pico 4 Web HUD
 
-A build-free 2D quality-control HUD for the Pico 4 browser. It displays the Raspberry Pi MJPEG feed, draws n8n detection results on a canvas, and sends a new text prompt to n8n.
+A build-free 2D quality-control HUD for the Pico 4 browser. It can display this device's local webcam or a remote MJPEG/image feed, draws n8n detection results on a canvas, and sends a new text prompt to n8n.
+
+## View modes
+
+The viewer toolbar has a **2D HUD / AR passthrough / VR cinema** switcher (top-right of the video panel):
+
+- **2D HUD** (default) — the flat page described above. Its **Fullscreen** button fills the whole browser viewport with the camera feed and re-docks the topbar and prompt panel as floating, semi-transparent panels over it (see `.app-shell:fullscreen` in `styles.css`).
+- **AR passthrough** — requests a WebXR `immersive-ar` session with a [DOM Overlay](https://immersive-web.github.io/dom-overlays/) (`js/ar-passthrough.js`). The headset's own real-world passthrough cameras show through natively; this page draws no 3D content at all. The camera panel shrinks into a small floating "monitor" (top-right) and the prompt panel floats bottom-center, both over a transparent background (`.xr-ar-active` in `styles.css`), so what you actually see through the lenses is the real room with the QC HUD floating in it.
+- **VR cinema** — requests an `immersive-vr` session built with [A-Frame](https://aframe.io/) (`js/vr-cinema.js`, loaded lazily from a CDN on first use — the headset needs internet access for this mode). The live camera feed plus its detection-box overlay are composited onto an offscreen canvas (`compositeVrFrame()` in `js/app.js`) and shown on a floating screen inside a simple virtual room, with a head-locked text HUD for the detection summary. There is no in-VR keyboard, so change the inspection prompt before entering, or exit back to 2D HUD mode to edit it.
+
+Both XR modes require the headset's browser to support the relevant WebXR session mode; unsupported devices get an inline error and stay on 2D HUD instead of failing silently. Verify camera-passthrough- and detection-related logic with the 2D HUD first — it is the only mode this project's `npm test` suite and a desktop browser can exercise directly. Test the XR modes with the [Immersive Web Emulator](https://chromewebstore.google.com/detail/immersive-web-emulator/cgffilbpcibhmcfbgggfhfolhkfbhmik) in desktop Chrome/Edge for quick iteration, then confirm on a physical Pico 4 before a demo — an emulator cannot verify stereo rendering, head tracking, controller input, or real passthrough latency.
 
 ## Run locally
 
@@ -11,13 +21,22 @@ cd pico-webapp
 python -m http.server 8080
 ```
 
-Open `http://<DEVELOPMENT-PC-IP>:8080` from the Pico browser. Do not use `localhost` on the headset; it points to the headset itself.
+For desktop webcam development, open `http://localhost:8080`. From the PICO browser, open `http://<DEVELOPMENT-PC-IP>:8080` and select the remote source mode. Do not use `localhost` on the headset; it points to the headset itself.
 
-Connection URLs can be changed in `config.js` or in **Connection settings** inside the HUD. Values saved in the HUD are stored only in that browser's local storage.
+The default development source is **Local webcam**. Allow camera permission when prompted. `getUserMedia()` always opens the camera attached to the device running the browser; it does not relay a computer webcam to a PICO headset. It also requires a secure browser context, normally HTTPS or localhost.
+
+For a headset, select **Remote stream / n8n source (PICO)** and enter a URL reachable from the headset over the LAN. Connection values can be changed in `config.js` or in **Connection settings** inside the HUD. Values saved in the HUD are stored only in that browser's local storage.
 
 The HUD polls the Pi `/health` endpoint while it is open. It hides stale video on `503` and, as a safety-first default, on any other reachable non-2xx health response; non-503 errors are shown as health/configuration errors. When health returns to `200`, the MJPEG source reconnects with a unique URL and stays hidden until the browser observes a fresh frame. The Pi must allow this HUD origin through CORS (the Pi scaffold defaults to `*` for prototype use).
 
 ## Integration contract
+
+### Camera sources
+
+The viewer uses `object-fit: cover`, so the active camera fills the entire video section and may crop its outer edges. Bounding-box rendering uses the same cover calculation so overlays remain aligned.
+
+- `local`: uses `navigator.mediaDevices.getUserMedia()` on the current device.
+- `remote`: uses an `<img>` for a still image or MJPEG source and a separate `<canvas>` for the overlay.
 
 ### Raspberry Pi video
 
@@ -28,7 +47,40 @@ GET http://raspberrypi.local:8000/stream.mjpg
 Content-Type: multipart/x-mixed-replace; boundary=frame
 ```
 
-The HUD uses an `<img>` for MJPEG and a separate `<canvas>` for the overlay.
+For live video on the PICO, the preferred route is camera/Pi -> PICO directly. n8n should orchestrate the workflow and send detection metadata or a stream URL, rather than relaying every video frame.
+
+### Camera source or analyzed frame from n8n
+
+The WebSocket gateway may switch the HUD to a remote camera at runtime. This update is temporary and does not overwrite the browser's saved settings:
+
+```json
+{
+  "schemaVersion": 1,
+  "type": "camera.source",
+  "timestamp": "2026-08-24T12:00:00Z",
+  "camera": {
+    "id": "inspection-1",
+    "mode": "mjpeg",
+    "streamUrl": "http://192.168.1.20:8000/stream.mjpg",
+    "healthUrl": "http://192.168.1.20:8000/health",
+    "sessionId": "pi-boot-7f8c"
+  }
+}
+```
+
+If the HUD is already in `remote` mode, n8n may also send an individual analyzed frame using `type: "camera.frame"`, or include `frame.snapshotUrl` / `frame.imageUrl` in a detection event:
+
+```json
+{
+  "type": "camera.frame",
+  "frame": {
+    "id": "frame-42",
+    "imageUrl": "http://192.168.1.20:8000/snapshots/frame-42.jpg"
+  }
+}
+```
+
+HTTP(S) image URLs are preferred. Bounded `data:image/jpeg|png|webp|gif|avif;base64,...` values are accepted for single frames, but Base64 should not be used as a live-video transport.
 
 ### Detection events from n8n
 
@@ -81,6 +133,7 @@ Any `2xx` response is treated as success. The browser aborts the request after `
 ## Network notes
 
 - The Raspberry Pi and n8n endpoints must be reachable from the Pico headset on the LAN.
+- A local webcam belongs to the device running the page. To show a PC webcam on a PICO headset, publish that webcam as a LAN-reachable MJPEG/WebRTC endpoint and use remote mode.
 - n8n must allow the HUD origin for the prompt request and must accept the browser's WebSocket origin.
 - Use one security scheme end to end. An HTTPS HUD may block `http://` video and `ws://` detection data as mixed content.
 - The inference frame must have the same crop/aspect ratio as the stream, or the n8n payload must describe the displayed source dimensions.
@@ -95,6 +148,6 @@ No packages need to be installed. With Node.js 18 or newer:
 npm test
 ```
 
-The tests cover payload parsing, result ordering, normalized coordinates, validation, letterbox-aware box scaling, prompt payloads, HTTP errors, and request timeouts.
+The tests cover camera-message parsing, payload parsing, result ordering, normalized coordinates, validation, contain/cover-aware box scaling, prompt payloads, HTTP errors, and request timeouts.
 
 Before a demo, also smoke-test on the physical Pico 4: rotate/resize the view, disconnect and restore Wi-Fi, verify that stale boxes clear, submit a prompt through the real n8n CORS policy, and compare one known box against the inference snapshot.

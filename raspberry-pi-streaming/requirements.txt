@@ -1,0 +1,3 @@
+Flask>=3.1,<4
+opencv-python-headless>=4.13,<6
+gunicorn>=26,<27; platform_system != "Windows"

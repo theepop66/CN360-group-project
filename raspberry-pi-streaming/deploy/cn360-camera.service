@@ -1,0 +1,24 @@
+[Unit]
+Description=CN360 Raspberry Pi camera streaming
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=cn360
+Group=cn360
+SupplementaryGroups=video
+WorkingDirectory=/opt/cn360/raspberry-pi-streaming
+EnvironmentFile=/etc/cn360-camera.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/cn360/raspberry-pi-streaming/.venv/bin/gunicorn --config deploy/gunicorn.conf.py app:app
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=10
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

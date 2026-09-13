@@ -281,6 +281,44 @@ h2 {
   padding: 20px;
 }
 
+.servo-panel {
+  margin-top: 16px;
+}
+
+.servo-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.servo-row label {
+  margin-bottom: 0;
+}
+
+.servo-row-label {
+  color: #c5d7d0;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.servo-panel input[type="range"] {
+  width: 220px;
+  min-height: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+  accent-color: var(--accent);
+}
+
+.servo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 label {
   display: block;
   margin-bottom: 7px;

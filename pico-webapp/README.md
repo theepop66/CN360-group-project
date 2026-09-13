@@ -130,6 +130,22 @@ Content-Type: application/json
 
 Any `2xx` response is treated as success. The browser aborts the request after `promptTimeoutMs` (8 seconds by default) so the control does not remain stuck when n8n is unreachable.
 
+### Reject actuator (360ControlUnit / ESP32)
+
+The **360ControlUnit servo** panel (`js/servo.js`) talks directly to the ESP32 firmware in `360ControlUnit/src/main.cpp` — not through n8n. It uses two configured URLs, `servoUrl` and `modeUrl` (Connection settings, or `controlUnitServoUrl`/`controlUnitModeUrl` in `config.js`):
+
+```http
+POST {modeUrl}          {"mode":"auto"|"manual"}       -> {"accepted":bool,"mode":"auto"|"manual"}
+POST {servoUrl}         {"angle":0-180} or {"sweep":true} -> {"accepted":bool}
+POST {servoUrl}/../verdict  {"action":"reject"|"pass"}  -> {"accepted":bool,"status":"rejected"|"passed"|"ignored"}
+```
+
+The `/verdict` endpoint is derived from `servoUrl` by replacing its last path segment (e.g. `http://192.168.1.50/servo` → `http://192.168.1.50/verdict`) rather than being a third configured field.
+
+The firmware's own state machine decides whether a request actually does anything — for example, the servo angle/sweep only apply in **Manual** mode while idle, and `/verdict` only applies while the unit is awaiting a verdict (an item is in the beam). A rejected-by-firmware request still returns HTTP 200 with `"accepted": false`; the panel treats that as informational feedback ("ignored — wrong mode or mid-cycle"), not an error. A thrown error (timeout, network failure, non-2xx) means the request never reached the firmware at all.
+
+The ESP32 firmware sends permissive CORS headers (`Access-Control-Allow-Origin: *`) so the browser can call it directly without a gateway.
+
 ## Network notes
 
 - The Raspberry Pi and n8n endpoints must be reachable from the Pico headset on the LAN.

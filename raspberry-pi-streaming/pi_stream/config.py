@@ -63,6 +63,11 @@ class Settings:
     frame_stale_seconds: float = 3.0
     initial_frame_wait_seconds: float = 2.0
     capture_wait_seconds: float = 2.0
+    n8n_webhook_url: str = ""
+    push_interval_seconds: float = 0.0
+    push_timeout_seconds: float = 10.0
+    push_retry_seconds: float = 2.0
+    push_max_attempts: int = 3
     log_level: str = "INFO"
 
     def __post_init__(self) -> None:
@@ -92,6 +97,11 @@ class Settings:
             frame_stale_seconds=_read_float(env, "FRAME_STALE_SECONDS", 3.0),
             initial_frame_wait_seconds=_read_float(env, "INITIAL_FRAME_WAIT_SECONDS", 2.0),
             capture_wait_seconds=_read_float(env, "CAPTURE_WAIT_SECONDS", 2.0),
+            n8n_webhook_url=env.get("N8N_WEBHOOK_URL", "").strip(),
+            push_interval_seconds=_read_float(env, "PUSH_INTERVAL_SECONDS", 0.0),
+            push_timeout_seconds=_read_float(env, "PUSH_TIMEOUT_SECONDS", 10.0),
+            push_retry_seconds=_read_float(env, "PUSH_RETRY_SECONDS", 2.0),
+            push_max_attempts=_read_int(env, "PUSH_MAX_ATTEMPTS", 3),
             log_level=env.get("LOG_LEVEL", "INFO").strip().upper(),
         )
         return settings
@@ -131,9 +141,26 @@ class Settings:
             ("FRAME_STALE_SECONDS", self.frame_stale_seconds),
             ("INITIAL_FRAME_WAIT_SECONDS", self.initial_frame_wait_seconds),
             ("CAPTURE_WAIT_SECONDS", self.capture_wait_seconds),
+            ("PUSH_TIMEOUT_SECONDS", self.push_timeout_seconds),
+            ("PUSH_RETRY_SECONDS", self.push_retry_seconds),
         ):
             if not math.isfinite(value) or value <= 0:
                 raise ValueError(f"{name} must be greater than zero")
+
+        if not math.isfinite(self.push_interval_seconds) or self.push_interval_seconds < 0:
+            raise ValueError("PUSH_INTERVAL_SECONDS must be zero or greater")
+
+        if self.push_max_attempts < 1:
+            raise ValueError("PUSH_MAX_ATTEMPTS must be at least 1")
+
+        if self.n8n_webhook_url:
+            try:
+                parsed = urlsplit(self.n8n_webhook_url)
+                parsed.port  # Validate a numeric port while parsing configuration.
+            except ValueError as error:
+                raise ValueError("N8N_WEBHOOK_URL is not a valid URL") from error
+            if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+                raise ValueError("N8N_WEBHOOK_URL must be an http(s) URL")
 
         if self.log_level not in {"CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"}:
             raise ValueError("LOG_LEVEL must be CRITICAL, ERROR, WARNING, INFO, or DEBUG")
@@ -150,6 +177,27 @@ class Settings:
             if "://" in self.camera_source or "@" in self.camera_source:
                 return "invalid camera URL"
             return self.camera_source
+
+        hostname = parsed.hostname
+        if ":" in hostname and not hostname.startswith("["):
+            hostname = f"[{hostname}]"
+        try:
+            port = parsed.port
+        except ValueError:
+            port = None
+        netloc = hostname if port is None else f"{hostname}:{port}"
+        return urlunsplit((parsed.scheme, netloc, parsed.path, "", ""))
+
+    def public_webhook_url(self) -> str:
+        if not self.n8n_webhook_url:
+            return ""
+
+        try:
+            parsed = urlsplit(self.n8n_webhook_url)
+        except ValueError:
+            return "invalid webhook URL"
+        if not parsed.scheme or not parsed.hostname:
+            return "invalid webhook URL"
 
         hostname = parsed.hostname
         if ":" in hostname and not hostname.startswith("["):

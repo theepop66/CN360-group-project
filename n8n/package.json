@@ -1,0 +1,10 @@
+{
+  "name": "cn360-n8n",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "build": "node build.mjs"
+  }
+}

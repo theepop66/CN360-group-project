@@ -13,7 +13,7 @@ components already expose.
 
 ## Import
 
-1. n8n: **Workflows → Import from File**, import all three JSON files.
+1. n8n: **Workflows เน€เธยเธขยเนโฌย Import from File**, import all three JSON files.
 2. Leave them **inactive** until the placeholders below are filled.
 3. Fill in the placeholders (Ctrl+H in the n8n editor finds them quickly).
 
@@ -24,7 +24,7 @@ goes missing, so this list cannot drift away from the workflows.
 
 | Placeholder | Replace with | Notes |
 | :--- | :--- | :--- |
-| `REPLACE_MODEL_HOST:8000` | The PC running the model server | **Not `0.0.0.0`** — that is a bind address, not a connectable target. Use the LAN IP, `127.0.0.1`, or `host.docker.internal` if n8n runs in Docker. |
+| `REPLACE_MODEL_HOST:8000` | The PC running the model server | **Not `0.0.0.0`** เน€เธยเนยเธเนโฌย that is a bind address, not a connectable target. Use the LAN IP, `127.0.0.1`, or `host.docker.internal` if n8n runs in Docker. |
 | `REPLACE_PI_HOST:8000` | The Raspberry Pi | Must be reachable from the n8n host. |
 | `REPLACE_ESP32_HOST` | The ESP32 | Its static IP on the line. |
 | `REPLACE_RELAY_HOST:8081` | The detection relay | See "The HUD overlay is not done yet". |
@@ -32,7 +32,7 @@ goes missing, so this list cannot drift away from the workflows.
 | `REPLACE_SUPABASE_SERVICE_ROLE_KEY` | The service-role key | Prefer an n8n HTTP Header Auth credential instead of pasting it here. |
 | `REPLACE_SNAPSHOT_BUCKET` | A **public** bucket name | Create the bucket first; the stored `frame_url` points at `/storage/v1/object/public/...`. |
 | `REPLACE_COVERAGE_THRESHOLD` | e.g. `0.005` | Or set an n8n variable named `COVERAGE_THRESHOLD`. |
-| `REPLACE_MODEL_TIMEOUT_MS` | `1500` | Must fit the Verdict Window budget. The workflow refuses a value it cannot fit rather than trusting it. |
+| `REPLACE_MODEL_TIMEOUT_MS` | `1200` | Must fit the Verdict Window budget. The workflow refuses a value it cannot fit rather than trusting it. |
 
 ### Secrets and n8n credentials
 
@@ -51,20 +51,49 @@ the verdict POST is budgeted and the stages are checked as a whole:
 
 | Stage | Timeout |
 | :--- | :--- |
-| `fetch-current-prompt` | 300 ms |
-| `capture-frame` | 900 ms |
-| `detect-defects` | `REPLACE_MODEL_TIMEOUT_MS` (default 1500 ms) |
+| `fetch-current-prompt` | 250 ms |
+| `capture-frame` | 800 ms |
+| `upload-snapshot` | 300 ms |
+| `detect-defects` | `REPLACE_MODEL_TIMEOUT_MS` (default 1200 ms) |
 | `post-verdict` | 250 ms |
+
+That is 2800 ms of work inside the ESP32's 3000 ms Verdict Window.
 
 `verify-verdict-budget` runs before the model call. If the configured model
 timeout cannot leave headroom inside the window, the Verdict is forced to
 **reject** with reason `invalid_verdict_budget`. The boxes the model returned are
 still recorded and drawn; only the physical path is forced.
 
-The snapshot upload runs **beside** the model call rather than inside the budget:
-n8n HTTP nodes do not pass binary along, so the capture fans out to both the
-model and the upload, and a two-input merge re-joins them before anything is
-persisted. The verdict itself is still sent before any write.
+A model timeout that cannot be read at all (left as the placeholder, zero, or
+nonsense) falls back to the shipped 1200 ms default rather than disabling the
+check. That substitution is reported as `readable: false` on the budget and lands
+in the outcome log, so a deployment that lost its configuration is visible instead
+of silent.
+
+`REPLACE_COVERAGE_THRESHOLD` works the same way but with one difference: an
+unconfigured placeholder takes the documented **0.5%** default, while a value
+that *was* set but cannot be read fails closed with `invalid_threshold`. A
+threshold is never guessed at, because it decides pass or reject.
+
+The snapshot upload is **serialised ahead of the model call** rather than fanned
+out beside it, and it is paid for in that budget. n8n HTTP nodes do not pass
+binary along, so a parallel upload would need a merge to re-join the branches.
+Serialising costs 300 ms and cannot hang. The Verdict itself is still sent before
+any write.
+
+## Repeat frames
+
+A repeat of the same `camera-session` + `frame-sequence` inside the Verdict
+Window still gets a verdict POSTed to the ESP32 เนโฌโ€ only its database record and
+HUD broadcast are suppressed, and the suppression is logged to `system_logs` as
+`duplicate frame suppressed`.
+
+This is deliberate. The ESP32 auto-passes whatever physically arrived if nothing
+arrives within 3000 ms, so *silently dropping* a duplicate event would let that
+fallback pass a real item. Re-posting is safe: the firmware's `acceptVerdict`
+returns 0 for any verdict once it has left `AwaitVerdict`, so the repeat is
+answered `accepted: false, status: "ignored"` and the machinery does not move
+twice. The `esp32_status` on the suppression log is the evidence for that.
 
 ## Two fixes outside this folder
 
@@ -77,23 +106,23 @@ HUD cannot reach n8n at all:
 ## Assumed Supabase schema
 
 **The real column names are not known yet.** These mappings are an assumption.
-Reconcile them before the first production run — the names live in one place
+Reconcile them before the first production run เน€เธยเนยเธเนโฌย the names live in one place
 (the `inspection_results` / `control_actions` / `prompt_history` /
 `system_logs` HTTP nodes) so the fix is mechanical.
 
-- `inspection_results` — `inspection_at`, `inspection_target`,
+- `inspection_results` เน€เธยเนยเธเนโฌย `inspection_at`, `inspection_target`,
   `model_instruction`, `camera_session`, `frame_sequence`, `frame_width`,
   `frame_height`, `box_count`, `defect_coverage`, `coverage_threshold`,
   `verdict`, `prompt_verified`, `frame_url`
-- `control_actions` — `inspection_id`, `action`, `esp32_accepted`,
+- `control_actions` เน€เธยเนยเธเนโฌย `inspection_id`, `action`, `esp32_accepted`,
   `esp32_status`, `requested_at`
-- `prompt_history` — `changed_at`, `inspection_target`, `model_instruction`,
+- `prompt_history` เน€เธยเนยเธเนโฌย `changed_at`, `inspection_target`, `model_instruction`,
   `source`, `model_http_status`
-- `system_logs` — `logged_at`, `severity`, `component`, `message`, `details`
+- `system_logs` เน€เธยเนยเธเนโฌย `logged_at`, `severity`, `component`, `message`, `details`
 
 ## Why there is no confidence threshold
 
-The model returns `confidence: 0.0` for every detection — it is not a real
+The model returns `confidence: 0.0` for every detection เน€เธยเนยเธเนโฌย it is not a real
 score. The original plan's confidence filter would have silently passed every
 item while appearing to filter. The pass/reject decision is **Defect Coverage**
 instead: the summed area of the returned boxes over the frame area, thresholded
@@ -117,8 +146,8 @@ verdict. A mid-flight prompt change shows up there as `promptMismatch: true`
 rather than being silently applied.
 
 **Expect near-total rejection in production today.** The model server reloads a
-5.83 GB model on CPU per request and cannot currently meet the 1500 ms timeout.
-That is the fail-safe working, not a workflow bug — but it is a line-stopping
+5.83 GB model on CPU per request and cannot currently meet the 1200 ms timeout.
+That is the fail-safe working, not a workflow bug เน€เธยเนยเธเนโฌย but it is a line-stopping
 condition until model latency is fixed.
 
 ## The HUD overlay is not done yet
@@ -136,11 +165,11 @@ coordinates, so the overlay will land in the right place once the relay exists.
 ## Duplicate suppression, and its limit
 
 The item-detected webhook body carries no item identity, so a redelivery cannot
-be deduplicated by content. The loop instead drops a second verdict for the same
-`camera session + frame sequence` within one Verdict Window using n8n static
-data — the duplicate item is discarded so it never reaches the ESP32 or the
-database. That covers webhook redelivery and a schedule/item race on the same
-frame.
+be deduplicated by content. The loop instead recognises a second verdict for the
+same `camera session + frame sequence` within one Verdict Window, using n8n
+static data. The duplicate is still sent to the ESP32 โ€” see **Repeat frames**
+above โ€” and only its database record and HUD broadcast are suppressed. That
+covers webhook redelivery and a schedule/item race on the same frame.
 
 It is **per n8n instance and does not survive a restart**. The ESP32 state
 machine remains the real backstop against double actuation.
@@ -148,7 +177,7 @@ machine remains the real backstop against double actuation.
 ## Development
 
 ```sh
-npm test     # 157 tests, no network, no n8n instance required
+npm test     # 178 tests, no network, no n8n instance required
 npm run build  # regenerates workflows/*.json from lib/
 ```
 

@@ -1,14 +1,20 @@
 export const DEFAULT_COVERAGE_THRESHOLD = 0.005;
 
 // The ESP32 auto-passes after 3000 ms, so every stage before the verdict is
-// budgeted: fetch the prompt, capture the frame, then ask the model.
+// budgeted: fetch the prompt, capture the frame, store the snapshot, ask the
+// model. The snapshot upload is in here on purpose — see the note on the
+// capture fan-out in workflow-definitions.mjs.
 export const VERDICT_WINDOW_MS = 3000;
-export const MODEL_PROMPT_TIMEOUT_MS = 300;
-export const CAPTURE_TIMEOUT_MS = 900;
-export const MODEL_TIMEOUT_MS = 1500;
+export const MODEL_PROMPT_TIMEOUT_MS = 250;
+export const CAPTURE_TIMEOUT_MS = 800;
+export const SNAPSHOT_UPLOAD_TIMEOUT_MS = 300;
+export const MODEL_TIMEOUT_MS = 1200;
 export const VERDICT_POST_TIMEOUT_MS = 250;
 export const PRE_VERDICT_BUDGET_MS =
-  MODEL_PROMPT_TIMEOUT_MS + CAPTURE_TIMEOUT_MS + MODEL_TIMEOUT_MS;
+  MODEL_PROMPT_TIMEOUT_MS +
+  CAPTURE_TIMEOUT_MS +
+  SNAPSHOT_UPLOAD_TIMEOUT_MS +
+  MODEL_TIMEOUT_MS;
 
 export const MODEL_SUCCESS_STATUS = "success";
 export const DEFAULT_DETECTION_LABEL = "defect";
@@ -22,6 +28,7 @@ export const FailureReason = Object.freeze({
   MODEL_INVALID_RESPONSE: "model_invalid_response",
   MODEL_STATUS_MISSING: "model_status_missing",
   MODEL_ERROR_STATUS: "model_error_status",
+  MODEL_INSTRUCTION_MISSING: "model_instruction_missing",
   MODEL_INVALID_BOX: "model_invalid_box",
   FRAME_CAPTURE_FAILED: "frame_capture_failed",
   FRAME_CONTEXT_INVALID: "frame_context_invalid",
@@ -229,19 +236,50 @@ export function buildSnapshotObjectName(frameContext) {
 // per deployment. Whatever it becomes, the whole pre-verdict path has to leave
 // headroom inside the ESP32 Verdict Window, so the budget is checked rather
 // than assumed. An unreadable value falls back to the shipped default instead
-// of disabling the check.
+// of disabling the check — but the substitution is reported, never silent,
+// because a configured value that quietly went unread is a deployment fault.
 export function resolveVerdictBudget(configuredModelTimeoutMs) {
   const requested = asFiniteNumber(configuredModelTimeoutMs);
-  const modelTimeoutMs = requested === null || requested <= 0 ? MODEL_TIMEOUT_MS : requested;
+  const readable = requested !== null && requested > 0;
+  const modelTimeoutMs = readable ? requested : MODEL_TIMEOUT_MS;
   const totalMs =
     PRE_VERDICT_BUDGET_MS - MODEL_TIMEOUT_MS + modelTimeoutMs + VERDICT_POST_TIMEOUT_MS;
+  const fits = totalMs < VERDICT_WINDOW_MS;
 
   return {
     configured: configuredModelTimeoutMs ?? null,
+    readable,
+    substituted: !readable,
     modelTimeoutMs,
+    // Refusing the load means nothing if the wire wait is untouched — the
+    // ESP32's auto-pass would fire first. The timeout the HTTP node applies is
+    // clamped inside the window so the forced reject is the thing that arrives.
+    appliedModelTimeoutMs: fits ? modelTimeoutMs : MODEL_TIMEOUT_MS,
     totalMs,
-    fits: totalMs < VERDICT_WINDOW_MS
+    fits
   };
+}
+
+// The Coverage Threshold decides pass or reject, so an unreadable configured
+// value must not be guessed at. An unconfigured placeholder falls back to the
+// documented default; a value that was set but cannot be read is a fault and is
+// returned as null so the decision fails closed with `invalid_threshold`.
+export function resolveCoverageThreshold(configuredThreshold) {
+  const raw = typeof configuredThreshold === "string" ? configuredThreshold.trim() : configuredThreshold;
+
+  if (raw === null || raw === undefined || raw === "") {
+    return { value: DEFAULT_COVERAGE_THRESHOLD, configured: null, readable: true, defaulted: true };
+  }
+  if (typeof raw === "string" && raw.startsWith("REPLACE_")) {
+    return { value: DEFAULT_COVERAGE_THRESHOLD, configured: raw, readable: true, defaulted: true };
+  }
+
+  const value = asFiniteNumber(raw);
+  if (value === null || value < 0 || value > 1) {
+    return { value: null, configured: raw, readable: false, defaulted: false };
+  }
+
+  return { value, configured: raw, readable: true, defaulted: false };
 }
 
 // Both watchdog probes read a different response shape but share one rule: a
@@ -260,8 +298,16 @@ export function buildInspectionDecision({
   frameContext,
   instruction,
   threshold,
-  budget
+  budget,
+  frameCaptureFailed = false
 } = {}) {
+  // A dead Pi is its own failure, and naming it keeps it out of the model's
+  // failure reasons where it would be misread as a model problem. There are no
+  // boxes to show in this case: the frame never arrived.
+  if (frameCaptureFailed) {
+    return rejected(FailureReason.FRAME_CAPTURE_FAILED);
+  }
+
   const coverageThreshold = readCoverageThreshold(threshold);
   if (coverageThreshold === null) {
     return rejected(FailureReason.INVALID_THRESHOLD);
@@ -305,6 +351,20 @@ export function buildInspectionDecision({
 
   const coverage = defectCoverage(detections, frameContext.width, frameContext.height);
   const prompt = verifyPrompt(response, instruction);
+
+  // Boxes found under an instruction nobody can name are not a verdict, but they
+  // are still what the operator needs to see — the threshold never hides a box.
+  // So the boxes are parsed first and the Verdict is forced afterwards.
+  const instructionMissing = typeof instruction !== "string" || !instruction.trim();
+  if (instructionMissing) {
+    return {
+      ...rejected(FailureReason.MODEL_INSTRUCTION_MISSING, { coverageThreshold }),
+      coverage,
+      boxCount: detections.length,
+      detections,
+      ...prompt
+    };
+  }
 
   // A budget that cannot fit is a setup error, but it is still a reject. The
   // measured figures and the boxes survive so the operator can see what the

@@ -41,6 +41,10 @@ export function parseInspectionTarget(instruction) {
 
 // The firmware answers { accepted, status }. Anything else means the board never
 // spoke, and recording that as acceptance would hide an unreachable controller.
+// n8n wraps an HTTP response in { body, headers, statusCode, statusMessage }
+// when "Include Response Headers and Status" is on. The ESP32's own contract
+// { accepted, status } lives inside `body` there; a bare object means the
+// verdict post went through without the envelope (or in an older graph).
 export function readEsp32Outcome(json) {
   const error = json?.error;
   if (error !== undefined && error !== null) {
@@ -48,14 +52,21 @@ export function readEsp32Outcome(json) {
     return {
       esp32Accepted: null,
       esp32Status: null,
+      esp32HttpStatus: null,
       esp32Error: message === undefined || message === null ? String(error) : String(message)
     };
   }
 
-  const accepted = typeof json?.accepted === "boolean" ? json.accepted : null;
-  const status = typeof json?.status === "string" && json.status.trim() ? json.status : null;
+  const body =
+    json && typeof json === "object" && json.body && typeof json.body === "object"
+      ? json.body
+      : json;
+  const accepted = typeof body?.accepted === "boolean" ? body.accepted : null;
+  const status =
+    typeof body?.status === "string" && body.status.trim() ? body.status : null;
+  const httpStatus = typeof json?.statusCode === "number" ? json.statusCode : null;
 
-  return { esp32Accepted: accepted, esp32Status: status, esp32Error: null };
+  return { esp32Accepted: accepted, esp32Status: status, esp32HttpStatus: httpStatus, esp32Error: null };
 }
 
 function orNull(value) {
@@ -67,10 +78,10 @@ function readFrameContext(frameContext) {
     return { sessionId: null, sequence: null, width: null, height: null };
   }
   return {
-    sessionId: orNull(frameContext.sessionId) ?? null,
-    sequence: orNull(frameContext.sequence) ?? null,
-    width: orNull(frameContext.width) ?? null,
-    height: orNull(frameContext.height) ?? null
+    sessionId: orNull(frameContext.sessionId),
+    sequence: orNull(frameContext.sequence),
+    width: orNull(frameContext.width),
+    height: orNull(frameContext.height)
   };
 }
 
@@ -104,6 +115,8 @@ export function buildControlActionRow({
   action,
   esp32Accepted,
   esp32Status,
+  esp32HttpStatus,
+  esp32Error,
   requestedAt
 } = {}) {
   return {
@@ -111,6 +124,8 @@ export function buildControlActionRow({
     action: orNull(action),
     esp32_accepted: esp32Accepted ?? null,
     esp32_status: esp32Status ?? null,
+    esp32_http_status: esp32HttpStatus ?? null,
+    esp32_error: esp32Error ?? null,
     requested_at: orNull(requestedAt)
   };
 }
@@ -120,14 +135,16 @@ export function buildPromptHistoryRow({
   inspectionTarget,
   modelInstruction,
   source,
-  modelHttpStatus
+  modelHttpStatus,
+  modelError
 } = {}) {
   return {
     changed_at: orNull(changedAt),
     inspection_target: orNull(inspectionTarget),
     model_instruction: orNull(modelInstruction),
     source: orNull(source),
-    model_http_status: orNull(modelHttpStatus)
+    model_http_status: orNull(modelHttpStatus),
+    model_error: orNull(modelError)
   };
 }
 
@@ -158,6 +175,11 @@ export function buildHudPayload({ decision, frameContext, snapshotUrl } = {}) {
     reason: decision.reason ?? null,
     timestamp: frameContext?.capturedAt ?? null,
     frame: {
+      // The HUD's parser reads frame.id first and uses it to order and
+      // de-duplicate frames, so it is composed from the Frame Context the Pi
+      // sent rather than left null. Session plus sequence is the same identity
+      // the duplicate guard uses.
+      id: frame.sessionId && frame.sequence !== null ? `${frame.sessionId}:${frame.sequence}` : null,
       sessionId: frame.sessionId,
       sequence: frame.sequence,
       width: frame.width,

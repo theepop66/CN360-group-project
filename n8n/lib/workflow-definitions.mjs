@@ -5,6 +5,7 @@ import { dirname, join } from "node:path";
 import {
   CAPTURE_TIMEOUT_MS,
   MODEL_PROMPT_TIMEOUT_MS,
+  SNAPSHOT_UPLOAD_TIMEOUT_MS,
   VERDICT_POST_TIMEOUT_MS
 } from "./inspection-logic.mjs";
 
@@ -126,7 +127,12 @@ const source = $('trigger-item-detected').isExecuted
   : $('trigger-inspect-now').isExecuted
     ? 'manual'
     : 'schedule';
-return [{ json: { source, requestedAt: new Date().toISOString() } }];
+const incoming = $input.first().json ?? {};
+return [{ json: {
+  source,
+  requestedAt: new Date().toISOString(),
+  inspectionTarget: typeof incoming.inspectionTarget === 'string' ? incoming.inspectionTarget : null
+} }];
 `;
 
   const verifyVerdictBudget = `
@@ -156,24 +162,30 @@ return [{ json: {
 }, binary: { image: $binary.data } }];
 `;
 
+  // NB: a local must not shadow an inlined name. The compile test enforces it.
   const decideInspection = `
 const frameContext = $('read-frame-context').first().json.frameContext;
-const instruction = $('resolve-instruction').first().json.instruction;
+const resolved = $('resolve-instruction').first().json;
 const budget = $('verify-verdict-budget').first().json.budget;
+const capture = $('capture-frame').first().json ?? {};
 const configured = typeof $vars !== 'undefined' && $vars.COVERAGE_THRESHOLD !== undefined
   ? $vars.COVERAGE_THRESHOLD
   : '${PLACEHOLDERS.coverageThreshold}';
+const threshold = resolveCoverageThreshold(configured);
 const decision = buildInspectionDecision({
   outcome: classifyModelOutcome($input.first().json),
   frameContext,
-  instruction,
-  threshold: Number(configured),
-  budget
+  instruction: resolved.instruction,
+  threshold: threshold.value,
+  budget,
+  frameCaptureFailed: capture.error !== undefined && capture.error !== null
 });
 return [{ json: {
   frameContext,
-  instruction,
-  inspectionTarget: $('resolve-instruction').first().json.inspectionTarget,
+  instruction: resolved.instruction,
+  inspectionTarget: resolved.inspectionTarget,
+  modelPromptMissing: resolved.modelPromptMissing,
+  coverageThreshold: threshold,
   decision,
   budget,
   decidedAt: new Date().toISOString()
@@ -181,19 +193,55 @@ return [{ json: {
 `;
 
   // A repeated frame inside the Verdict Window must not move the machinery
-  // twice, so the duplicate item is dropped rather than flagged and sent on.
+  // twice, so the duplicate is flagged and its *record* suppressed. It is NOT
+  // dropped here: the ESP32 is waiting out its 3000 ms auto-pass for whatever
+  // physically arrived, and staying silent here would let that fallback pass a
+  // real item. Re-posting is safe because the firmware's acceptVerdict ignores
+  // any verdict once it has left AwaitVerdict, answering `accepted: false`.
   const duplicateGuard = `
 const store = $getWorkflowStaticData('global');
-const { frameContext } = $input.first().json;
-if (shouldSuppressDuplicate(store, frameContext)) return [];
-return $input.all();
+const carried = $input.first().json;
+const { frameContext } = carried;
+return [{ json: {
+  ...carried,
+  duplicate: shouldSuppressDuplicate(store, frameContext),
+  duplicateSuppressedAt: new Date().toISOString()
+} }];
+`;
+
+  // Only an explicit pass becomes a pass. Deriving the action from the Verdict
+  // means an unrecognised verdict can never fall through to the pass branch.
+  const toControlAction = `
+const { decision } = $input.first().json;
+return [{ json: { ...$input.first().json, action: decision.verdict === VERDICT.PASS ? 'pass' : 'reject' } }];
+`;
+
+  // A duplicate was still told to the ESP32; only the record is suppressed. It
+  // is logged rather than dropped so the audit trail shows the frame was seen
+  // twice instead of once.
+  const buildDuplicateLog = `
+const base = $input.first().json;
+return [{ json: { logRow: buildSystemLogRow({
+  loggedAt: base.duplicateSuppressedAt,
+  severity: 'info',
+  component: 'inspection-loop',
+  message: 'duplicate frame suppressed',
+  details: {
+    verdict: base.decision?.verdict ?? null,
+    action: base.action,
+    cameraSession: base.frameContext?.sessionId ?? null,
+    frameSequence: base.frameContext?.sequence ?? null,
+    esp32Accepted: base.esp32?.esp32Accepted ?? null,
+    esp32Status: base.esp32?.esp32Status ?? null,
+    esp32HttpStatus: base.esp32?.esp32HttpStatus ?? null,
+    esp32Error: base.esp32?.esp32Error ?? null
+  }
+}) } }];
 `;
 
   const captureEsp32Response = `
-const decided = $('action-reject').isExecuted
-  ? $('action-reject').first().json
-  : $('action-pass').first().json;
-return [{ json: { ...decided, esp32: readEsp32Outcome($input.first().json) } }];
+const decided = $input.first().json;
+return [{ json: { ...decided, esp32: readEsp32Outcome($('post-verdict').first().json) } }];
 `;
 
   const buildSnapshotUrl = `
@@ -229,6 +277,8 @@ return [{ json: { ...base, inspectionId, controlActionRow: buildControlActionRow
   action: base.action,
   esp32Accepted: base.esp32?.esp32Accepted ?? null,
   esp32Status: base.esp32?.esp32Status ?? null,
+  esp32HttpStatus: base.esp32?.esp32HttpStatus ?? null,
+  esp32Error: base.esp32?.esp32Error ?? null,
   requestedAt: base.decidedAt
 }) } }];
 `;
@@ -244,15 +294,18 @@ return [{ json: { ...base, hudPayload: buildHudPayload({
 
   // The outcome row is the audit trail: it is where a prompt that drifted
   // mid-flight, an unreachable board, or a budget that cannot fit is recorded.
+  // NB: the local must not be named `rejected` — the inlined logic declares that.
   const buildOutcomeLog = `
 const base = $('build-control-action').first().json;
 const decision = base.decision;
-const rejected = decision.verdict !== VERDICT.PASS;
+const wasRejected = decision.verdict !== VERDICT.PASS;
 return [{ json: { logRow: buildSystemLogRow({
   loggedAt: base.decidedAt,
-  severity: rejected ? 'warn' : 'info',
+  // A mid-flight prompt change is a warning even on a pass: the model answered
+  // a question the operator did not ask, and that must be visible.
+  severity: wasRejected || decision.promptMismatch ? 'warn' : 'info',
   component: 'inspection-loop',
-  message: rejected ? 'inspection rejected' : 'inspection passed',
+  message: wasRejected ? 'inspection rejected' : 'inspection passed',
   details: {
     verdict: decision.verdict,
     reason: decision.reason,
@@ -263,12 +316,14 @@ return [{ json: { logRow: buildSystemLogRow({
     cameraSession: base.frameContext?.sessionId ?? null,
     frameSequence: base.frameContext?.sequence ?? null,
     inspectionId: base.inspectionId ?? null,
+    modelPromptMissing: base.modelPromptMissing ?? null,
     promptVerified: decision.promptVerified,
     promptUsed: decision.promptUsed,
     promptMismatch: decision.promptMismatch,
     verdictBudget: base.budget ?? null,
     esp32Accepted: base.esp32?.esp32Accepted ?? null,
     esp32Status: base.esp32?.esp32Status ?? null,
+    esp32HttpStatus: base.esp32?.esp32HttpStatus ?? null,
     esp32Error: base.esp32?.esp32Error ?? null,
     frameUrl: base.frameUrl
   }
@@ -329,11 +384,35 @@ return [{ json: { logRow: buildSystemLogRow({
         url: `=${PI_CAPTURE}`,
         options: {
           timeout: CAPTURE_TIMEOUT_MS,
-          response: { response: { responseFormat: "file" } }
+          // fullResponse is what puts the response headers on the output item.
+          // Without it a file-format response passes the input json through
+          // untouched, and read-frame-context would see {} on every capture.
+          response: { response: { responseFormat: "file", fullResponse: true } }
         }
       }),
       codeNode("read-frame-context", "read-frame-context", [700, 160], readFrameContext),
-      httpNode("detect-defects", "detect-defects", [920, 40], {
+      // The snapshot upload is serialised ahead of the model call — and it must
+      // carry the frame forward. n8n's HTTP node only copies the input binary
+      // through when responseFormat is 'file', so this node answers that way and
+      // posts as binaryData; 'binary' is not a real content type.
+      httpNode("upload-snapshot", "upload-snapshot", [920, 280], {
+        __continueOnError: true,
+        method: "POST",
+        url: `=https://${PLACEHOLDERS.supabaseHost}/storage/v1/object/${PLACEHOLDERS.snapshotBucket}/{{ $json.snapshotObjectName }}`,
+        sendHeaders: true,
+        headerParameters: supabaseHeaders([
+          { name: "Content-Type", value: "image/jpeg" },
+          { name: "x-upsert", value: "true" }
+        ]),
+        sendBody: true,
+        contentType: "binaryData",
+        inputDataFieldName: "image",
+        options: {
+          timeout: SNAPSHOT_UPLOAD_TIMEOUT_MS,
+          response: { response: { responseFormat: "file" } }
+        }
+      }),
+      httpNode("detect-defects", "detect-defects", [1140, 40], {
         __continueOnError: true,
         method: "POST",
         url: `=${MODEL_BASE}/predict`,
@@ -351,75 +430,15 @@ return [{ json: { logRow: buildSystemLogRow({
             }
           ]
         },
-        options: { timeout: PLACEHOLDERS.modelTimeoutMs }
+        options: {
+          // The budget is computed upstream and already clamped inside the
+          // Verdict Window, so a misconfigured value can never outrun the
+          // ESP32's auto-pass fallback.
+          timeout: "={{ $('verify-verdict-budget').first().json.budget.appliedModelTimeoutMs }}"
+        }
       }),
-      // The snapshot is expensive bookkeeping, so it runs beside the model
-      // call instead of spending Verdict Window budget on a file write. Only
-      // the URL is stored and broadcast, and only after the verdict.
-      httpNode("upload-snapshot", "upload-snapshot", [920, 280], {
-        __continueOnError: true,
-        method: "POST",
-        url: `=https://${PLACEHOLDERS.supabaseHost}/storage/v1/object/${PLACEHOLDERS.snapshotBucket}/{{ $json.snapshotObjectName }}`,
-        sendHeaders: true,
-        headerParameters: supabaseHeaders([
-          { name: "Content-Type", value: "image/jpeg" },
-          { name: "x-upsert", value: "true" }
-        ]),
-        sendBody: true,
-        contentType: "binary",
-        options: { timeout: 4000 }
-      }),
-      codeNode("decide-inspection", "decide-inspection", [1140, 160], decideInspection),
-      {
-        parameters: {
-          conditions: {
-            options: { caseSensitive: true, leftValue: "", typeValidation: "strict", version: 2 },
-            conditions: [
-              {
-                id: "verdict-is-reject",
-                leftValue: "={{ $json.decision.verdict }}",
-                rightValue: "reject",
-                operator: { type: "string", operation: "equals" }
-              }
-            ],
-            combinator: "and"
-          },
-          options: {}
-        },
-        type: "n8n-nodes-base.if",
-        typeVersion: 2.2,
-        position: [1360, 160],
-        name: "verdict-is-reject",
-        id: "cn360-verdict-if"
-      },
-      {
-        parameters: {
-          assignments: {
-            assignments: [
-              { id: "action-reject", name: "action", value: "reject", type: "string" }
-            ]
-          },
-          includeOtherFields: true
-        },
-        type: "n8n-nodes-base.set",
-        typeVersion: 3.4,
-        position: [1580, 40],
-        name: "action-reject",
-        id: "cn360-action-reject"
-      },
-      {
-        parameters: {
-          assignments: {
-            assignments: [{ id: "action-pass", name: "action", value: "pass", type: "string" }]
-          },
-          includeOtherFields: true
-        },
-        type: "n8n-nodes-base.set",
-        typeVersion: 3.4,
-        position: [1580, 280],
-        name: "action-pass",
-        id: "cn360-action-pass"
-      },
+      codeNode("decide-inspection", "decide-inspection", [1360, 160], decideInspection),
+      codeNode("to-control-action", "to-control-action", [1580, 160], toControlAction),
       codeNode("duplicate-guard", "duplicate-guard", [1800, 160], duplicateGuard),
       httpNode("post-verdict", "post-verdict", [2020, 160], {
         __continueOnError: true,
@@ -430,18 +449,44 @@ return [{ json: { logRow: buildSystemLogRow({
         sendBody: true,
         specifyBody: "json",
         jsonBody: "={{ JSON.stringify({ action: $json.action }) }}",
-        options: { timeout: VERDICT_POST_TIMEOUT_MS }
+        options: {
+          timeout: VERDICT_POST_TIMEOUT_MS,
+          // The Control Action records whether the board accepted and the HTTP
+          // status it returned; both live on the full-response envelope.
+          response: { response: { fullResponse: true } }
+        }
       }),
       codeNode("capture-esp32-response", "capture-esp32-response", [2240, 160], captureEsp32Response),
       {
-        parameters: { numberInputs: 2 },
-        type: "n8n-nodes-base.merge",
-        typeVersion: 3,
+        parameters: {
+          conditions: {
+            options: { caseSensitive: true, leftValue: "", typeValidation: "strict", version: 2 },
+            conditions: [
+              {
+                id: "is-duplicate",
+                leftValue: "={{ $json.duplicate }}",
+                rightValue: true,
+                operator: { type: "boolean", operation: "true", singleValue: true }
+              }
+            ],
+            combinator: "and"
+          },
+          options: {}
+        },
+        type: "n8n-nodes-base.if",
+        typeVersion: 2.2,
         position: [2460, 160],
-        name: "join-snapshot-and-verdict",
-        id: "cn360-join-snapshot"
+        name: "duplicate-or-new",
+        id: "cn360-duplicate-if"
       },
-      codeNode("build-snapshot-url", "build-snapshot-url", [2680, 160], buildSnapshotUrl),
+      codeNode("build-duplicate-log", "build-duplicate-log", [2680, 40], buildDuplicateLog),
+      supabaseTable(
+        "log-duplicate",
+        [2900, 40],
+        "system_logs",
+        "={{ JSON.stringify($json.logRow) }}"
+      ),
+      codeNode("build-snapshot-url", "build-snapshot-url", [2680, 300], buildSnapshotUrl),
       codeNode("build-inspection-record", "build-inspection-record", [2900, 160], buildInspectionRecord),
       supabaseTable(
         "insert-inspection",
@@ -482,6 +527,14 @@ return [{ json: { logRow: buildSystemLogRow({
         position: [4660, 60],
         name: "done",
         id: "cn360-done"
+      },
+      {
+        parameters: {},
+        type: "n8n-nodes-base.noOp",
+        typeVersion: 1,
+        position: [3120, 40],
+        name: "done-duplicate",
+        id: "cn360-done-duplicate"
       }
     ],
     connections: mergeLinks(
@@ -493,20 +546,21 @@ return [{ json: { logRow: buildSystemLogRow({
       link("fetch-current-prompt", "resolve-instruction"),
       link("resolve-instruction", "capture-frame"),
       link("capture-frame", "read-frame-context"),
-      // One capture, two consumers: the model needs the bytes, the snapshot
-      // keeps them, and the HTTP nodes that follow cannot pass binary along.
-      link("read-frame-context", "detect-defects"),
+      // One capture, one consumer at a time. The HTTP nodes that follow cannot
+      // pass binary along, so serialising is what keeps the bytes reachable.
       link("read-frame-context", "upload-snapshot"),
+      link("upload-snapshot", "detect-defects"),
       link("detect-defects", "decide-inspection"),
-      link("decide-inspection", "verdict-is-reject"),
-      branch("verdict-is-reject", ["action-reject", "action-pass"]),
-      link("action-reject", "duplicate-guard"),
-      link("action-pass", "duplicate-guard"),
+      link("decide-inspection", "to-control-action"),
+      link("to-control-action", "duplicate-guard"),
+      // The ESP32 is told on every event, duplicate or not: silence here is
+      // what lets its auto-pass fallback fire on a real item.
       link("duplicate-guard", "post-verdict"),
       link("post-verdict", "capture-esp32-response"),
-      link("capture-esp32-response", "join-snapshot-and-verdict"),
-      link("upload-snapshot", "join-snapshot-and-verdict"),
-      link("join-snapshot-and-verdict", "build-snapshot-url"),
+      link("capture-esp32-response", "duplicate-or-new"),
+      branch("duplicate-or-new", ["build-duplicate-log", "build-snapshot-url"]),
+      link("build-duplicate-log", "log-duplicate"),
+      link("log-duplicate", "done-duplicate"),
       link("build-snapshot-url", "build-inspection-record"),
       link("build-inspection-record", "insert-inspection"),
       link("insert-inspection", "build-control-action"),
@@ -525,14 +579,20 @@ return [{ json: { logRow: buildSystemLogRow({
 }
 
 export function buildPromptCapture() {
+  // The instruction is read from the node that built it, not from $input: the
+  // predecessor is the HTTP call to the model server, so $input here is that
+  // server's response body and carries none of the prompt fields.
   const buildPromptRecord = `
-const { inspectionTarget, modelInstruction, modelHttpStatus, changedAt } = $input.first().json;
+const built = $('build-instruction').first().json;
+const applied = $('set-model-prompt').first().json ?? {};
+const status = applied.statusCode ?? applied.status ?? null;
 return [{ json: { promptRow: buildPromptHistoryRow({
-  changedAt,
-  inspectionTarget,
-  modelInstruction,
+  changedAt: built.changedAt,
+  inspectionTarget: built.inspectionTarget,
+  modelInstruction: built.modelInstruction,
   source: 'hud',
-  modelHttpStatus
+  modelHttpStatus: status,
+  modelError: applied.error ? String(applied.error?.message ?? applied.error) : null
 }) } }];
 `;
   const buildInstruction = `
@@ -593,7 +653,12 @@ return [{ json: {
         queryParameters: {
           parameters: [{ name: "prompt", value: "={{ $json.modelInstruction }}" }]
         },
-        options: { timeout: 1500 }
+        // The Prompt History records the model server's HTTP status, which only
+        // exists on the item when the full-response envelope is requested.
+        options: {
+          timeout: 1500,
+          response: { response: { fullResponse: true } }
+        }
       }),
       codeNode("build-prompt-record", "build-prompt-record", [500, -100], buildPromptRecord),
       supabaseTable(
@@ -706,7 +771,12 @@ return emitted;
         __continueOnError: true,
         method: "GET",
         url: `=${PI_CAPTURE}`,
-        options: { timeout: 3000, response: { response: { responseFormat: "file" } } }
+        options: {
+          timeout: 3000,
+          // Same reason as capture-frame: the health probe reads the capture
+          // headers, and they only survive with the full-response envelope.
+          response: { response: { responseFormat: "file", fullResponse: true } }
+        }
       }),
       codeNode("probe-capture-result", "probe-capture-result", [40, 100], probePi),
       codeNode("record-transitions", "record-transitions", [260, 0], recordTransitions),

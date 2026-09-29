@@ -1,0 +1,459 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+
+import {
+  MODEL_INSTRUCTION_TEMPLATE,
+  buildControlActionRow,
+  buildHudPayload,
+  buildInspectionRow,
+  buildModelInstruction,
+  buildPromptHistoryRow,
+  buildSystemLogRow,
+  parseInspectionTarget,
+  readEsp32Outcome
+} from "../lib/inspection-records.mjs";
+import {
+  MODEL_SUCCESS_STATUS,
+  VERDICT,
+  buildInspectionDecision
+} from "../lib/inspection-logic.mjs";
+
+const FRAME = {
+  sessionId: "session-a",
+  sequence: 7,
+  capturedAt: "2026-08-23T12:00:00.000Z",
+  width: 1000,
+  height: 1000
+};
+
+const INSPECTED_AT = "2026-08-23T12:00:01.000Z";
+const TARGET = "mold";
+
+function passDecision(overrides = {}) {
+  return {
+    verdict: VERDICT.PASS,
+    reason: "no_defect_detected",
+    coverage: 0,
+    coverageThreshold: 0.005,
+    boxCount: 0,
+    detections: [],
+    promptVerified: true,
+    promptUsed: "unused",
+    promptMismatch: false,
+    ...overrides
+  };
+}
+
+test("a bare target becomes the canonical model instruction", () => {
+  const instruction = buildModelInstruction("mold");
+  assert.equal(instruction, "Locate all the instances that matches the following description: mold.");
+  assert.equal(instruction, MODEL_INSTRUCTION_TEMPLATE.replace("{target}", "mold"));
+});
+
+test("punctuation and whitespace variants of a target produce one instruction", () => {
+  const expected = "Locate all the instances that matches the following description: mold.";
+  for (const target of ["mold", "mold.", "mold ", "  mold  ", "mold!", "mold? ", "mold..."]) {
+    assert.equal(buildModelInstruction(target), expected, `target: ${JSON.stringify(target)}`);
+  }
+});
+
+test("interior punctuation is preserved without doubling the terminator", () => {
+  assert.equal(
+    buildModelInstruction("bruised spot on fruit, small"),
+    "Locate all the instances that matches the following description: bruised spot on fruit, small."
+  );
+  assert.equal(
+    buildModelInstruction("a scratch."),
+    "Locate all the instances that matches the following description: a scratch."
+  );
+});
+
+test("an empty target produces no instruction", () => {
+  for (const target of ["", "   ", ".", "!?", null, undefined, 42, {}]) {
+    assert.equal(buildModelInstruction(target), null, `target: ${JSON.stringify(target)}`);
+  }
+});
+
+test("the instruction is used verbatim for prompt verification", () => {
+  const instruction = buildModelInstruction("mold");
+  const decision = buildInspectionDecision({
+    outcome: {
+      kind: "ok",
+      response: { status: MODEL_SUCCESS_STATUS, prompt_used: instruction, detections: [] }
+    },
+    frameContext: FRAME,
+    instruction
+  });
+
+  assert.equal(decision.promptVerified, true);
+});
+
+test("an inspection row carries the target, the instruction and the decision", () => {
+  const row = buildInspectionRow(passDecision(), {
+    frameContext: FRAME,
+    inspectionTarget: TARGET,
+    modelInstruction: "Locate all the instances that matches the following description: mold.",
+    inspectedAt: INSPECTED_AT,
+    frameUrl: null
+  });
+
+  assert.deepEqual(row, {
+    inspection_at: INSPECTED_AT,
+    inspection_target: TARGET,
+    model_instruction: "Locate all the instances that matches the following description: mold.",
+    camera_session: "session-a",
+    frame_sequence: 7,
+    frame_width: 1000,
+    frame_height: 1000,
+    box_count: 0,
+    defect_coverage: 0,
+    coverage_threshold: 0.005,
+    verdict: VERDICT.PASS,
+    prompt_verified: true,
+    frame_url: null
+  });
+});
+
+test("an inspection row records the coverage figure and box count", () => {
+  const row = buildInspectionRow(
+    passDecision({ verdict: VERDICT.REJECT, reason: "defect_detected", coverage: 0.09, boxCount: 1, detections: [{ label: "mold", box: [0, 0, 300, 300] }] }),
+    {
+      frameContext: FRAME,
+      inspectionTarget: TARGET,
+      modelInstruction: "instruction",
+      inspectedAt: INSPECTED_AT,
+      frameUrl: "https://storage.example/frame.jpg"
+    }
+  );
+
+  assert.equal(row.defect_coverage, 0.09);
+  assert.equal(row.box_count, 1);
+  assert.equal(row.frame_url, "https://storage.example/frame.jpg");
+});
+
+test("a failed inspection row records a null coverage figure", () => {
+  const row = buildInspectionRow(
+    { verdict: VERDICT.REJECT, reason: "model_timeout", coverage: null, coverageThreshold: 0.005, boxCount: 0, detections: [], promptVerified: null, promptUsed: null, promptMismatch: false },
+    { frameContext: FRAME, inspectionTarget: TARGET, modelInstruction: "instruction", inspectedAt: INSPECTED_AT, frameUrl: null }
+  );
+
+  assert.equal(row.defect_coverage, null);
+  assert.equal(row.box_count, 0);
+  assert.equal(row.prompt_verified, null);
+  assert.equal(row.verdict, VERDICT.REJECT);
+});
+
+test("an inspection row survives a missing frame context", () => {
+  const row = buildInspectionRow(passDecision(), {
+    frameContext: null,
+    inspectionTarget: TARGET,
+    modelInstruction: "instruction",
+    inspectedAt: INSPECTED_AT,
+    frameUrl: null
+  });
+
+  assert.equal(row.camera_session, null);
+  assert.equal(row.frame_sequence, null);
+  assert.equal(row.frame_width, null);
+  assert.equal(row.frame_height, null);
+});
+
+test("a control action row records the ESP32 outcome", () => {
+  const row = buildControlActionRow({
+    inspectionId: "3f2b1c4d-0000-4000-8000-000000000000",
+    action: VERDICT.REJECT,
+    esp32Accepted: true,
+    esp32Status: "applied",
+    esp32HttpStatus: 200,
+    requestedAt: INSPECTED_AT
+  });
+
+  assert.deepEqual(row, {
+    inspection_id: "3f2b1c4d-0000-4000-8000-000000000000",
+    action: VERDICT.REJECT,
+    esp32_accepted: true,
+    esp32_status: "applied",
+    esp32_http_status: 200,
+    esp32_error: null,
+    requested_at: INSPECTED_AT
+  });
+});
+
+test("a control action row records a rejected or unanswered ESP32", () => {
+  const row = buildControlActionRow({
+    inspectionId: "abc",
+    action: VERDICT.PASS,
+    esp32Accepted: false,
+    esp32Status: null,
+    requestedAt: INSPECTED_AT
+  });
+
+  assert.equal(row.esp32_accepted, false);
+  assert.equal(row.esp32_status, null);
+});
+
+test("a prompt history row records the target change and its source", () => {
+  const row = buildPromptHistoryRow({
+    changedAt: INSPECTED_AT,
+    inspectionTarget: TARGET,
+    modelInstruction: "Locate all the instances that matches the following description: mold.",
+    source: "hud",
+    modelHttpStatus: 200
+  });
+
+  assert.deepEqual(row, {
+    changed_at: INSPECTED_AT,
+    inspection_target: TARGET,
+    model_instruction: "Locate all the instances that matches the following description: mold.",
+    source: "hud",
+    model_http_status: 200,
+    model_error: null
+  });
+});
+
+test("a prompt history row records a model server that refused the change", () => {
+  const row = buildPromptHistoryRow({
+    changedAt: INSPECTED_AT,
+    inspectionTarget: TARGET,
+    modelInstruction: "instruction",
+    source: "hud",
+    modelHttpStatus: 500
+  });
+
+  assert.equal(row.model_http_status, 500);
+});
+
+test("a system log row records severity, component and details", () => {
+  const row = buildSystemLogRow({
+    loggedAt: INSPECTED_AT,
+    severity: "error",
+    component: "inspection-loop",
+    message: "model call exceeded the verdict window",
+    details: { reason: "model_timeout" }
+  });
+
+  assert.deepEqual(row, {
+    logged_at: INSPECTED_AT,
+    severity: "error",
+    component: "inspection-loop",
+    message: "model call exceeded the verdict window",
+    details: { reason: "model_timeout" }
+  });
+});
+
+test("a system log row tolerates missing details", () => {
+  const row = buildSystemLogRow({
+    loggedAt: INSPECTED_AT,
+    severity: "info",
+    component: "health-watchdog",
+    message: "model server recovered"
+  });
+
+  assert.equal(row.details, null);
+});
+
+test("the HUD payload declares pixel space and carries the frame dimensions", () => {
+  const payload = buildHudPayload({
+    decision: passDecision(),
+    frameContext: FRAME
+  });
+
+  assert.equal(payload.type, "detections");
+  assert.equal(payload.coordinateSpace, "pixel");
+  assert.equal(payload.frame.width, 1000);
+  assert.equal(payload.frame.height, 1000);
+  assert.equal(payload.frame.sessionId, "session-a");
+  assert.equal(payload.frame.sequence, 7);
+  assert.equal(payload.timestamp, "2026-08-23T12:00:00.000Z");
+});
+
+test("the HUD payload never reuses a reserved message type", () => {
+  const reserved = new Set(["heartbeat", "ping", "connected"]);
+  const payload = buildHudPayload({ decision: passDecision(), frameContext: FRAME });
+  assert.equal(reserved.has(payload.type), false);
+});
+
+test("the HUD payload carries no confidence field", () => {
+  const payload = buildHudPayload({
+    decision: passDecision({ boxCount: 1, detections: [{ label: "mold", box: [0, 0, 100, 100] }] }),
+    frameContext: FRAME
+  });
+
+  const serialized = JSON.stringify(payload);
+  assert.equal(serialized.includes("confidence"), false);
+});
+
+test("the HUD payload marks detections with the verdict", () => {
+  const pass = buildHudPayload({
+    decision: passDecision({ boxCount: 1, detections: [{ label: "mold", box: [0, 0, 100, 100] }] }),
+    frameContext: FRAME
+  });
+  assert.equal(pass.detections[0].status, VERDICT.PASS);
+
+  const reject = buildHudPayload({
+    decision: passDecision({ verdict: VERDICT.REJECT, boxCount: 1, detections: [{ label: "mold", box: [0, 0, 100, 100] }] }),
+    frameContext: FRAME
+  });
+  assert.equal(reject.detections[0].status, VERDICT.REJECT);
+});
+
+test("the HUD payload includes a snapshot URL when one is available", () => {
+  const withSnapshot = buildHudPayload({
+    decision: passDecision(),
+    frameContext: FRAME,
+    snapshotUrl: "https://storage.example/frame.jpg"
+  });
+  assert.equal(withSnapshot.snapshotUrl, "https://storage.example/frame.jpg");
+
+  const withoutSnapshot = buildHudPayload({ decision: passDecision(), frameContext: FRAME });
+  assert.equal(withoutSnapshot.snapshotUrl, null);
+});
+
+test("the HUD payload explains a failed inspection with an empty box list", () => {
+  const payload = buildHudPayload({
+    decision: {
+      verdict: VERDICT.REJECT,
+      reason: "model_timeout",
+      coverage: null,
+      coverageThreshold: 0.005,
+      boxCount: 0,
+      detections: [],
+      promptVerified: null,
+      promptUsed: null,
+      promptMismatch: false
+    },
+    frameContext: FRAME
+  });
+
+  assert.deepEqual(payload.detections, []);
+  assert.equal(payload.status, VERDICT.REJECT);
+  assert.equal(payload.reason, "model_timeout");
+});
+
+test("every row builder tolerates absent optional input", () => {
+  assert.doesNotThrow(() =>
+    buildInspectionRow(passDecision(), {
+      frameContext: FRAME,
+      inspectionTarget: TARGET,
+      modelInstruction: "instruction",
+      inspectedAt: INSPECTED_AT
+    })
+  );
+  assert.doesNotThrow(() =>
+    buildControlActionRow({ inspectionId: "abc", action: VERDICT.PASS, requestedAt: INSPECTED_AT })
+  );
+  assert.doesNotThrow(() =>
+    buildPromptHistoryRow({ changedAt: INSPECTED_AT, inspectionTarget: TARGET, modelInstruction: "i" })
+  );
+  assert.doesNotThrow(() => buildSystemLogRow({ loggedAt: INSPECTED_AT, message: "m" }));
+});
+
+// The Inspection Target is the operator's own words. Recovering it from the
+// Model Instruction must go through the canonical template rather than a
+// hand-written split, so a grammar change cannot silently corrupt the record.
+test("the inspection target round-trips through the canonical template", () => {
+  for (const target of ["mold", "bruised spot on fruit", "scratch", "  a dent  "]) {
+    const instruction = buildModelInstruction(target);
+    assert.equal(parseInspectionTarget(instruction), target.trim(), target);
+  }
+});
+
+test("a trailing full stop in the target does not change the recorded target", () => {
+  assert.equal(
+    parseInspectionTarget(buildModelInstruction("mold.")),
+    "mold"
+  );
+});
+
+test("an instruction that is not the canonical template yields no target", () => {
+  for (const instruction of [
+    "find the mold",
+    "",
+    null,
+    undefined,
+    "Locate all the instances that matches the following description: .",
+    "Locate all the instances that matches the following description: mold"
+  ]) {
+    assert.equal(parseInspectionTarget(instruction), null, JSON.stringify(instruction));
+  }
+});
+
+// The firmware answers { accepted, status }; a Control Action that records
+// acceptance has to read the field the firmware actually sends.
+test("an accepted verdict is read from the firmware response", () => {
+  assert.deepEqual(readEsp32Outcome({ accepted: true, status: "applied" }), {
+    esp32Accepted: true,
+    esp32Status: "applied",
+    esp32HttpStatus: null,
+    esp32Error: null
+  });
+});
+
+test("a rejected verdict is recorded as refused by the firmware", () => {
+  const outcome = readEsp32Outcome({ accepted: false, status: "ignored" });
+
+  assert.equal(outcome.esp32Accepted, false);
+  assert.equal(outcome.esp32Status, "ignored");
+});
+
+test("an unreachable ESP32 is recorded as an error rather than as acceptance", () => {
+  const outcome = readEsp32Outcome({ error: { message: "connect ECONNREFUSED 192.168.1.7" } });
+
+  assert.equal(outcome.esp32Accepted, null, "an unreachable board did not accept anything");
+  assert.equal(outcome.esp32Error, "connect ECONNREFUSED 192.168.1.7");
+});
+
+test("a string error from n8n is still recorded", () => {
+  assert.equal(readEsp32Outcome({ error: "socket hang up" }).esp32Error, "socket hang up");
+});
+
+test("an unreadable response records no acceptance at all", () => {
+  for (const json of [{}, null, undefined, { accepted: "yes", status: 7 }]) {
+    const outcome = readEsp32Outcome(json);
+
+    assert.equal(outcome.esp32Accepted, null, JSON.stringify(json));
+    assert.equal(outcome.esp32Status, null, JSON.stringify(json));
+  }
+});
+// n8n emits an HTTP node's response as { body, headers, statusCode, statusMessage }
+// when "Include Response Headers and Status" is on. The ESP32 outcome may arrive
+// in either that envelope or (on error) as a bare { error } item.
+test("the ESP32 outcome unwraps the full-response envelope and keeps the HTTP status", () => {
+  const applied = readEsp32Outcome({ body: { accepted: true, status: "applied" }, statusCode: 200 });
+  assert.equal(applied.esp32Accepted, true);
+  assert.equal(applied.esp32Status, "applied");
+  assert.equal(applied.esp32HttpStatus, 200);
+  assert.equal(applied.esp32Error, null);
+
+  const ignored = readEsp32Outcome({ body: { accepted: false, status: "ignored" }, statusCode: 200 });
+  assert.equal(ignored.esp32Accepted, false);
+  assert.equal(ignored.esp32HttpStatus, 200);
+
+  const bare = readEsp32Outcome({ accepted: true, status: "applied" });
+  assert.equal(bare.esp32Accepted, true, "a non-enveloped response still parses");
+  assert.equal(bare.esp32HttpStatus, null);
+});
+
+test("an aborted verdict post records the failure, never a made-up acceptance", () => {
+  const failed = readEsp32Outcome({ error: { message: "ESOCKETTIMEDOUT" } });
+  assert.equal(failed.esp32Accepted, null);
+  assert.equal(failed.esp32HttpStatus, null);
+  assert.equal(failed.esp32Error, "ESOCKETTIMEDOUT");
+});
+
+test("the control action row carries acceptance and the wire status", () => {
+  const row = buildControlActionRow({
+    inspectionId: "a1b2",
+    action: "reject",
+    esp32Accepted: true,
+    esp32Status: "applied",
+    esp32HttpStatus: 200,
+    esp32Error: null,
+    requestedAt: INSPECTED_AT
+  });
+
+  assert.equal(row.esp32_accepted, true);
+  assert.equal(row.esp32_status, "applied");
+  assert.equal(row.esp32_http_status, 200, "spec: the control action records the HTTP status");
+  assert.equal(row.esp32_error, null);
+});

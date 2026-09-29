@@ -1,6 +1,7 @@
 import { mapBoxToDisplay, parseDetectionPayload } from "./overlay.js";
 import { createDetectionOrderTracker } from "./detection-order.js";
 import { sendPrompt } from "./prompt.js";
+import { setMode, setServoAngle, runSweep, sendVerdict } from "./servo.js";
 
 const STORAGE_KEY = "cn360-hud-connections";
 const defaults = window.HUD_CONFIG ?? {};
@@ -22,8 +23,18 @@ const elements = {
   healthUrl: document.querySelector("#health-url"),
   websocketUrl: document.querySelector("#websocket-url"),
   promptUrl: document.querySelector("#prompt-url"),
+  servoUrl: document.querySelector("#servo-url"),
+  modeUrl: document.querySelector("#mode-url"),
   resetSettings: document.querySelector("#reset-settings"),
-  fullscreenButton: document.querySelector("#fullscreen-button")
+  fullscreenButton: document.querySelector("#fullscreen-button"),
+  servoModeAuto: document.querySelector("#servo-mode-auto"),
+  servoModeManual: document.querySelector("#servo-mode-manual"),
+  servoAngle: document.querySelector("#servo-angle"),
+  servoAngleValue: document.querySelector("#servo-angle-value"),
+  servoSweep: document.querySelector("#servo-sweep"),
+  servoPass: document.querySelector("#servo-pass"),
+  servoReject: document.querySelector("#servo-reject"),
+  servoFeedback: document.querySelector("#servo-feedback")
 };
 
 let config = loadConfig();
@@ -57,11 +68,14 @@ function loadConfig() {
     healthUrl: saved.healthUrl ?? defaults.raspberryPiHealthUrl ?? "",
     websocketUrl: saved.websocketUrl ?? defaults.n8nDetectionWebSocketUrl ?? "",
     promptUrl: saved.promptUrl ?? defaults.n8nPromptWebhookUrl ?? "",
+    servoUrl: saved.servoUrl ?? defaults.controlUnitServoUrl ?? "",
+    modeUrl: saved.modeUrl ?? defaults.controlUnitModeUrl ?? "",
     reconnectDelayMs: Number(defaults.reconnectDelayMs) || 2000,
     healthPollIntervalMs: Number(defaults.healthPollIntervalMs) || 2000,
     healthRequestTimeoutMs: Number(defaults.healthRequestTimeoutMs) || 1500,
     detectionTtlMs: Number(defaults.detectionTtlMs) || 3000,
-    promptTimeoutMs: Number(defaults.promptTimeoutMs) || 8000
+    promptTimeoutMs: Number(defaults.promptTimeoutMs) || 8000,
+    servoRequestTimeoutMs: Number(defaults.servoRequestTimeoutMs) || 5000
   };
 }
 
@@ -75,6 +89,8 @@ function populateSettings() {
   elements.healthUrl.value = config.healthUrl;
   elements.websocketUrl.value = config.websocketUrl;
   elements.promptUrl.value = config.promptUrl;
+  elements.servoUrl.value = config.servoUrl;
+  elements.modeUrl.value = config.modeUrl;
 }
 
 function hideStaleVideo() {
@@ -412,7 +428,9 @@ elements.settingsForm.addEventListener("submit", (event) => {
     streamUrl: elements.streamUrl.value.trim(),
     healthUrl: elements.healthUrl.value.trim(),
     websocketUrl: elements.websocketUrl.value.trim(),
-    promptUrl: elements.promptUrl.value.trim()
+    promptUrl: elements.promptUrl.value.trim(),
+    servoUrl: elements.servoUrl.value.trim(),
+    modeUrl: elements.modeUrl.value.trim()
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
   if (config.websocketUrl !== previousWebsocketUrl) detectionOrder.reset();
@@ -426,6 +444,89 @@ elements.resetSettings.addEventListener("click", () => {
   localStorage.removeItem(STORAGE_KEY);
   config = loadConfig();
   populateSettings();
+});
+
+// `accepted: false` from the control unit is a valid, non-error response
+// (wrong mode, or the unit is mid-cycle) — surfaced as feedback rather
+// than treated as a thrown error like a network failure or timeout.
+async function runServoAction(trigger, action, describeSuccess) {
+  const wasDisabled = trigger.disabled;
+  trigger.disabled = true;
+  elements.servoFeedback.className = "feedback";
+  elements.servoFeedback.textContent = "Sending…";
+
+  try {
+    const result = await action();
+    if (result?.accepted === false) {
+      elements.servoFeedback.className = "feedback";
+      elements.servoFeedback.textContent = "Control unit ignored this request (wrong mode, or mid-cycle).";
+    } else {
+      elements.servoFeedback.className = "feedback feedback--ok";
+      elements.servoFeedback.textContent = describeSuccess(result);
+    }
+    return result;
+  } catch (error) {
+    elements.servoFeedback.className = "feedback feedback--error";
+    elements.servoFeedback.textContent = error.name === "AbortError"
+      ? "Control unit request timed out."
+      : `Control unit error: ${error.message}`;
+    return null;
+  } finally {
+    trigger.disabled = wasDisabled;
+  }
+}
+
+async function setServoMode(mode) {
+  const trigger = mode === "auto" ? elements.servoModeAuto : elements.servoModeManual;
+  const result = await runServoAction(
+    trigger,
+    () => setMode({ url: config.modeUrl, mode, timeoutMs: config.servoRequestTimeoutMs }),
+    (res) => `Mode set to ${res.mode ?? mode}.`
+  );
+  if (result?.accepted) {
+    elements.servoModeAuto.setAttribute("aria-pressed", String(mode === "auto"));
+    elements.servoModeManual.setAttribute("aria-pressed", String(mode === "manual"));
+  }
+}
+
+elements.servoModeAuto.addEventListener("click", () => void setServoMode("auto"));
+elements.servoModeManual.addEventListener("click", () => void setServoMode("manual"));
+
+elements.servoAngle.addEventListener("input", () => {
+  elements.servoAngleValue.textContent = elements.servoAngle.value;
+});
+
+elements.servoAngle.addEventListener("change", () => {
+  const angle = Number(elements.servoAngle.value);
+  void runServoAction(
+    elements.servoAngle,
+    () => setServoAngle({ url: config.servoUrl, angle, timeoutMs: config.servoRequestTimeoutMs }),
+    () => `Servo set to ${angle}°.`
+  );
+});
+
+elements.servoSweep.addEventListener("click", () => {
+  void runServoAction(
+    elements.servoSweep,
+    () => runSweep({ url: config.servoUrl, timeoutMs: config.servoRequestTimeoutMs }),
+    () => "Sweep triggered."
+  );
+});
+
+elements.servoPass.addEventListener("click", () => {
+  void runServoAction(
+    elements.servoPass,
+    () => sendVerdict({ servoUrl: config.servoUrl, action: "pass", timeoutMs: config.servoRequestTimeoutMs }),
+    () => "Marked as pass."
+  );
+});
+
+elements.servoReject.addEventListener("click", () => {
+  void runServoAction(
+    elements.servoReject,
+    () => sendVerdict({ servoUrl: config.servoUrl, action: "reject", timeoutMs: config.servoRequestTimeoutMs }),
+    (res) => `Marked as ${res.status ?? "reject"}.`
+  );
 });
 
 elements.fullscreenButton.addEventListener("click", async () => {

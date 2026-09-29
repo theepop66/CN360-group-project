@@ -85,12 +85,48 @@
             <label for="prompt-url">n8n prompt webhook URL</label>
             <input id="prompt-url" name="promptUrl" type="url" inputmode="url" required />
 
+            <label for="servo-url">Control unit servo URL</label>
+            <input id="servo-url" name="servoUrl" type="url" inputmode="url" required />
+
+            <label for="mode-url">Control unit mode URL</label>
+            <input id="mode-url" name="modeUrl" type="url" inputmode="url" required />
+
             <div class="settings-actions">
               <button class="secondary-button" type="button" id="reset-settings">Use defaults</button>
               <button class="primary-button" type="submit">Save &amp; reconnect</button>
             </div>
           </form>
         </details>
+      </section>
+
+      <section class="panel servo-panel" aria-label="Reject actuator control">
+        <div>
+          <p class="eyebrow">REJECT ACTUATOR</p>
+          <h2>360ControlUnit servo</h2>
+        </div>
+
+        <div class="servo-row">
+          <span class="servo-row-label">Mode</span>
+          <div class="mode-switcher" role="group" aria-label="Actuator mode">
+            <button type="button" class="mode-button" id="servo-mode-auto" data-servo-mode="auto" aria-pressed="true">Auto</button>
+            <button type="button" class="mode-button" id="servo-mode-manual" data-servo-mode="manual" aria-pressed="false">Manual</button>
+          </div>
+        </div>
+
+        <div class="servo-row">
+          <label for="servo-angle">Angle (<span id="servo-angle-value">0</span>&deg;)</label>
+          <input id="servo-angle" type="range" min="0" max="180" step="1" value="0" />
+        </div>
+
+        <div class="servo-actions">
+          <button type="button" class="secondary-button" id="servo-sweep">Sweep</button>
+          <button type="button" class="secondary-button" id="servo-pass">Pass now</button>
+          <button type="button" class="primary-button" id="servo-reject">Reject now</button>
+        </div>
+
+        <p id="servo-feedback" class="feedback" role="status" aria-live="polite">
+          Switch to Manual to move the servo directly. Reject/Pass apply while the unit is awaiting a verdict.
+        </p>
       </section>
 
       <footer>

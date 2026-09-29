@@ -47,13 +47,21 @@ Traditional AI-based QC systems require retraining whenever the target defect ch
 ## 🧩 Core Modules
 
 ### n8n Workflow Orchestration
-The core orchestration logic is built across 4 main nodes:
-| Node | Purpose |
+
+The orchestration layer is implemented in [`n8n/`](./n8n) as three importable workflows:
+
+| Workflow | Job |
 | :--- | :--- |
-| **Webhook / Trigger** | Receives raw images (Base64 or multipart form data) from the Raspberry Pi. |
-| **HTTP Request** | Sends the image + dynamic text prompt to the LocateAnything API. |
-| **IF / Switch** | Checks whether a bounding box was returned and if the confidence score exceeds thresholds. |
-| **Action Branching** | Triggers ESP32, logs stats (Supabase), and broadcasts WebSockets to the HUD. |
+| **Inspection Loop** | Trigger (ESP32 item event / manual / scheduled) → pull a frame from the Pi → call the vision model → decide → verdict to the ESP32 → record → broadcast to the HUD |
+| **Prompt Capture** | Turn the operator's Inspection Target into a Model Instruction, commit it to the model server, and record the change |
+| **Health Watchdog** | Report model-server and capture-service outages once per state change |
+
+Two things differ from the original design, deliberately:
+
+- **The model reports `confidence: 0.0` for every detection**, so confidence is not a signal. The pass/reject decision is **Defect Coverage** — the summed area of the returned boxes over the frame area, thresholded. Every box is still shown on the HUD whatever the verdict.
+- **The system fails closed.** A model timeout, unreachable model or unreadable threshold rejects the item rather than passing it.
+
+See [`n8n/README.md`](./n8n/README.md) for import instructions, placeholders and the assumed Supabase schema, and [`CONTEXT.md`](./CONTEXT.md) for the shared vocabulary.
 
 ### Edge & Physical Devices
 * **Raspberry Pi (Video Stream):** Python + OpenCV server streaming MJPEG video. Exposes a `/capture` endpoint for high-res snapshots.

@@ -9,6 +9,7 @@ import {
   VERDICT,
   VERDICT_WINDOW_MS,
   boxArea,
+  buildHealthProbe,
   buildInspectionDecision,
   decideVerdict,
   defectCoverage,
@@ -432,4 +433,46 @@ test("a failed inspection reports no coverage figure", () => {
 test("the model timeout sits inside the ESP32 verdict window", () => {
   assert.ok(MODEL_TIMEOUT_MS < VERDICT_WINDOW_MS, "the verdict POST needs headroom");
   assert.equal(VERDICT_WINDOW_MS, 3000);
+});
+
+// Both watchdog probes read a different response shape but share one rule: a
+// throw is a failure, and only a well-formed answer can be healthy.
+test("a probe reports healthy when its reader and predicate agree", () => {
+  const probe = buildHealthProbe("model-server", () => ({ status: "ok" }), (body) => body.status === "ok");
+
+  assert.deepEqual(probe, {
+    component: "model-server",
+    healthy: true,
+    detail: { status: "ok" },
+    error: null
+  });
+});
+
+test("a probe reports unhealthy without throwing", () => {
+  const probe = buildHealthProbe("model-server", () => ({ status: "loading" }), (body) => body.status === "ok");
+
+  assert.equal(probe.healthy, false);
+  assert.deepEqual(probe.detail, { status: "loading" });
+});
+
+test("a probe whose reader throws is unhealthy and keeps the message", () => {
+  const probe = buildHealthProbe(
+    "capture-service",
+    () => {
+      throw new Error("no headers");
+    },
+    () => true
+  );
+
+  assert.equal(probe.healthy, false);
+  assert.equal(probe.detail, null);
+  assert.equal(probe.error, "no headers");
+});
+
+test("a non-boolean verdict from the predicate is never treated as healthy", () => {
+  for (const verdict of ["yes", 1, {}, null, undefined]) {
+    const probe = buildHealthProbe("model-server", () => ({}), () => verdict);
+
+    assert.equal(probe.healthy, false, String(verdict));
+  }
 });

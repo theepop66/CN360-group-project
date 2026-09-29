@@ -11,7 +11,13 @@ import {
   serializeWorkflows,
   sharedLogicSource
 } from "../lib/workflow-definitions.mjs";
-import { MODEL_TIMEOUT_MS, VERDICT_WINDOW_MS } from "../lib/inspection-logic.mjs";
+import {
+  CAPTURE_TIMEOUT_MS,
+  MODEL_PROMPT_TIMEOUT_MS,
+  MODEL_TIMEOUT_MS,
+  VERDICT_POST_TIMEOUT_MS,
+  VERDICT_WINDOW_MS
+} from "../lib/inspection-logic.mjs";
 import { MODEL_INSTRUCTION_TEMPLATE } from "../lib/inspection-records.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -28,6 +34,25 @@ function nodeNamed(workflow, name) {
   return node;
 }
 
+// Breadth-first reachability order, which is the order data actually flows in.
+function walk(workflow, from) {
+  const seen = [from];
+  const queue = [from];
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    for (const branch of workflow.connections[current]?.main ?? []) {
+      for (const target of branch) {
+        if (seen.includes(target.node)) continue;
+        seen.push(target.node);
+        queue.push(target.node);
+      }
+    }
+  }
+
+  return seen;
+}
+
 function allWorkflowText() {
   return Object.values(workflows)
     .map((workflow) => JSON.stringify(workflow))
@@ -36,6 +61,28 @@ function allWorkflowText() {
 
 function codeOf(workflow, name) {
   return nodeNamed(workflow, name).parameters.jsCode;
+}
+
+// Every Code node is prefixed with the whole inlined library, so assertions
+// about what a node's own glue does have to look past that prefix.
+function glueOf(workflow, name) {
+  const code = codeOf(workflow, name);
+  const shared = sharedLogicSource();
+  assert.ok(code.startsWith(shared), `${name} has stale inlined logic. Run: npm run build`);
+  return code.slice(shared.length);
+}
+
+// A node dominates another if removing the first makes the second unreachable.
+// This is the honest way to assert "X always happens before Y" in a graph with
+// fan-out and merges, where depth order means nothing.
+function dominates(workflow, earlier, later) {
+  const withoutEarlier = {
+    ...workflow,
+    connections: Object.fromEntries(
+      Object.entries(workflow.connections).filter(([from]) => from !== earlier)
+    )
+  };
+  return !walk(withoutEarlier, "begin-inspection").includes(later);
 }
 
 test("the committed workflow files match a fresh build", () => {
@@ -139,20 +186,144 @@ test("the model server is asked for the prompt before every inspection", () => {
   );
 });
 
-test("the verdict is sent before any persistence or broadcast", () => {
-  const order = inspection.nodes.map((node) => node.name);
-  const verdict = order.indexOf("post-verdict");
+test("the verdict reaches the ESP32 before anything is persisted or broadcast", () => {
+  assert.ok(
+    dominates(inspection, "post-verdict", "capture-esp32-response"),
+    "the firmware result must be read after the verdict, not before"
+  );
+
+  // Persistence hangs off a 2-input merge, so it cannot run until the ESP32
+  // verdict branch has arrived. numberInputs is what makes that true; without
+  // it the snapshot branch would carry the run on its own.
+  const join = nodeNamed(inspection, "join-snapshot-and-verdict");
+  assert.equal(join.type, "n8n-nodes-base.merge");
+  assert.equal(join.parameters.numberInputs, 2, "the join must wait for the verdict branch");
+
+  const feeds = (target) =>
+    Object.keys(inspection.connections)
+      .filter((from) =>
+        inspection.connections[from].main.some((branch) =>
+          branch.some((link) => link.node === target)
+        )
+      )
+      .sort();
+  assert.deepEqual(feeds("join-snapshot-and-verdict"), [
+    "capture-esp32-response",
+    "upload-snapshot"
+  ]);
+
   for (const downstream of [
     "insert-inspection",
     "insert-control-action",
-    "upload-snapshot",
     "broadcast-hud",
     "log-outcome"
   ]) {
     assert.ok(
-      verdict < order.indexOf(downstream),
-      `the verdict must precede ${downstream}`
+      dominates(inspection, "join-snapshot-and-verdict", downstream),
+      `${downstream} must hang off the join that waits for the verdict`
     );
+  }
+});
+
+test("the snapshot URL is stored and broadcast, not left null", () => {
+  const build = glueOf(inspection, "build-snapshot-url");
+  assert.ok(build.includes("snapshotObjectName"), "the object name is computed once, upstream");
+  assert.ok(build.includes("frameUrl"), "the public URL must be derived from the upload result");
+  assert.ok(
+    build.includes("stored ?"),
+    "a failed upload must not leave a URL that points at nothing"
+  );
+
+  assert.ok(
+    glueOf(inspection, "build-inspection-record").includes("frameUrl: base.frameUrl"),
+    "the inspection row must carry the real frame_url"
+  );
+
+  const broadcast = nodeNamed(inspection, "broadcast-hud");
+  assert.ok(
+    broadcast.parameters.jsonBody.includes("hudPayload"),
+    "the HUD payload must be built in a Code node, not inside an HTTP expression"
+  );
+});
+
+test("the budget is verified before the model is called", () => {
+  assert.ok(
+    dominates(inspection, "verify-verdict-budget", "detect-defects"),
+    "a budget that cannot fit must be known before the model call it governs"
+  );
+  assert.ok(glueOf(inspection, "verify-verdict-budget").includes("resolveVerdictBudget"));
+});
+
+test("the timeouts on the verdict path are budgeted, not left at defaults", () => {
+  assert.equal(
+    nodeNamed(inspection, "fetch-current-prompt").parameters.options.timeout,
+    MODEL_PROMPT_TIMEOUT_MS
+  );
+  assert.equal(nodeNamed(inspection, "capture-frame").parameters.options.timeout, CAPTURE_TIMEOUT_MS);
+  assert.equal(nodeNamed(inspection, "post-verdict").parameters.options.timeout, VERDICT_POST_TIMEOUT_MS);
+});
+
+test("the capture fans out to the model and the snapshot in one pass", () => {
+  assert.deepEqual(inspection.connections["read-frame-context"].main[0].map((t) => t.node).sort(), [
+    "detect-defects",
+    "upload-snapshot"
+  ]);
+  assert.equal(nodeNamed(inspection, "join-snapshot-and-verdict").type, "n8n-nodes-base.merge");
+});
+
+test("a duplicate frame is dropped rather than flagged and sent on", () => {
+  const guard = glueOf(inspection, "duplicate-guard");
+  assert.ok(guard.includes("shouldSuppressDuplicate"));
+  assert.ok(guard.includes("return []"), "the duplicate must not reach the ESP32");
+  assert.equal(guard.includes("shouldActuate"), false);
+});
+
+test("the control action is anchored to the inserted inspection id", () => {
+  const build = glueOf(inspection, "build-control-action");
+  assert.ok(build.includes("inspectionId"), "the id comes back from PostgREST");
+  assert.equal(
+    build.includes("readEsp32Outcome"),
+    false,
+    "the firmware result is read once, upstream"
+  );
+  assert.ok(
+    glueOf(inspection, "capture-esp32-response").includes("readEsp32Outcome"),
+    "the firmware answers { accepted, status }, not esp32Accepted"
+  );
+});
+
+test("the prompt comparison reaches the audit trail", () => {
+  const log = glueOf(inspection, "build-outcome-log");
+  assert.ok(log.includes("buildSystemLogRow"));
+  for (const field of ["promptVerified", "promptMismatch", "esp32Accepted", "verdictBudget"]) {
+    assert.ok(log.includes(field), `the outcome log must record ${field}`);
+  }
+});
+
+test("the inspection target is not recovered by splitting the instruction", () => {
+  const resolve = glueOf(inspection, "resolve-instruction");
+  assert.ok(resolve.includes("parseInspectionTarget"));
+  assert.equal(
+    resolve.includes("description:"),
+    false,
+    "the canonical template is the only place the grammar is written down"
+  );
+});
+
+test("every Supabase insert sends one named row, not the execution envelope", () => {
+  const expected = {
+    "insert-inspection": "inspectionRow",
+    "insert-control-action": "controlActionRow",
+    "log-outcome": "logRow",
+    "insert-prompt-history": "promptRow"
+  };
+
+  for (const [node, field] of Object.entries(expected)) {
+    const workflow = Object.values(workflows).find((candidate) =>
+      candidate.nodes.some((n) => n.name === node)
+    );
+    const body = nodeNamed(workflow, node).parameters.jsonBody;
+    assert.equal(body, `={{ JSON.stringify($json.${field}) }}`, `${node} must send $json.${field}`);
   }
 });
 
@@ -174,7 +345,12 @@ test("both verdict branches are wired back into the single verdict call", () => 
 });
 
 test("a model failure cannot stop the loop before the verdict", () => {
-  for (const name of ["fetch-current-prompt", "capture-frame", "post-verdict"]) {
+  for (const name of [
+    "fetch-current-prompt",
+    "capture-frame",
+    "detect-defects",
+    "post-verdict"
+  ]) {
     assert.equal(
       nodeNamed(inspection, name).onError,
       "continueRegularOutput",
@@ -183,9 +359,10 @@ test("a model failure cannot stop the loop before the verdict", () => {
   }
 });
 
-test("the snapshot is uploaded before the broadcast references it", () => {
-  const order = inspection.nodes.map((node) => node.name);
-  assert.ok(order.indexOf("upload-snapshot") < order.indexOf("broadcast-hud"));
+test("the model timeout is a placeholder inside the verdict window", () => {
+  const detect = nodeNamed(inspection, "detect-defects");
+  assert.equal(detect.parameters.options.timeout, PLACEHOLDERS.modelTimeoutMs);
+  assert.ok(MODEL_TIMEOUT_MS < VERDICT_WINDOW_MS, "documented default must fit the window");
 });
 
 test("the broadcast targets the relay ingest rather than the HUD websocket", () => {
@@ -202,7 +379,7 @@ test("Supabase is written over PostgREST so the column names stay visible", () =
   const insert = nodeNamed(inspection, "insert-inspection");
   assert.equal(insert.parameters.url, `=https://${PLACEHOLDERS.supabaseHost}/rest/v1/inspection_results`);
   assert.equal(insert.parameters.sendBody, true);
-  assert.equal(insert.parameters.jsonBody, "={{ JSON.stringify($json) }}");
+  assert.ok(insert.parameters.jsonBody.includes("$json."), "an insert must name the row it sends");
 
   const writtenTables = Object.values(workflows)
     .flatMap((workflow) => workflow.nodes)

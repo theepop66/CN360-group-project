@@ -124,12 +124,12 @@ Three design decisions carry the weight:
 
 ### Fail-safe behaviour
 
-- The model call has a **2000 ms timeout**, deliberately inside the ESP32's 3000 ms Verdict Window, leaving headroom for the verdict POST itself.
-- **The system fails closed.** A model timeout, connection refusal, non-2xx response, malformed JSON, absent status field, or invalid box geometry all produce `reject` — never a silent `pass`.
+- The pre-verdict path is **budgeted as a whole**, not just the model call: prompt fetch 300 ms, frame capture 900 ms, model call 1500 ms, verdict POST 250 ms — 2950 ms inside the ESP32's 3000 ms Verdict Window. A `verify-verdict-budget` step refuses a configured model timeout that cannot leave that headroom, forcing `reject` with reason `invalid_verdict_budget` rather than trusting the configuration.
+- **The system fails closed.** A model timeout, connection refusal, non-2xx response, malformed JSON, absent status field, or invalid box geometry all produce `reject` — never a silent `pass`. Failures are classified into named reasons by `classifyModelOutcome` and recorded on the outcome log row.
 - If the **frame capture itself** fails, the workflow still sends `reject`. A dead Pi must not become a pass-through.
 - The Verdict Window's 3000 ms auto-pass fallback in firmware is treated as a **bug that this workflow exists to prevent firing**. That is the justification for the fail-safe branch, and it should be read as such.
-- Side effects are ordered **verdict → persistence → snapshot → broadcast**. The hardware decision is made first; the slow, non-critical work happens afterwards so persistence latency can never cost the Verdict Window.
-- The model server currently reloads a 5.83 GB model per request on CPU and cannot meet 2000 ms. The fail-safe branch is therefore the *expected* path today. The workflow is correct for a fast server; the latency itself is tracked separately and is called out in Further Notes so nobody mistakes it for a workflow bug.
+- Side effects are ordered **verdict → persistence → snapshot URL → broadcast → outcome log**. The hardware decision is made first; the slow, non-critical work happens afterwards so persistence latency can never cost the Verdict Window. The snapshot *upload* runs concurrently with the model call (n8n HTTP nodes do not pass binary along, so the capture fans out to both paths and a two-input merge re-joins them), but the URL is only stored and broadcast after the verdict.
+- The model server currently reloads a 5.83 GB model per request on CPU and cannot meet 1500 ms. The fail-safe branch is therefore the *expected* path today. The workflow is correct for a fast server; the latency itself is tracked separately and is called out in Further Notes so nobody mistakes it for a workflow bug.
 
 ### Persistence
 
@@ -169,7 +169,8 @@ Three design decisions carry the weight:
 ### Operational Reality check
 
 - Before a production run, n8n verifies it can actually reach the model server: a plain `0.0.0.0` is a **bind address, not a connectable target**. Using it in a workflow produces a connection error that looks like a dead server. The setup document states this explicitly and requires a real LAN IP, `127.0.0.1`, or `host.docker.internal` depending on deployment.
-- Credentials live in n8n's credential store, referenced by name from the workflow. **No token is committed to the repository.**
+- **No token is committed to the repository.** This is enforced by a test that scans the workflow JSON for JWTs, `sk-` keys, and 40-character secrets after the Supabase table names.
+- **Deviation, recorded deliberately:** the Supabase service-role key ships as the `REPLACE_SUPABASE_SERVICE_ROLE_KEY` header placeholder rather than an n8n credential-store reference. The HTTP Request node needs two headers (`apikey` and `Authorization: Bearer`) and a single header credential would half-configure it, so the placeholder is the honest option until the Supabase nodes are reworked onto credentials as a set. The setup guide says so rather than implying the credential store is in use.
 
 ## Testing Decisions
 
@@ -255,7 +256,7 @@ Rationale for one seam, not several: the project already has strong, consistent 
 
 **Supersedes a core assumption in the existing n8n issue.** The open issue for n8n orchestration calls for "confidence-threshold logic" and assumes a hosted NVIDIA LocateAnything API. Both are wrong for the system as built: confidence is a hardcoded `0.0`, and the model is local and CPU-only. Implementing that issue as written would produce a workflow that always passes every item while looking like it was filtering. This spec should replace that requirement, and Defect Coverage is the substitute.
 
-**The fail-safe branch will be the common path until the model is fixed.** The vision server reloads a 5.83 GB model per request and cannot currently meet the 2000 ms timeout. Expect near-total rejection on a production line — which is safe, and is exactly what fail-closed means, but it is a line-stopping condition and should be treated as one. Worth stating plainly: the workflow being correct does not make the system usable until model latency is addressed.
+**The fail-safe branch will be the common path until the model is fixed.** The vision server reloads a 5.83 GB model per request and cannot currently meet the 1500 ms model timeout. Expect near-total rejection on a production line — which is safe, and is exactly what fail-closed means, but it is a line-stopping condition and should be treated as one. Worth stating plainly: the workflow being correct does not make the system usable until model latency is addressed.
 
 **Frame identity is load-bearing for the HUD.** The Pi's README states it directly: copy the capture headers into the HUD payload "so ordering still works after the Pi process restarts and its sequence resets." Dropping session or sequence silently reintroduces stale-frame flicker, and no test would catch it except the round-trip payload test above.
 
@@ -265,10 +266,11 @@ Rationale for one seam, not several: the project already has strong, consistent 
 
 ## Implementation Notes (from the spec synthesis)
 
-_Published alongside the spec for the implementer; the state of the world at spec time._
+_Published alongside the spec for the implementer. The state of the world at spec time, updated as implementation moved._
 
-- **Tracker setup is incomplete.** `/setup-matt-pocock-skills` was never run for this repository: there is no `.github/` directory, no agent config, no label vocabulary, and no `CONTEXT.md`. The `ready-for-agent` label referenced by this spec's publishing step does not exist. GitHub Issues is the de facto tracker — the `gh` CLI is authenticated, issues are enabled, and nine open issues already follow a consistent `[PRIORITY] Title` convention. Recommend running the setup skill before the next spec is published.
-- **The publishing account has read-only access.** The authenticated account has `pull` but not `push` or `admin` on this repository, so the `ready-for-agent` label could not be created and the spec could not be opened as an issue by the agent. The spec is committed to the repository instead; opening the issue requires an account with write access.
+- **The spec was published as [#17](https://github.com/theepop66/CN360-group-project/issues/17).** The comment explaining the publication carries the two decisions that were made for the team: no ESP32 change, and 2000 ms reduced to 1500 ms.
+- **Tracker setup is incomplete.** `/setup-matt-pocock-skills` has not been run for this repository: there is no `.github/` directory, no agent config and no label vocabulary. `CONTEXT.md` now exists (written as part of this work). The `ready-for-agent` label does not exist and could not be created. GitHub Issues is the de facto tracker — the `gh` CLI is authenticated, issues are enabled, and the open issues follow a consistent `[PRIORITY] Title` convention. Recommend running the setup skill before the next spec is published.
+- **The publishing account has read-only access.** It has `pull` but not `push` or `admin`, so it could open an issue but could not create or apply the `ready-for-agent` label, and it could not push a branch. The label work requires an account with write access.
 - **The n8n target hostname needs correcting in two member-owned files** (ESP32 firmware secrets, HUD config) before any workflow will reach the HUD.
 - **Vision model endpoint is `0.0.0.0:8000`** — a bind address. A workflow pointed at it will fail to connect in a way that looks like a server outage.
 - **The model server exposes** `POST /predict` (multipart image, optional prompt), `GET /set_prompt`, `GET /get_prompt`, and `GET /health`. Response detections are `{"label", "box": [x1,y1,x2,y2], "confidence"}` in pixel coordinates of the uploaded image.

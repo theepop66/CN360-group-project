@@ -20,6 +20,44 @@ export function buildModelInstruction(target) {
   return MODEL_INSTRUCTION_TEMPLATE.replace("{target}", normalized);
 }
 
+// Recovering the target from the instruction is the inverse of the builder, so
+// it is derived from the same template rather than split on a hand-written
+// delimiter. An instruction that is not the canonical shape yields null: a
+// guess would write the operator's own words into the Inspection Result wrong.
+const [TEMPLATE_PREFIX, TEMPLATE_SUFFIX] = MODEL_INSTRUCTION_TEMPLATE.split("{target}");
+
+export function parseInspectionTarget(instruction) {
+  if (typeof instruction !== "string") return null;
+  const candidate = instruction.trim();
+  if (candidate.length <= TEMPLATE_PREFIX.length + TEMPLATE_SUFFIX.length) return null;
+  if (!candidate.startsWith(TEMPLATE_PREFIX)) return null;
+  if (!candidate.endsWith(TEMPLATE_SUFFIX)) return null;
+
+  const target = candidate
+    .slice(TEMPLATE_PREFIX.length, candidate.length - TEMPLATE_SUFFIX.length)
+    .trim();
+  return target ? target : null;
+}
+
+// The firmware answers { accepted, status }. Anything else means the board never
+// spoke, and recording that as acceptance would hide an unreachable controller.
+export function readEsp32Outcome(json) {
+  const error = json?.error;
+  if (error !== undefined && error !== null) {
+    const message = typeof error === "string" ? error : error?.message;
+    return {
+      esp32Accepted: null,
+      esp32Status: null,
+      esp32Error: message === undefined || message === null ? String(error) : String(message)
+    };
+  }
+
+  const accepted = typeof json?.accepted === "boolean" ? json.accepted : null;
+  const status = typeof json?.status === "string" && json.status.trim() ? json.status : null;
+
+  return { esp32Accepted: accepted, esp32Status: status, esp32Error: null };
+}
+
 function orNull(value) {
   return value === undefined ? null : value;
 }

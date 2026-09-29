@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { Script } from "node:vm";
 
 import {
   PLACEHOLDERS,
@@ -15,8 +16,12 @@ import {
   CAPTURE_TIMEOUT_MS,
   MODEL_PROMPT_TIMEOUT_MS,
   MODEL_TIMEOUT_MS,
+  SNAPSHOT_UPLOAD_TIMEOUT_MS,
   VERDICT_POST_TIMEOUT_MS,
-  VERDICT_WINDOW_MS
+  VERDICT_WINDOW_MS,
+  buildInspectionDecision,
+  classifyModelOutcome,
+  resolveVerdictBudget
 } from "../lib/inspection-logic.mjs";
 import { MODEL_INSTRUCTION_TEMPLATE } from "../lib/inspection-records.mjs";
 
@@ -63,15 +68,6 @@ function codeOf(workflow, name) {
   return nodeNamed(workflow, name).parameters.jsCode;
 }
 
-// Every Code node is prefixed with the whole inlined library, so assertions
-// about what a node's own glue does have to look past that prefix.
-function glueOf(workflow, name) {
-  const code = codeOf(workflow, name);
-  const shared = sharedLogicSource();
-  assert.ok(code.startsWith(shared), `${name} has stale inlined logic. Run: npm run build`);
-  return code.slice(shared.length);
-}
-
 // A node dominates another if removing the first makes the second unreachable.
 // This is the honest way to assert "X always happens before Y" in a graph with
 // fan-out and merges, where depth order means nothing.
@@ -84,6 +80,90 @@ function dominates(workflow, earlier, later) {
   };
   return !walk(withoutEarlier, "begin-inspection").includes(later);
 }
+
+// Runs a Code node's real jsCode against stubbed n8n globals. Asserting on what
+// a node *returns* is the only way a test about workflow glue can fail — a test
+// that greps its own source for a word cannot.
+function runCode(
+  workflow,
+  name,
+  { items = [{}], nodes = {}, executed, vars, binary, store = {} } = {}
+) {
+  const $input = items;
+  $input.all = () => items;
+  $input.first = () => items[0] ?? {};
+
+  const known = new Set(workflow.nodes.map((node) => node.name));
+
+  // `executed` names the nodes a real run would have completed. A node that did
+  // not run is still referenceable and reports isExecuted: false, which is how
+  // the pass/reject branch gets chosen. A name that is not a node at all is a
+  // genuine wiring bug, so that still throws.
+  const ran = (nodeName) => (executed === undefined ? true : executed.includes(nodeName));
+  const $ = (nodeName) => {
+    if (!known.has(nodeName)) throw new Error(`no node named ${nodeName} in ${workflow.name}`);
+    const stub = nodes[nodeName];
+    const isExecuted = nodeName in nodes ? ran(nodeName) : false;
+    return { isExecuted, first: () => ({ json: stub ?? {} }) };
+  };
+
+  // eslint-disable-next-line no-new-func
+  const factory = new Function(
+    "$",
+    "$input",
+    "$json",
+    "$binary",
+    "$getWorkflowStaticData",
+    "$vars",
+    codeOf(workflow, name)
+  );
+
+  // In n8n $json is the current item's json and $binary its binary sidecar.
+  return factory($, $input, items[0]?.json ?? {}, binary ?? {}, () => store, vars);
+}
+
+const FRAME = {
+  "x-camera-session": "s1",
+  "x-frame-sequence": "7",
+  "x-captured-at": "2026-01-01T00:00:00.000Z",
+  "x-frame-width": "640",
+  "x-frame-height": "480"
+};
+
+const FRAME_CONTEXT = {
+  sessionId: "s1",
+  sequence: 7,
+  capturedAt: "2026-01-01T00:00:00.000Z",
+  width: 640,
+  height: 480
+};
+
+const DECISION_PASS = {
+  verdict: "pass",
+  reason: "no_defect_detected",
+  coverage: 0,
+  coverageThreshold: 0.005,
+  boxCount: 0,
+  promptVerified: true,
+  promptUsed: "Look for mould.",
+  promptMismatch: false
+};
+
+// n8n wraps a Code node's jsCode in one function body, so glue that redeclares
+// an inlined name — `const rejected = ...` beside `function rejected()` — is a
+// SyntaxError that only shows up when the node runs. Compiling each node here is
+// the only thing that catches it before import.
+test("every Code node compiles as a single function body", () => {
+  for (const workflow of Object.values(workflows)) {
+    for (const node of workflow.nodes) {
+      if (node.type !== "n8n-nodes-base.code") continue;
+      assert.doesNotThrow(
+        () => new Script(`(function () {${node.parameters.jsCode}\n})`),
+        `${workflow.name} / ${node.name} does not compile. A glue name may be shadowing an inlined one.`
+      );
+    }
+  }
+});
 
 test("the committed workflow files match a fresh build", () => {
   const expected = serializeWorkflows(workflows);
@@ -168,10 +248,20 @@ test("the model is asked over multipart with the image and the instruction", () 
   assert.equal(prompt.value, "={{ $('resolve-instruction').first().json.instruction }}");
 });
 
-test("the model timeout is a placeholder inside the verdict window", () => {
+test("the model timeout is the budget-clamped value, not the raw placeholder", () => {
   const detect = nodeNamed(inspection, "detect-defects");
-  assert.equal(detect.parameters.options.timeout, PLACEHOLDERS.modelTimeoutMs);
-  assert.ok(MODEL_TIMEOUT_MS < VERDICT_WINDOW_MS, "documented default must fit the window");
+
+  assert.match(
+    detect.parameters.options.timeout,
+    /verify-verdict-budget.*appliedModelTimeoutMs/,
+    "an over-budget configured timeout must be clamped at the wire, or the auto-pass fires first"
+  );
+
+  // And the budget node itself must be the place that computes it.
+  const budgeted = runCode(inspection, "verify-verdict-budget");
+  assert.equal(budgeted[0].json.budget.readable, false, "the placeholder is not a number");
+  assert.equal(budgeted[0].json.budget.appliedModelTimeoutMs, MODEL_TIMEOUT_MS);
+  assert.ok(budgeted[0].json.budget.fits, "the documented default fits the window");
 });
 
 test("the model server is asked for the prompt before every inspection", () => {
@@ -179,39 +269,13 @@ test("the model server is asked for the prompt before every inspection", () => {
     nodeNamed(inspection, "fetch-current-prompt").parameters.url,
     `=https://${PLACEHOLDERS.modelHost}/get_prompt`
   );
-  const order = inspection.nodes.map((node) => node.name);
   assert.ok(
-    order.indexOf("resolve-instruction") < order.indexOf("detect-defects"),
-    "the instruction is resolved before the model is called"
+    dominates(inspection, "resolve-instruction", "detect-defects"),
+    "every path to the model call must have resolved an instruction first"
   );
 });
 
 test("the verdict reaches the ESP32 before anything is persisted or broadcast", () => {
-  assert.ok(
-    dominates(inspection, "post-verdict", "capture-esp32-response"),
-    "the firmware result must be read after the verdict, not before"
-  );
-
-  // Persistence hangs off a 2-input merge, so it cannot run until the ESP32
-  // verdict branch has arrived. numberInputs is what makes that true; without
-  // it the snapshot branch would carry the run on its own.
-  const join = nodeNamed(inspection, "join-snapshot-and-verdict");
-  assert.equal(join.type, "n8n-nodes-base.merge");
-  assert.equal(join.parameters.numberInputs, 2, "the join must wait for the verdict branch");
-
-  const feeds = (target) =>
-    Object.keys(inspection.connections)
-      .filter((from) =>
-        inspection.connections[from].main.some((branch) =>
-          branch.some((link) => link.node === target)
-        )
-      )
-      .sort();
-  assert.deepEqual(feeds("join-snapshot-and-verdict"), [
-    "capture-esp32-response",
-    "upload-snapshot"
-  ]);
-
   for (const downstream of [
     "insert-inspection",
     "insert-control-action",
@@ -219,39 +283,92 @@ test("the verdict reaches the ESP32 before anything is persisted or broadcast", 
     "log-outcome"
   ]) {
     assert.ok(
-      dominates(inspection, "join-snapshot-and-verdict", downstream),
-      `${downstream} must hang off the join that waits for the verdict`
+      dominates(inspection, "post-verdict", downstream),
+      `every path to ${downstream} must pass through the ESP32 verdict`
     );
   }
 });
 
-test("the snapshot URL is stored and broadcast, not left null", () => {
-  const build = glueOf(inspection, "build-snapshot-url");
-  assert.ok(build.includes("snapshotObjectName"), "the object name is computed once, upstream");
-  assert.ok(build.includes("frameUrl"), "the public URL must be derived from the upload result");
-  assert.ok(
-    build.includes("stored ?"),
-    "a failed upload must not leave a URL that points at nothing"
-  );
-
-  assert.ok(
-    glueOf(inspection, "build-inspection-record").includes("frameUrl: base.frameUrl"),
-    "the inspection row must carry the real frame_url"
-  );
-
+test("the HUD is sent a payload a Code node built", () => {
   const broadcast = nodeNamed(inspection, "broadcast-hud");
   assert.ok(
     broadcast.parameters.jsonBody.includes("hudPayload"),
-    "the HUD payload must be built in a Code node, not inside an HTTP expression"
+    "the payload must be built in a Code node, not inside an HTTP expression"
+  );
+
+  const built = runCode(inspection, "build-hud-broadcast", {
+    nodes: {
+      "build-control-action": {
+        action: "pass",
+        frameContext: FRAME_CONTEXT,
+        frameUrl: `https://${PLACEHOLDERS.supabaseHost}/x/s1-7.jpg`,
+        decision: DECISION_PASS
+      }
+    }
+  });
+  const payload = built[0].json.hudPayload;
+
+  assert.equal(payload.frame.id, "s1:7", "the HUD orders frames by this id");
+  assert.equal(payload.frame.sessionId, "s1", "frame identity is load-bearing for ordering");
+  assert.equal(payload.frame.sequence, 7);
+  assert.equal(payload.status, "pass");
+  assert.equal(payload.snapshotUrl, `https://${PLACEHOLDERS.supabaseHost}/x/s1-7.jpg`);
+  assert.deepEqual(payload.detections, [], "a pass with no detections sends nothing to draw");
+  assert.equal(
+    JSON.stringify(payload).includes("confidence"),
+    false,
+    "the model hardcodes confidence 0.0; it must never reach the HUD"
   );
 });
 
-test("the budget is verified before the model is called", () => {
+test("boxes are drawn on the HUD whatever the verdict", () => {
+  const built = runCode(inspection, "build-hud-broadcast", {
+    nodes: {
+      "build-control-action": {
+        action: "reject",
+        frameContext: FRAME_CONTEXT,
+        frameUrl: null,
+        decision: {
+          ...DECISION_PASS,
+          verdict: "reject",
+          reason: "defect_detected",
+          detections: [{ label: "mould", box: [10, 20, 30, 40] }]
+        }
+      }
+    }
+  });
+
+  assert.deepEqual(built[0].json.hudPayload.detections, [
+    { label: "mould", box: [10, 20, 30, 40], status: "reject" }
+  ]);
+});
+
+test("the verdict path is budgeted against the ESP32 verdict window", () => {
+  const [{ json: { budget } }] = runCode(inspection, "verify-verdict-budget");
+
+  assert.equal(budget.fits, true, "the shipped timeouts must leave headroom in the window");
+  assert.ok(
+    budget.totalMs < VERDICT_WINDOW_MS,
+    `${budget.totalMs}ms of work inside a ${VERDICT_WINDOW_MS}ms window`
+  );
+});
+
+test("a budget that cannot fit is rejected, and known before the model call", () => {
   assert.ok(
     dominates(inspection, "verify-verdict-budget", "detect-defects"),
     "a budget that cannot fit must be known before the model call it governs"
   );
-  assert.ok(glueOf(inspection, "verify-verdict-budget").includes("resolveVerdictBudget"));
+
+  const decision = buildInspectionDecision({
+    outcome: classifyModelOutcome({ status: "success", detections: [] }),
+    frameContext: FRAME_CONTEXT,
+    instruction: "Look for mould.",
+    threshold: 0.005,
+    budget: { fits: false, totalMs: 4200, modelTimeoutMs: 3600 }
+  });
+
+  assert.equal(decision.verdict, "reject");
+  assert.equal(decision.reason, "invalid_verdict_budget");
 });
 
 test("the timeouts on the verdict path are budgeted, not left at defaults", () => {
@@ -259,54 +376,403 @@ test("the timeouts on the verdict path are budgeted, not left at defaults", () =
     nodeNamed(inspection, "fetch-current-prompt").parameters.options.timeout,
     MODEL_PROMPT_TIMEOUT_MS
   );
-  assert.equal(nodeNamed(inspection, "capture-frame").parameters.options.timeout, CAPTURE_TIMEOUT_MS);
-  assert.equal(nodeNamed(inspection, "post-verdict").parameters.options.timeout, VERDICT_POST_TIMEOUT_MS);
-});
-
-test("the capture fans out to the model and the snapshot in one pass", () => {
-  assert.deepEqual(inspection.connections["read-frame-context"].main[0].map((t) => t.node).sort(), [
-    "detect-defects",
-    "upload-snapshot"
-  ]);
-  assert.equal(nodeNamed(inspection, "join-snapshot-and-verdict").type, "n8n-nodes-base.merge");
-});
-
-test("a duplicate frame is dropped rather than flagged and sent on", () => {
-  const guard = glueOf(inspection, "duplicate-guard");
-  assert.ok(guard.includes("shouldSuppressDuplicate"));
-  assert.ok(guard.includes("return []"), "the duplicate must not reach the ESP32");
-  assert.equal(guard.includes("shouldActuate"), false);
-});
-
-test("the control action is anchored to the inserted inspection id", () => {
-  const build = glueOf(inspection, "build-control-action");
-  assert.ok(build.includes("inspectionId"), "the id comes back from PostgREST");
   assert.equal(
-    build.includes("readEsp32Outcome"),
-    false,
-    "the firmware result is read once, upstream"
+    nodeNamed(inspection, "capture-frame").parameters.options.timeout,
+    CAPTURE_TIMEOUT_MS
+  );
+  assert.equal(
+    nodeNamed(inspection, "upload-snapshot").parameters.options.timeout,
+    SNAPSHOT_UPLOAD_TIMEOUT_MS
+  );
+  assert.equal(
+    nodeNamed(inspection, "post-verdict").parameters.options.timeout,
+    VERDICT_POST_TIMEOUT_MS
+  );
+});
+
+test("the capture is serialised, not fanned out behind a merge", () => {
+  // A parallel snapshot upload would need a merge to re-join the branches.
+  // Serialising costs budget but cannot block on an input that never arrives.
+  assert.ok(
+    dominates(inspection, "upload-snapshot", "detect-defects"),
+    "every path to the model call must have stored the snapshot first"
+  );
+  assert.equal(
+    inspection.nodes.filter((node) => node.type === "n8n-nodes-base.merge").length,
+    0,
+    "no merge means no node that can block on an input that never arrives"
+  );
+  assert.equal(
+    inspection.connections["read-frame-context"].main[0].length,
+    1,
+    "the capture feeds one consumer, not two"
+  );
+});
+
+test("a failed capture is decided at the wire, as a capture failure", () => {
+  // The HTTP node surfaces its own error; the glue must name it as the capture
+  // failing, not smuggle it in as a model problem.
+  const decided = runCode(inspection, "decide-inspection", {
+    items: [{ json: { error: { message: "anything" } } }],
+    nodes: {
+      "read-frame-context": { frameContext: {} },
+      "resolve-instruction": { instruction: "Look for mould.", inspectionTarget: "mould", modelPromptMissing: false },
+      "verify-verdict-budget": { budget: { fits: true, totalMs: 2800 } },
+      "capture-frame": { error: { message: "connect ETIMEDOUT" } }
+    },
+    vars: { COVERAGE_THRESHOLD: 0.005 }
+  });
+
+  assert.equal(decided[0].json.decision.verdict, "reject");
+  assert.equal(decided[0].json.decision.reason, "frame_capture_failed");
+});
+
+test("a duplicate frame is still told to the ESP32, but only recorded once", () => {
+  const carried = { json: { frameContext: FRAME_CONTEXT, decision: DECISION_PASS } };
+  const store = {};
+
+  const first = runCode(inspection, "duplicate-guard", { items: [carried], store });
+  assert.equal(first[0].json.duplicate, false, "the first frame for this sequence is not a duplicate");
+
+  const second = runCode(inspection, "duplicate-guard", { items: [carried], store });
+  assert.equal(
+    second[0].json.duplicate,
+    true,
+    "a repeat of the same frame is recognised"
+  );
+
+  // The critical part: the duplicate still has to reach the firmware. Dropping
+  // it here would let the ESP32's 3000 ms auto-pass fallback pass a real item.
+  assert.equal(second.length, 1, "the duplicate is never dropped, only flagged");
+  assert.ok(
+    dominates(inspection, "duplicate-guard", "post-verdict"),
+    "the ESP32 verdict must be sent for duplicates too"
   );
   assert.ok(
-    glueOf(inspection, "capture-esp32-response").includes("readEsp32Outcome"),
-    "the firmware answers { accepted, status }, not esp32Accepted"
+    dominates(inspection, "post-verdict", "duplicate-or-new"),
+    "the board must be told before the record is suppressed"
+  );
+  // Nothing downstream of the duplicate branch may write or broadcast. This is
+  // a reachability question from that branch, not a dominance one: the branch
+  // is one of two outputs, so it cannot dominate anything downstream.
+  const writes = [
+    "build-snapshot-url",
+    "insert-inspection",
+    "insert-control-action",
+    "broadcast-hud",
+    "log-outcome"
+  ];
+  const reached = walk(inspection, "build-duplicate-log");
+  for (const write of writes) {
+    assert.ok(!reached.includes(write), `the duplicate branch must not reach ${write}`);
+  }
+  assert.ok(reached.includes("log-duplicate"), "but it must still record that it suppressed one");
+});
+
+test("a duplicate is logged rather than vanishing", () => {
+  const logged = runCode(inspection, "build-duplicate-log", {
+    items: [
+      {
+        json: {
+          action: "reject",
+          frameContext: FRAME_CONTEXT,
+          decision: DECISION_PASS,
+          duplicateSuppressedAt: "2026-01-01T00:00:00.000Z",
+          esp32: { esp32Accepted: false, esp32Status: "ignored", esp32Error: null }
+        }
+      }
+    ]
+  });
+
+  const { logRow } = logged[0].json;
+  assert.equal(logRow.message, "duplicate frame suppressed");
+  assert.equal(logRow.details.frameSequence, 7);
+  assert.equal(
+    logRow.details.esp32Status,
+    "ignored",
+    "the firmware's refusal of the repeat is the evidence the board did not move twice"
   );
 });
 
-test("the prompt comparison reaches the audit trail", () => {
-  const log = glueOf(inspection, "build-outcome-log");
-  assert.ok(log.includes("buildSystemLogRow"));
-  for (const field of ["promptVerified", "promptMismatch", "esp32Accepted", "verdictBudget"]) {
-    assert.ok(log.includes(field), `the outcome log must record ${field}`);
+test("the firmware answer is read once, upstream of the record", () => {
+  const captured = runCode(inspection, "capture-esp32-response", {
+    items: [{ json: { action: "pass", frameContext: FRAME_CONTEXT } }],
+    nodes: { "post-verdict": { accepted: false, status: "ignored" } }
+  });
+
+  assert.deepEqual(captured[0].json.esp32, {
+    esp32Accepted: false,
+    esp32Status: "ignored",
+    esp32HttpStatus: null,
+    esp32Error: null
+  });
+});
+
+test("the wire result the firmware sent is recorded, envelope and all", () => {
+  const captured = runCode(inspection, "capture-esp32-response", {
+    items: [{ json: { action: "reject", frameContext: FRAME_CONTEXT } }],
+    nodes: { "post-verdict": { body: { accepted: true, status: "applied" }, statusCode: 200 } }
+  });
+
+  assert.equal(captured[0].json.esp32.esp32Accepted, true);
+  assert.equal(
+    captured[0].json.esp32.esp32HttpStatus,
+    200,
+    "the Control Action records the HTTP status, not just the firmware payload"
+  );
+});
+
+test("only an explicit pass becomes a pass", () => {
+  for (const [verdict, action] of [
+    ["pass", "pass"],
+    ["reject", "reject"],
+    ["PASS", "reject"],
+    ["anything else", "reject"]
+  ]) {
+    const items = runCode(inspection, "to-control-action", {
+      items: [{ json: { decision: { verdict, reason: "x" } } }]
+    });
+    assert.equal(items[0].json.action, action, `verdict ${verdict} must not become ${action}`);
   }
 });
 
-test("the inspection target is not recovered by splitting the instruction", () => {
-  const resolve = glueOf(inspection, "resolve-instruction");
-  assert.ok(resolve.includes("parseInspectionTarget"));
+test("the capture headers become the frame context, and the bytes ride along", () => {
+  const items = runCode(inspection, "read-frame-context", {
+    items: [{ json: { headers: FRAME } }],
+    binary: { data: { data: "JPEGBYTES" } }
+  });
+
+  assert.deepEqual(items[0].json.frameContext, FRAME_CONTEXT);
   assert.equal(
-    resolve.includes("description:"),
-    false,
-    "the canonical template is the only place the grammar is written down"
+    items[0].json.snapshotObjectName,
+    "s1-7.jpg",
+    "the object name is derived once, upstream, so upload and record agree"
+  );
+  assert.equal(
+    items[0].binary.image.data,
+    "JPEGBYTES",
+    "both HTTP nodes need the image, so the binary must survive this node"
+  );
+});
+
+test("a prompt mismatch on a passing item is still a warning", () => {
+  // Spec: drift is "surfaced as a warning rather than silently accepted" — the
+  // Verdict can be a pass and the drift is still the thing an operator must see.
+  const items = runCode(inspection, "build-outcome-log", {
+    nodes: {
+      "build-control-action": {
+        decidedAt: "2026-01-01T00:00:00.000Z",
+        source: "schedule",
+        frameContext: FRAME_CONTEXT,
+        frameUrl: null,
+        budget: { fits: true, totalMs: 2800 },
+        esp32: { esp32Accepted: true, esp32Status: "applied", esp32Error: null },
+        decision: {
+          verdict: "pass",
+          reason: "no_defect_detected",
+          coverage: 0,
+          coverageThreshold: 0.005,
+          boxCount: 0,
+          promptVerified: false,
+          promptUsed: "some other instruction",
+          promptMismatch: true
+        }
+      }
+    }
+  });
+
+  assert.equal(items[0].json.logRow.severity, "warn");
+});
+
+test("a failed snapshot upload yields no frame URL", () => {
+  const nodes = {
+    "capture-esp32-response": {
+      action: "pass",
+      frameContext: FRAME_CONTEXT,
+      decision: DECISION_PASS
+    },
+    "read-frame-context": { snapshotObjectName: "s1-7.jpg" },
+    "upload-snapshot": { Key: "s1-7.jpg" }
+  };
+
+  const uploaded = runCode(inspection, "build-snapshot-url", { nodes });
+  assert.equal(uploaded[0].json.snapshotStored, true);
+  assert.equal(
+    uploaded[0].json.frameUrl,
+    `https://${PLACEHOLDERS.supabaseHost}/storage/v1/object/public/${PLACEHOLDERS.snapshotBucket}/s1-7.jpg`
+  );
+
+  const failed = runCode(inspection, "build-snapshot-url", {
+    nodes: { ...nodes, "upload-snapshot": { error: { message: "storage is down" } } }
+  });
+  assert.equal(failed[0].json.snapshotStored, false);
+  assert.equal(
+    failed[0].json.frameUrl,
+    null,
+    "a URL pointing at an object nobody stored is worse than no URL"
+  );
+
+  // And the inspection row must carry that null, not invent a URL.
+  const record = runCode(inspection, "build-inspection-record", {
+    nodes: { "build-snapshot-url": failed[0].json }
+  });
+  assert.equal(record[0].json.inspectionRow.frame_url, null);
+});
+
+test("an unreadable model prompt fails the item closed, by name", () => {
+  const begun = runCode(inspection, "begin-inspection", { items: [{ json: {} }] });
+  assert.equal(begun[0].json.inspectionTarget, null);
+
+  const resolved = runCode(inspection, "resolve-instruction", {
+    nodes: {
+      "fetch-current-prompt": { error: { message: "connect ECONNREFUSED" } },
+      "begin-inspection": begun[0].json
+    }
+  });
+  assert.equal(resolved[0].json.modelPromptMissing, true);
+  assert.equal(resolved[0].json.instruction, null);
+
+  const decided = runCode(inspection, "decide-inspection", {
+    items: [{ json: { status: "success", detections: [] } }],
+    nodes: {
+      "read-frame-context": { frameContext: FRAME_CONTEXT },
+      "resolve-instruction": resolved[0].json,
+      "verify-verdict-budget": { budget: resolveVerdictBudget(undefined) }
+    },
+    vars: { COVERAGE_THRESHOLD: 0.005 }
+  });
+
+  assert.equal(decided[0].json.decision.verdict, "reject");
+  assert.equal(
+    decided[0].json.decision.reason,
+    "model_instruction_missing",
+    "an item nobody can name an instruction for is not a pass"
+  );
+});
+
+test("a target on the webhook becomes a canonical instruction, built not recovered", () => {
+  const begun = runCode(inspection, "begin-inspection", {
+    items: [{ json: { inspectionTarget: "  mould  " } }]
+  });
+  assert.equal(begun[0].json.inspectionTarget, "  mould  ");
+
+  const resolved = runCode(inspection, "resolve-instruction", {
+    nodes: { "fetch-current-prompt": { current_prompt: "  " }, "begin-inspection": begun[0].json }
+  });
+
+  assert.equal(
+    resolved[0].json.instruction,
+    "Locate all the instances that matches the following description: mould."
+  );
+  assert.equal(
+    resolved[0].json.inspectionTarget,
+    "mould",
+    "the target is parsed back out of the template by the tested parser, not by splitting here"
+  );
+  assert.equal(resolved[0].json.modelPromptMissing, true);
+});
+
+test("the model server's own prompt wins over the target on the webhook", () => {
+  const begun = runCode(inspection, "begin-inspection", {
+    items: [{ json: { inspectionTarget: "mould" } }]
+  });
+  const resolved = runCode(inspection, "resolve-instruction", {
+    nodes: {
+      "fetch-current-prompt": { current_prompt: "Look for hairline cracks on the rim." },
+      "begin-inspection": begun[0].json
+    }
+  });
+
+  assert.equal(resolved[0].json.instruction, "Look for hairline cracks on the rim.");
+  assert.equal(resolved[0].json.modelPromptMissing, false);
+});
+
+test("the prompt comparison and the board result reach the audit trail", () => {
+  const items = runCode(inspection, "build-outcome-log", {
+    nodes: {
+      "build-control-action": {
+        decidedAt: "2026-01-01T00:00:00.000Z",
+        source: "manual",
+        inspectionId: 17,
+        frameContext: FRAME_CONTEXT,
+        frameUrl: `https://${PLACEHOLDERS.supabaseHost}/x/s1-7.jpg`,
+        modelPromptMissing: false,
+        budget: { fits: true, totalMs: 2800 },
+        esp32: { esp32Accepted: false, esp32Status: "ignored", esp32Error: null },
+        decision: {
+          verdict: "reject",
+          reason: "defect_detected",
+          coverage: 0.02,
+          coverageThreshold: 0.005,
+          boxCount: 2,
+          promptVerified: false,
+          promptUsed: "some other instruction",
+          promptMismatch: true
+        }
+      }
+    }
+  });
+
+  const { logRow } = items[0].json;
+  assert.equal(logRow.component, "inspection-loop");
+  assert.equal(logRow.severity, "warn");
+  assert.equal(logRow.details.promptMismatch, true, "a mid-flight prompt change must be visible");
+  assert.equal(logRow.details.esp32Accepted, false, "a board that refused must not read accepted");
+  assert.equal(logRow.details.inspectionId, 17);
+  assert.equal(logRow.details.verdictBudget.totalMs, 2800);
+});
+
+test("a passing inspection logs at info", () => {
+  const items = runCode(inspection, "build-outcome-log", {
+    nodes: {
+      "build-control-action": {
+        decidedAt: "2026-01-01T00:00:00.000Z",
+        source: "schedule",
+        frameContext: FRAME_CONTEXT,
+        frameUrl: null,
+        budget: { fits: true, totalMs: 2800 },
+        esp32: { esp32Accepted: true, esp32Status: "applied", esp32Error: null },
+        decision: {
+          verdict: "pass",
+          reason: "no_defect_detected",
+          coverage: 0,
+          coverageThreshold: 0.005,
+          boxCount: 0,
+          promptVerified: true,
+          promptMismatch: false
+        }
+      }
+    }
+  });
+
+  assert.equal(items[0].json.logRow.severity, "info");
+  assert.equal(items[0].json.logRow.message, "inspection passed");
+});
+
+test("the control action is anchored to the id PostgREST returns", () => {
+  const base = {
+    action: "reject",
+    decidedAt: "2026-01-01T00:00:00.000Z",
+    frameContext: FRAME_CONTEXT,
+    esp32: { esp32Accepted: true, esp32Status: "applied", esp32Error: null }
+  };
+
+  const anchored = runCode(inspection, "build-control-action", {
+    items: [{ json: [{ id: "a1b2", inspection_at: "2026-01-01" }] }],
+    nodes: { "build-snapshot-url": base }
+  });
+  assert.equal(anchored[0].json.controlActionRow.inspection_id, "a1b2");
+
+  // A failed insert must not invent an anchor.
+  const orphaned = runCode(inspection, "build-control-action", {
+    items: [{ json: { error: { message: "PostgREST 400" } } }],
+    nodes: { "build-snapshot-url": base }
+  });
+  assert.equal(orphaned[0].json.controlActionRow.inspection_id, null);
+  assert.equal(
+    orphaned[0].json.controlActionRow.esp32_accepted,
+    true,
+    "the board moved the machinery whether or not the row was written"
   );
 });
 
@@ -336,12 +802,20 @@ test("the verdict body carries only the action", () => {
   );
 });
 
-test("both verdict branches are wired back into the single verdict call", () => {
-  const guard = inspection.connections["verdict-is-reject"].main;
-  assert.equal(guard[0][0].node, "action-reject");
-  assert.equal(guard[1][0].node, "action-pass");
-  assert.equal(inspection.connections["action-reject"].main[0][0].node, "duplicate-guard");
-  assert.equal(inspection.connections["action-pass"].main[0][0].node, "duplicate-guard");
+test("the duplicate branch and the full branch both terminate", () => {
+  assert.equal(nodeNamed(inspection, "duplicate-or-new").type, "n8n-nodes-base.if");
+
+  const condition = nodeNamed(inspection, "duplicate-or-new").parameters.conditions.conditions[0];
+  assert.equal(condition.leftValue, "={{ $json.duplicate }}");
+  assert.equal(condition.operator.operation, "true");
+
+  const targets = inspection.connections["duplicate-or-new"].main.map((branch) => branch[0].node);
+  assert.deepEqual(targets, ["build-duplicate-log", "build-snapshot-url"]);
+
+  assert.ok(
+    walk(inspection, "build-duplicate-log").includes("done-duplicate"),
+    "a suppressed duplicate must still reach an end, not dangle"
+  );
 });
 
 test("a model failure cannot stop the loop before the verdict", () => {
@@ -357,12 +831,6 @@ test("a model failure cannot stop the loop before the verdict", () => {
       `${name} must continue on error so the fail-safe branch still runs`
     );
   }
-});
-
-test("the model timeout is a placeholder inside the verdict window", () => {
-  const detect = nodeNamed(inspection, "detect-defects");
-  assert.equal(detect.parameters.options.timeout, PLACEHOLDERS.modelTimeoutMs);
-  assert.ok(MODEL_TIMEOUT_MS < VERDICT_WINDOW_MS, "documented default must fit the window");
 });
 
 test("the broadcast targets the relay ingest rather than the HUD websocket", () => {
@@ -398,16 +866,80 @@ test("Supabase is written over PostgREST so the column names stay visible", () =
 });
 
 test("the prompt history row is built by the tested module", () => {
-  assert.ok(
-    codeOf(promptCapture, "build-prompt-record").includes("buildPromptHistoryRow"),
-    "row building must not be reimplemented inside a Code node"
+  // The predecessor is the model server's HTTP response, so the prompt fields
+  // have to come from the node that built them, not from $input.
+  const items = runCode(promptCapture, "build-prompt-record", {
+    items: [{ json: { status: "ok", unrelated: true } }],
+    nodes: {
+      "build-instruction": {
+        inspectionTarget: "mould",
+        modelInstruction: "Locate all the instances that matches the following description: mould.",
+        changedAt: "2026-01-01T00:00:00.000Z"
+      },
+      "set-model-prompt": { statusCode: 200, ok: true }
+    }
+  });
+
+  assert.deepEqual(items[0].json.promptRow, {
+    changed_at: "2026-01-01T00:00:00.000Z",
+    inspection_target: "mould",
+    model_instruction: "Locate all the instances that matches the following description: mould.",
+    source: "hud",
+    model_http_status: 200,
+    model_error: null
+  });
+});
+
+test("a rejected prompt change is recorded with its status and error", () => {
+  const items = runCode(promptCapture, "build-prompt-record", {
+    items: [{ json: { error: { message: "Model server unavailable" } } }],
+    nodes: {
+      "build-instruction": {
+        inspectionTarget: "mould",
+        modelInstruction: "Locate all the instances that matches the following description: mould.",
+        changedAt: "2026-01-01T00:00:00.000Z"
+      },
+      "set-model-prompt": { error: { message: "Model server unavailable" } }
+    }
+  });
+
+  const { promptRow } = items[0].json;
+  assert.equal(promptRow.model_http_status, null);
+  assert.equal(promptRow.model_error, "Model server unavailable");
+  assert.equal(
+    promptRow.inspection_target,
+    "mould",
+    "the operator still sees what they tried to change"
   );
 });
 
 test("the health watchdog records transitions rather than every poll", () => {
-  const record = codeOf(healthWatchdog, "record-transitions");
-  assert.ok(record.includes("buildSystemLogRow"));
-  assert.ok(record.includes("previous === probe.healthy"));
+  // First poll of each component is a transition; an unchanged poll is not.
+  const store = {};
+  const first = runCode(healthWatchdog, "record-transitions", {
+    items: [{ json: { component: "model", healthy: true } }, { json: { component: "capture", healthy: false } }],
+    store
+  });
+
+  assert.equal(first.length, 2, "the first reading of each component is news");
+  assert.deepEqual(
+    first.map((item) => item.json.severity),
+    ["info", "error"]
+  );
+  assert.equal(first[1].json.message, "capture is not responding");
+
+  const unchanged = runCode(healthWatchdog, "record-transitions", {
+    items: [{ json: { component: "model", healthy: true } }, { json: { component: "capture", healthy: false } }],
+    store
+  });
+  assert.deepEqual(unchanged, [], "polling every 30s must not write a row every 30s");
+
+  const flipped = runCode(healthWatchdog, "record-transitions", {
+    items: [{ json: { component: "model", healthy: false } }],
+    store
+  });
+  assert.equal(flipped.length, 1);
+  assert.equal(flipped[0].json.severity, "error");
 });
 
 test("the health watchdog probes the model server and the capture service", () => {

@@ -12,11 +12,13 @@ import {
   MODEL_PROMPT_TIMEOUT_MS,
   MODEL_TIMEOUT_MS,
   PRE_VERDICT_BUDGET_MS,
+  SNAPSHOT_UPLOAD_TIMEOUT_MS,
   VERDICT_POST_TIMEOUT_MS,
   VERDICT_WINDOW_MS,
-  buildSnapshotObjectName,
   buildInspectionDecision,
+  buildSnapshotObjectName,
   classifyModelOutcome,
+  resolveCoverageThreshold,
   resolveVerdictBudget,
   shouldSuppressDuplicate
 } from "../lib/inspection-logic.mjs";
@@ -30,7 +32,13 @@ test("the whole pre-verdict budget fits inside the ESP32 verdict window", () => 
 });
 
 test("each stage is budgeted individually", () => {
-  assert.equal(PRE_VERDICT_BUDGET_MS, MODEL_PROMPT_TIMEOUT_MS + CAPTURE_TIMEOUT_MS + MODEL_TIMEOUT_MS);
+  assert.equal(
+    PRE_VERDICT_BUDGET_MS,
+    MODEL_PROMPT_TIMEOUT_MS +
+      CAPTURE_TIMEOUT_MS +
+      SNAPSHOT_UPLOAD_TIMEOUT_MS +
+      MODEL_TIMEOUT_MS
+  );
   assert.ok(MODEL_PROMPT_TIMEOUT_MS < CAPTURE_TIMEOUT_MS, "reading a prompt is cheaper than a capture");
   assert.ok(MODEL_TIMEOUT_MS < VERDICT_WINDOW_MS);
 });
@@ -201,7 +209,11 @@ test("the budget total is the sum of every stage including the verdict post", ()
 
   assert.equal(
     budget.totalMs,
-    MODEL_PROMPT_TIMEOUT_MS + CAPTURE_TIMEOUT_MS + MODEL_TIMEOUT_MS + VERDICT_POST_TIMEOUT_MS
+    MODEL_PROMPT_TIMEOUT_MS +
+      CAPTURE_TIMEOUT_MS +
+      SNAPSHOT_UPLOAD_TIMEOUT_MS +
+      MODEL_TIMEOUT_MS +
+      VERDICT_POST_TIMEOUT_MS
   );
 });
 
@@ -284,4 +296,161 @@ test("no budget at all behaves exactly as before", () => {
   });
 
   assert.equal(decision.verdict, "pass");
+});
+
+// The Model Instruction is what makes the box meaningful. If the model server's
+// prompt could not be read there is nothing to verify against, so the item
+// cannot be trusted â€” but it must still be reject, not a guess.
+test("an instruction that cannot be read is a named fail-safe reason", () => {
+  assert.equal(FailureReason.MODEL_INSTRUCTION_MISSING, "model_instruction_missing");
+
+  const outcome = classifyModelOutcome({ status: MODEL_SUCCESS_STATUS, detections: [] });
+  const decision = buildInspectionDecision({
+    outcome,
+    frameContext: CTX_A7,
+    instruction: null,
+    threshold: 0.005
+  });
+
+  assert.equal(decision.reason, FailureReason.MODEL_INSTRUCTION_MISSING);
+});
+
+// A missing instruction forces the Verdict, not the overlay: the boxes the model
+// found are still what the operator needs to see.
+test("a missing instruction still shows the boxes it found", () => {
+  const decision = buildInspectionDecision({
+    outcome: classifyModelOutcome({
+      status: MODEL_SUCCESS_STATUS,
+      detections: [{ label: "mould", box: [0, 0, 320, 240] }]
+    }),
+    frameContext: CTX_A7,
+    instruction: "   ",
+    threshold: 0.005
+  });
+
+  assert.equal(decision.verdict, "reject");
+  assert.equal(decision.reason, "model_instruction_missing");
+  assert.equal(decision.boxCount, 1, "the threshold never hides a box");
+  assert.deepEqual(decision.detections, [{ label: "mould", box: [0, 0, 320, 240] }]);
+  assert.ok(decision.coverage > 0);
+});
+
+test("a model outcome is not classified as a failure when there is no instruction", () => {
+  const outcome = classifyModelOutcome({ status: MODEL_SUCCESS_STATUS, detections: [] });
+
+  assert.equal(outcome.kind, "ok", "the transport succeeded; the instruction is the missing part");
+});
+// A configured timeout that cannot be read is a deployment fault. Falling back
+// to the shipped default is safe, but it must be reported rather than silent.
+test("an unreadable configured timeout is substituted and reported, never silent", () => {
+  for (const bad of ["abc", 0, -1, null, undefined, "REPLACE_MODEL_TIMEOUT_MS"]) {
+    const budget = resolveVerdictBudget(bad);
+    assert.equal(budget.readable, false, `${bad} is not a usable timeout`);
+    assert.equal(budget.substituted, true);
+    assert.equal(budget.modelTimeoutMs, MODEL_TIMEOUT_MS, "the shipped default is used");
+    assert.equal(budget.fits, true, "the substituted default still fits the window");
+  }
+
+  assert.equal(resolveVerdictBudget(900).readable, true);
+  assert.equal(resolveVerdictBudget(900).modelTimeoutMs, 900);
+});
+
+test("a budget that cannot fit the window is refused rather than trusted", () => {
+  const budget = resolveVerdictBudget(3000);
+  assert.equal(budget.readable, true);
+  assert.equal(budget.fits, false, "a timeout that overruns the Verdict Window must not be trusted");
+});
+
+// The Coverage Threshold decides pass or reject, so an unreadable value is
+// never guessed at. An unconfigured placeholder takes the documented default.
+test("coverage threshold resolution separates unconfigured from unreadable", () => {
+  const unconfigured = resolveCoverageThreshold("REPLACE_COVERAGE_THRESHOLD");
+  assert.equal(unconfigured.value, 0.005, "a fresh import gets the documented default");
+  assert.equal(unconfigured.readable, true);
+  assert.equal(unconfigured.defaulted, true);
+
+  assert.equal(resolveCoverageThreshold(undefined).value, 0.005);
+  assert.equal(resolveCoverageThreshold("").value, 0.005);
+
+  for (const bad of ["abc", -0.1, 1.5, true, {}]) {
+    const resolved = resolveCoverageThreshold(bad);
+    assert.equal(resolved.readable, false, `${bad} must not be guessed at`);
+    assert.equal(resolved.value, null);
+
+    const decision = buildInspectionDecision({
+      outcome: classifyModelOutcome({ status: "success", detections: [] }),
+      frameContext: CTX_A7,
+      instruction: "Look for mould.",
+      threshold: resolved.value
+    });
+    assert.equal(decision.verdict, "reject");
+    assert.equal(decision.reason, "invalid_threshold");
+  }
+
+  assert.equal(resolveCoverageThreshold("0.02").value, 0.02);
+});
+
+test("a failed frame capture is named as a capture failure, not a model failure", () => {
+  const decision = buildInspectionDecision({
+    outcome: classifyModelOutcome({ error: { message: "ECONNREFUSED" } }),
+    frameContext: CTX_A7,
+    instruction: "Look for mould.",
+    threshold: 0.005,
+    frameCaptureFailed: true
+  });
+
+  assert.equal(decision.verdict, "reject");
+  assert.equal(
+    decision.reason,
+    "frame_capture_failed",
+    "a dead Pi must not be logged as a model problem"
+  );
+});
+
+test("a budget refusal still shows the boxes and the measured coverage", () => {
+  const decision = buildInspectionDecision({
+    outcome: classifyModelOutcome({
+      status: "success",
+      detections: [{ label: "mould", box: [0, 0, 320, 240] }]
+    }),
+    frameContext: CTX_A7,
+    instruction: "Look for mould.",
+    threshold: 0.005,
+    budget: { fits: false, totalMs: 4200, modelTimeoutMs: 3600 }
+  });
+
+  assert.equal(decision.verdict, "reject");
+  assert.equal(decision.reason, "invalid_verdict_budget");
+  assert.equal(decision.boxCount, 1, "the threshold never hides a box");
+  assert.ok(decision.coverage > 0);
+});
+// A configured model timeout that overruns the window cannot simply be trusted:
+// the wire timeout is clamped so the forced reject actually reaches the ESP32
+// before its auto-pass fallback fires. The clamp never hides the misconfiguration
+// — fits stays false and the decision is still a named reject.
+test("an over-budget model timeout is clamped at the wire and refused in the verdict", () => {
+  const budget = resolveVerdictBudget(5000);
+
+  assert.equal(budget.fits, false, "refused, not trusted");
+  assert.equal(budget.modelTimeoutMs, 5000, "the configured value is recorded as given");
+  assert.equal(
+    budget.appliedModelTimeoutMs,
+    MODEL_TIMEOUT_MS,
+    "the wire waits no longer than the budgeted share"
+  );
+});
+
+test("a fitting configured model timeout passes through unclamped", () => {
+  const budget = resolveVerdictBudget(900);
+
+  assert.equal(budget.fits, true);
+  assert.equal(budget.appliedModelTimeoutMs, 900);
+});
+
+test("an unreadable configured model timeout applies the documented default", () => {
+  const budget = resolveVerdictBudget("REPLACE_MODEL_TIMEOUT_MS");
+
+  assert.equal(budget.readable, false);
+  assert.equal(budget.fits, true, "the documented default fits the window");
+  assert.equal(budget.appliedModelTimeoutMs, MODEL_TIMEOUT_MS);
 });

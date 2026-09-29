@@ -163,7 +163,8 @@ test("a control action row records the ESP32 outcome", () => {
     inspectionId: "3f2b1c4d-0000-4000-8000-000000000000",
     action: VERDICT.REJECT,
     esp32Accepted: true,
-    esp32Status: 200,
+    esp32Status: "applied",
+    esp32HttpStatus: 200,
     requestedAt: INSPECTED_AT
   });
 
@@ -171,7 +172,9 @@ test("a control action row records the ESP32 outcome", () => {
     inspection_id: "3f2b1c4d-0000-4000-8000-000000000000",
     action: VERDICT.REJECT,
     esp32_accepted: true,
-    esp32_status: 200,
+    esp32_status: "applied",
+    esp32_http_status: 200,
+    esp32_error: null,
     requested_at: INSPECTED_AT
   });
 });
@@ -203,7 +206,8 @@ test("a prompt history row records the target change and its source", () => {
     inspection_target: TARGET,
     model_instruction: "Locate all the instances that matches the following description: mold.",
     source: "hud",
-    model_http_status: 200
+    model_http_status: 200,
+    model_error: null
   });
 });
 
@@ -380,6 +384,7 @@ test("an accepted verdict is read from the firmware response", () => {
   assert.deepEqual(readEsp32Outcome({ accepted: true, status: "applied" }), {
     esp32Accepted: true,
     esp32Status: "applied",
+    esp32HttpStatus: null,
     esp32Error: null
   });
 });
@@ -409,4 +414,46 @@ test("an unreadable response records no acceptance at all", () => {
     assert.equal(outcome.esp32Accepted, null, JSON.stringify(json));
     assert.equal(outcome.esp32Status, null, JSON.stringify(json));
   }
+});
+// n8n emits an HTTP node's response as { body, headers, statusCode, statusMessage }
+// when "Include Response Headers and Status" is on. The ESP32 outcome may arrive
+// in either that envelope or (on error) as a bare { error } item.
+test("the ESP32 outcome unwraps the full-response envelope and keeps the HTTP status", () => {
+  const applied = readEsp32Outcome({ body: { accepted: true, status: "applied" }, statusCode: 200 });
+  assert.equal(applied.esp32Accepted, true);
+  assert.equal(applied.esp32Status, "applied");
+  assert.equal(applied.esp32HttpStatus, 200);
+  assert.equal(applied.esp32Error, null);
+
+  const ignored = readEsp32Outcome({ body: { accepted: false, status: "ignored" }, statusCode: 200 });
+  assert.equal(ignored.esp32Accepted, false);
+  assert.equal(ignored.esp32HttpStatus, 200);
+
+  const bare = readEsp32Outcome({ accepted: true, status: "applied" });
+  assert.equal(bare.esp32Accepted, true, "a non-enveloped response still parses");
+  assert.equal(bare.esp32HttpStatus, null);
+});
+
+test("an aborted verdict post records the failure, never a made-up acceptance", () => {
+  const failed = readEsp32Outcome({ error: { message: "ESOCKETTIMEDOUT" } });
+  assert.equal(failed.esp32Accepted, null);
+  assert.equal(failed.esp32HttpStatus, null);
+  assert.equal(failed.esp32Error, "ESOCKETTIMEDOUT");
+});
+
+test("the control action row carries acceptance and the wire status", () => {
+  const row = buildControlActionRow({
+    inspectionId: "a1b2",
+    action: "reject",
+    esp32Accepted: true,
+    esp32Status: "applied",
+    esp32HttpStatus: 200,
+    esp32Error: null,
+    requestedAt: INSPECTED_AT
+  });
+
+  assert.equal(row.esp32_accepted, true);
+  assert.equal(row.esp32_status, "applied");
+  assert.equal(row.esp32_http_status, 200, "spec: the control action records the HTTP status");
+  assert.equal(row.esp32_error, null);
 });

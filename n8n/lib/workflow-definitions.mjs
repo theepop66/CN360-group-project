@@ -2,6 +2,12 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
+import {
+  CAPTURE_TIMEOUT_MS,
+  MODEL_PROMPT_TIMEOUT_MS,
+  VERDICT_POST_TIMEOUT_MS
+} from "./inspection-logic.mjs";
+
 const LIB = dirname(fileURLToPath(import.meta.url));
 
 export const WORKFLOW_FILES = {
@@ -67,7 +73,9 @@ function httpNode(slug, name, position, parameters) {
   };
 }
 
-function supabaseTable(name, position, table) {
+// The body is passed in rather than assumed to be $json: an insert must send
+// one real row, not the whole execution envelope.
+function supabaseTable(name, position, table, jsonBody) {
   const node = httpNode(`supabase-${name}`, name, position, {
     __continueOnError: true,
     method: "POST",
@@ -76,7 +84,7 @@ function supabaseTable(name, position, table) {
     headerParameters: supabaseHeaders([{ name: "Prefer", value: "return=representation" }]),
     sendBody: true,
     specifyBody: "json",
-    jsonBody: "={{ JSON.stringify($json) }}",
+    jsonBody,
     options: {}
   });
   delete node.parameters.__continueOnError;
@@ -121,71 +129,150 @@ const source = $('trigger-item-detected').isExecuted
 return [{ json: { source, requestedAt: new Date().toISOString() } }];
 `;
 
+  const verifyVerdictBudget = `
+const budget = resolveVerdictBudget('${PLACEHOLDERS.modelTimeoutMs}');
+return [{ json: { budget } }];
+`;
+
   const resolveInstruction = `
-const requestedAt = $('begin-inspection').first().json.requestedAt ?? new Date().toISOString();
+const begun = $('begin-inspection').first().json;
 const promptResponse = $('fetch-current-prompt').first().json ?? {};
 const current = typeof promptResponse.current_prompt === 'string' ? promptResponse.current_prompt.trim() : '';
-const instruction = current || buildModelInstruction($input.first().json.inspectionTarget);
+const instruction = current || buildModelInstruction(begun.inspectionTarget);
 return [{ json: {
-  source: $('begin-inspection').first().json.source,
-  requestedAt,
+  source: begun.source,
+  requestedAt: begun.requestedAt ?? new Date().toISOString(),
   instruction,
   modelPromptMissing: current === '',
-  inspectionTarget: instruction ? instruction.split('description:')[1]?.replace(/\\.$/, '').trim() ?? '' : ''
+  inspectionTarget: parseInspectionTarget(instruction)
 } }];
 `;
 
   const readFrameContext = `
 const frameContext = parseFrameContext($json.headers ?? {});
-return [{ json: { frameContext }, binary: { image: $binary.data } }];
+return [{ json: {
+  frameContext,
+  snapshotObjectName: buildSnapshotObjectName(frameContext)
+}, binary: { image: $binary.data } }];
 `;
 
   const decideInspection = `
 const frameContext = $('read-frame-context').first().json.frameContext;
 const instruction = $('resolve-instruction').first().json.instruction;
+const budget = $('verify-verdict-budget').first().json.budget;
 const configured = typeof $vars !== 'undefined' && $vars.COVERAGE_THRESHOLD !== undefined
   ? $vars.COVERAGE_THRESHOLD
   : '${PLACEHOLDERS.coverageThreshold}';
 const decision = buildInspectionDecision({
-  outcome: $input.first().json,
+  outcome: classifyModelOutcome($input.first().json),
   frameContext,
   instruction,
-  threshold: Number(configured)
+  threshold: Number(configured),
+  budget
 });
-return [{ json: { frameContext, instruction, decision, decidedAt: new Date().toISOString() } }];
+return [{ json: {
+  frameContext,
+  instruction,
+  inspectionTarget: $('resolve-instruction').first().json.inspectionTarget,
+  decision,
+  budget,
+  decidedAt: new Date().toISOString()
+} }];
 `;
 
+  // A repeated frame inside the Verdict Window must not move the machinery
+  // twice, so the duplicate item is dropped rather than flagged and sent on.
   const duplicateGuard = `
 const store = $getWorkflowStaticData('global');
-const { frameContext, decision } = $input.first().json;
-const key = frameContext.sessionId + ':' + frameContext.sequence;
-const last = store.lastVerdictAt?.[key];
-const duplicate =
-  typeof last === 'number' && Date.now() - last < VERDICT_WINDOW_MS;
-if (!duplicate) {
-  store.lastVerdictAt = store.lastVerdictAt ?? {};
-  store.lastVerdictAt[key] = Date.now();
-}
-return [{ json: { ...$input.first().json, shouldActuate: !duplicate } }];
+const { frameContext } = $input.first().json;
+if (shouldSuppressDuplicate(store, frameContext)) return [];
+return $input.all();
 `;
 
-  const buildRecords = `
-const { frameContext, instruction, decision, decidedAt } = $input.first().json;
-const inspectionRow = buildInspectionRow(decision, {
-  frameContext,
-  inspectionTarget: $('resolve-instruction').first().json.inspectionTarget,
-  modelInstruction: instruction,
-  inspectedAt: decidedAt,
-  frameUrl: null
-});
-const controlActionRow = buildControlActionRow({
-  inspectionId: null,
-  action: decision.verdict,
-  esp32Accepted: $json.esp32Accepted ?? null,
-  esp32Status: $json.esp32Status ?? null,
-  requestedAt: decidedAt
-});
-return [{ json: { frameContext, instruction, decision, inspectionRow, controlActionRow, decidedAt } }];
+  const captureEsp32Response = `
+const decided = $('action-reject').isExecuted
+  ? $('action-reject').first().json
+  : $('action-pass').first().json;
+return [{ json: { ...decided, esp32: readEsp32Outcome($input.first().json) } }];
+`;
+
+  const buildSnapshotUrl = `
+const decided = $('capture-esp32-response').first().json;
+const upload = $('upload-snapshot').first().json ?? {};
+const objectName = $('read-frame-context').first().json.snapshotObjectName;
+const stored = upload.error === undefined || upload.error === null;
+const publicBase = 'https://${PLACEHOLDERS.supabaseHost}/storage/v1/object/public/${PLACEHOLDERS.snapshotBucket}/';
+const frameUrl = stored ? publicBase + objectName : null;
+return [{ json: { ...decided, snapshotObjectName: objectName, snapshotStored: stored, frameUrl } }];
+`;
+
+  const buildInspectionRecord = `
+const base = $('build-snapshot-url').first().json;
+return [{ json: { ...base, inspectionRow: buildInspectionRow(base.decision, {
+  frameContext: base.frameContext,
+  inspectionTarget: base.inspectionTarget,
+  modelInstruction: base.instruction,
+  inspectedAt: base.decidedAt,
+  frameUrl: base.frameUrl
+}) } }];
+`;
+
+  // PostgREST returns the inserted row, which is the only place the inspection
+  // id exists. The Control Action can only be anchored to it once it is back.
+  const buildControlAction = `
+const inserted = $input.first().json;
+const base = $('build-snapshot-url').first().json;
+const row = Array.isArray(inserted) ? inserted[0] : inserted;
+const inspectionId = row && typeof row === 'object' && row.id !== undefined ? row.id : null;
+return [{ json: { ...base, inspectionId, controlActionRow: buildControlActionRow({
+  inspectionId,
+  action: base.action,
+  esp32Accepted: base.esp32?.esp32Accepted ?? null,
+  esp32Status: base.esp32?.esp32Status ?? null,
+  requestedAt: base.decidedAt
+}) } }];
+`;
+
+  const buildHudBroadcast = `
+const base = $('build-control-action').first().json;
+return [{ json: { ...base, hudPayload: buildHudPayload({
+  decision: base.decision,
+  frameContext: base.frameContext,
+  snapshotUrl: base.frameUrl
+}) } }];
+`;
+
+  // The outcome row is the audit trail: it is where a prompt that drifted
+  // mid-flight, an unreachable board, or a budget that cannot fit is recorded.
+  const buildOutcomeLog = `
+const base = $('build-control-action').first().json;
+const decision = base.decision;
+const rejected = decision.verdict !== VERDICT.PASS;
+return [{ json: { logRow: buildSystemLogRow({
+  loggedAt: base.decidedAt,
+  severity: rejected ? 'warn' : 'info',
+  component: 'inspection-loop',
+  message: rejected ? 'inspection rejected' : 'inspection passed',
+  details: {
+    verdict: decision.verdict,
+    reason: decision.reason,
+    defectCoverage: decision.coverage,
+    coverageThreshold: decision.coverageThreshold,
+    boxCount: decision.boxCount,
+    source: base.source,
+    cameraSession: base.frameContext?.sessionId ?? null,
+    frameSequence: base.frameContext?.sequence ?? null,
+    inspectionId: base.inspectionId ?? null,
+    promptVerified: decision.promptVerified,
+    promptUsed: decision.promptUsed,
+    promptMismatch: decision.promptMismatch,
+    verdictBudget: base.budget ?? null,
+    esp32Accepted: base.esp32?.esp32Accepted ?? null,
+    esp32Status: base.esp32?.esp32Status ?? null,
+    esp32Error: base.esp32?.esp32Error ?? null,
+    frameUrl: base.frameUrl
+  }
+}) } }];
 `;
 
   return {
@@ -228,21 +315,26 @@ return [{ json: { frameContext, instruction, decision, inspectionRow, controlAct
         webhookId: "6c1a0f1e-0b4d-4a5e-9a0b-2f4d1c7e5a12"
       },
       codeNode("begin-inspection", "begin-inspection", [-400, 160], beginInspection),
-      httpNode("fetch-current-prompt", "fetch-current-prompt", [-180, 160], {
+      codeNode("verify-verdict-budget", "verify-verdict-budget", [-180, 160], verifyVerdictBudget),
+      httpNode("fetch-current-prompt", "fetch-current-prompt", [40, 160], {
         __continueOnError: true,
         method: "GET",
         url: `=${MODEL_BASE}/get_prompt`,
-        options: { timeout: 1000 }
+        options: { timeout: MODEL_PROMPT_TIMEOUT_MS }
       }),
-      codeNode("resolve-instruction", "resolve-instruction", [40, 160], resolveInstruction),
-      httpNode("capture-frame", "capture-frame", [260, 160], {
+      codeNode("resolve-instruction", "resolve-instruction", [260, 160], resolveInstruction),
+      httpNode("capture-frame", "capture-frame", [480, 160], {
         __continueOnError: true,
         method: "GET",
         url: `=${PI_CAPTURE}`,
-        options: { timeout: 2000, response: { response: { responseFormat: "file" } } }
+        options: {
+          timeout: CAPTURE_TIMEOUT_MS,
+          response: { response: { responseFormat: "file" } }
+        }
       }),
-      codeNode("read-frame-context", "read-frame-context", [460, 160], readFrameContext),
-      httpNode("detect-defects", "detect-defects", [680, 160], {
+      codeNode("read-frame-context", "read-frame-context", [700, 160], readFrameContext),
+      httpNode("detect-defects", "detect-defects", [920, 40], {
+        __continueOnError: true,
         method: "POST",
         url: `=${MODEL_BASE}/predict`,
         sendHeaders: true,
@@ -252,12 +344,32 @@ return [{ json: { frameContext, instruction, decision, inspectionRow, controlAct
         bodyParameters: {
           parameters: [
             { parameterType: "formBinaryData", name: "image", inputDataFieldName: "image" },
-            { parameterType: "formData", name: "prompt", value: "={{ $('resolve-instruction').first().json.instruction }}" }
+            {
+              parameterType: "formData",
+              name: "prompt",
+              value: "={{ $('resolve-instruction').first().json.instruction }}"
+            }
           ]
         },
         options: { timeout: PLACEHOLDERS.modelTimeoutMs }
       }),
-      codeNode("decide-inspection", "decide-inspection", [900, 160], decideInspection),
+      // The snapshot is expensive bookkeeping, so it runs beside the model
+      // call instead of spending Verdict Window budget on a file write. Only
+      // the URL is stored and broadcast, and only after the verdict.
+      httpNode("upload-snapshot", "upload-snapshot", [920, 280], {
+        __continueOnError: true,
+        method: "POST",
+        url: `=https://${PLACEHOLDERS.supabaseHost}/storage/v1/object/${PLACEHOLDERS.snapshotBucket}/{{ $json.snapshotObjectName }}`,
+        sendHeaders: true,
+        headerParameters: supabaseHeaders([
+          { name: "Content-Type", value: "image/jpeg" },
+          { name: "x-upsert", value: "true" }
+        ]),
+        sendBody: true,
+        contentType: "binary",
+        options: { timeout: 4000 }
+      }),
+      codeNode("decide-inspection", "decide-inspection", [1140, 160], decideInspection),
       {
         parameters: {
           conditions: {
@@ -276,7 +388,7 @@ return [{ json: { frameContext, instruction, decision, inspectionRow, controlAct
         },
         type: "n8n-nodes-base.if",
         typeVersion: 2.2,
-        position: [1120, 160],
+        position: [1360, 160],
         name: "verdict-is-reject",
         id: "cn360-verdict-if"
       },
@@ -291,27 +403,25 @@ return [{ json: { frameContext, instruction, decision, inspectionRow, controlAct
         },
         type: "n8n-nodes-base.set",
         typeVersion: 3.4,
-        position: [1340, 40],
+        position: [1580, 40],
         name: "action-reject",
         id: "cn360-action-reject"
       },
       {
         parameters: {
           assignments: {
-            assignments: [
-              { id: "action-pass", name: "action", value: "pass", type: "string" }
-            ]
+            assignments: [{ id: "action-pass", name: "action", value: "pass", type: "string" }]
           },
           includeOtherFields: true
         },
         type: "n8n-nodes-base.set",
         typeVersion: 3.4,
-        position: [1340, 280],
+        position: [1580, 280],
         name: "action-pass",
         id: "cn360-action-pass"
       },
-      codeNode("duplicate-guard", "duplicate-guard", [1560, 160], duplicateGuard),
-      httpNode("post-verdict", "post-verdict", [1780, 160], {
+      codeNode("duplicate-guard", "duplicate-guard", [1800, 160], duplicateGuard),
+      httpNode("post-verdict", "post-verdict", [2020, 160], {
         __continueOnError: true,
         method: "POST",
         url: `=${ESP32_VERDICT}`,
@@ -320,25 +430,34 @@ return [{ json: { frameContext, instruction, decision, inspectionRow, controlAct
         sendBody: true,
         specifyBody: "json",
         jsonBody: "={{ JSON.stringify({ action: $json.action }) }}",
-        options: { timeout: 800 }
+        options: { timeout: VERDICT_POST_TIMEOUT_MS }
       }),
-      codeNode("build-records", "build-records", [2000, 160], buildRecords),
-      supabaseTable("insert-inspection", [2220, 60], "inspection_results"),
-      supabaseTable("insert-control-action", [2440, 60], "control_actions"),
-      httpNode("upload-snapshot", "upload-snapshot", [2660, 60], {
-        __continueOnError: true,
-        method: "POST",
-        url: `=https://${PLACEHOLDERS.supabaseHost}/storage/v1/object/${PLACEHOLDERS.snapshotBucket}/{{ $json.frameContext.sessionId }}-{{ $json.frameContext.sequence }}.jpg`,
-        sendHeaders: true,
-        headerParameters: supabaseHeaders([
-          { name: "Content-Type", value: "image/jpeg" },
-          { name: "x-upsert", value: "true" }
-        ]),
-        sendBody: true,
-        contentType: "binary",
-        options: {}
-      }),
-      httpNode("broadcast-hud", "broadcast-hud", [2880, 60], {
+      codeNode("capture-esp32-response", "capture-esp32-response", [2240, 160], captureEsp32Response),
+      {
+        parameters: { numberInputs: 2 },
+        type: "n8n-nodes-base.merge",
+        typeVersion: 3,
+        position: [2460, 160],
+        name: "join-snapshot-and-verdict",
+        id: "cn360-join-snapshot"
+      },
+      codeNode("build-snapshot-url", "build-snapshot-url", [2680, 160], buildSnapshotUrl),
+      codeNode("build-inspection-record", "build-inspection-record", [2900, 160], buildInspectionRecord),
+      supabaseTable(
+        "insert-inspection",
+        [3120, 60],
+        "inspection_results",
+        "={{ JSON.stringify($json.inspectionRow) }}"
+      ),
+      codeNode("build-control-action", "build-control-action", [3340, 60], buildControlAction),
+      supabaseTable(
+        "insert-control-action",
+        [3560, 60],
+        "control_actions",
+        "={{ JSON.stringify($json.controlActionRow) }}"
+      ),
+      codeNode("build-hud-broadcast", "build-hud-broadcast", [3780, 60], buildHudBroadcast),
+      httpNode("broadcast-hud", "broadcast-hud", [4000, 60], {
         __continueOnError: true,
         method: "POST",
         url: `=${RELAY_DETECTIONS}`,
@@ -346,16 +465,21 @@ return [{ json: { frameContext, instruction, decision, inspectionRow, controlAct
         headerParameters: { parameters: [{ name: "Content-Type", value: "application/json" }] },
         sendBody: true,
         specifyBody: "json",
-        jsonBody:
-          "={{ JSON.stringify(buildHudPayload({ decision: $('build-records').first().json.decision, frameContext: $('build-records').first().json.frameContext, snapshotUrl: null })) }}",
+        jsonBody: "={{ JSON.stringify($json.hudPayload) }}",
         options: { timeout: 1000 }
       }),
-      supabaseTable("log-outcome", [3100, 60], "system_logs"),
+      codeNode("build-outcome-log", "build-outcome-log", [4220, 60], buildOutcomeLog),
+      supabaseTable(
+        "log-outcome",
+        [4440, 60],
+        "system_logs",
+        "={{ JSON.stringify($json.logRow) }}"
+      ),
       {
         parameters: {},
         type: "n8n-nodes-base.noOp",
         typeVersion: 1,
-        position: [3320, 60],
+        position: [4660, 60],
         name: "done",
         id: "cn360-done"
       }
@@ -364,23 +488,33 @@ return [{ json: { frameContext, instruction, decision, inspectionRow, controlAct
       link("trigger-schedule", "begin-inspection"),
       link("trigger-item-detected", "begin-inspection"),
       link("trigger-inspect-now", "begin-inspection"),
-      link("begin-inspection", "fetch-current-prompt"),
+      link("begin-inspection", "verify-verdict-budget"),
+      link("verify-verdict-budget", "fetch-current-prompt"),
       link("fetch-current-prompt", "resolve-instruction"),
       link("resolve-instruction", "capture-frame"),
       link("capture-frame", "read-frame-context"),
+      // One capture, two consumers: the model needs the bytes, the snapshot
+      // keeps them, and the HTTP nodes that follow cannot pass binary along.
       link("read-frame-context", "detect-defects"),
+      link("read-frame-context", "upload-snapshot"),
       link("detect-defects", "decide-inspection"),
       link("decide-inspection", "verdict-is-reject"),
       branch("verdict-is-reject", ["action-reject", "action-pass"]),
       link("action-reject", "duplicate-guard"),
       link("action-pass", "duplicate-guard"),
       link("duplicate-guard", "post-verdict"),
-      link("post-verdict", "build-records"),
-      link("build-records", "insert-inspection"),
-      link("insert-inspection", "insert-control-action"),
-      link("insert-control-action", "upload-snapshot"),
-      link("upload-snapshot", "broadcast-hud"),
-      link("broadcast-hud", "log-outcome"),
+      link("post-verdict", "capture-esp32-response"),
+      link("capture-esp32-response", "join-snapshot-and-verdict"),
+      link("upload-snapshot", "join-snapshot-and-verdict"),
+      link("join-snapshot-and-verdict", "build-snapshot-url"),
+      link("build-snapshot-url", "build-inspection-record"),
+      link("build-inspection-record", "insert-inspection"),
+      link("insert-inspection", "build-control-action"),
+      link("build-control-action", "insert-control-action"),
+      link("insert-control-action", "build-hud-broadcast"),
+      link("build-hud-broadcast", "broadcast-hud"),
+      link("broadcast-hud", "build-outcome-log"),
+      link("build-outcome-log", "log-outcome"),
       link("log-outcome", "done")
     ),
     settings: { executionOrder: "v1" },
@@ -401,7 +535,6 @@ return [{ json: { promptRow: buildPromptHistoryRow({
   modelHttpStatus
 }) } }];
 `;
-
   const buildInstruction = `
 const target = $input.first().json?.prompt;
 const modelInstruction = buildModelInstruction(target);
@@ -463,7 +596,12 @@ return [{ json: {
         options: { timeout: 1500 }
       }),
       codeNode("build-prompt-record", "build-prompt-record", [500, -100], buildPromptRecord),
-      supabaseTable("insert-prompt-history", [720, -100], "prompt_history"),
+      supabaseTable(
+        "insert-prompt-history",
+        [720, -100],
+        "prompt_history",
+        "={{ JSON.stringify($json.promptRow) }}"
+      ),
       {
         parameters: {
           respondWith: "json",
@@ -507,25 +645,19 @@ return [{ json: {
 
 export function buildHealthWatchdog() {
   const probeModel = `
-try {
-  const body = $input.first().json;
-  return [{ json: { component: 'model-server', healthy: body?.status === 'ok', detail: body ?? null } }];
-} catch (error) {
-  return [{ json: { component: 'model-server', healthy: false, detail: null, error: String(error?.message ?? error) } }];
-}
+return [{ json: buildHealthProbe(
+  'model-server',
+  () => $input.first().json,
+  (body) => body?.status === 'ok'
+) }];
 `;
 
   const probePi = `
-try {
-  const frameContext = parseFrameContext($json.headers ?? {});
-  return [{ json: {
-    component: 'capture-service',
-    healthy: hasUsableFrameGeometry(frameContext),
-    detail: frameContext
-  } }];
-} catch (error) {
-  return [{ json: { component: 'capture-service', healthy: false, detail: null, error: String(error?.message ?? error) } }];
-}
+return [{ json: buildHealthProbe(
+  'capture-service',
+  () => parseFrameContext($json.headers ?? {}),
+  (frameContext) => hasUsableFrameGeometry(frameContext)
+) }];
 `;
 
   const recordTransitions = `
@@ -578,7 +710,8 @@ return emitted;
       }),
       codeNode("probe-capture-result", "probe-capture-result", [40, 100], probePi),
       codeNode("record-transitions", "record-transitions", [260, 0], recordTransitions),
-      supabaseTable("insert-health-log", [480, 0], "system_logs")
+      // record-transitions already emits a built system log row as $json.
+      supabaseTable("insert-health-log", [480, 0], "system_logs", "={{ JSON.stringify($json) }}")
     ],
     connections: mergeLinks(
       link("trigger-health-schedule", "probe-model-health"),

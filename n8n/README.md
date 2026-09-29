@@ -30,9 +30,41 @@ goes missing, so this list cannot drift away from the workflows.
 | `REPLACE_RELAY_HOST:8081` | The detection relay | See "The HUD overlay is not done yet". |
 | `REPLACE_SUPABASE_HOST` | `https://<project-ref>.supabase.co` | |
 | `REPLACE_SUPABASE_SERVICE_ROLE_KEY` | The service-role key | Prefer an n8n HTTP Header Auth credential instead of pasting it here. |
-| `REPLACE_SNAPSHOT_BUCKET` | A public bucket name | Create the bucket first. |
+| `REPLACE_SNAPSHOT_BUCKET` | A **public** bucket name | Create the bucket first; the stored `frame_url` points at `/storage/v1/object/public/...`. |
 | `REPLACE_COVERAGE_THRESHOLD` | e.g. `0.005` | Or set an n8n variable named `COVERAGE_THRESHOLD`. |
-| `REPLACE_MODEL_TIMEOUT_MS` | `2000` | Must stay under the ESP32's 3000 ms Verdict Window. |
+| `REPLACE_MODEL_TIMEOUT_MS` | `1500` | Must fit the Verdict Window budget. The workflow refuses a value it cannot fit rather than trusting it. |
+
+### Secrets and n8n credentials
+
+Supabase is reached with the service-role key as a header placeholder
+(`REPLACE_SUPABASE_SERVICE_ROLE_KEY`), not an n8n credential-store reference.
+That is a deliberate, documented deviation from the spec: the HTTP Request node
+needs *two* headers (`apikey` and `Authorization: Bearer`) and a credential
+supplies one, so a naive header-auth credential would half-configure the node.
+Replace the placeholder in place, or rework the Supabase nodes onto credentials
+together. Do not paste a key into this file.
+
+## The Verdict Window budget
+
+The ESP32 auto-passes 3000 ms after it asks for a verdict, so every stage before
+the verdict POST is budgeted and the stages are checked as a whole:
+
+| Stage | Timeout |
+| :--- | :--- |
+| `fetch-current-prompt` | 300 ms |
+| `capture-frame` | 900 ms |
+| `detect-defects` | `REPLACE_MODEL_TIMEOUT_MS` (default 1500 ms) |
+| `post-verdict` | 250 ms |
+
+`verify-verdict-budget` runs before the model call. If the configured model
+timeout cannot leave headroom inside the window, the Verdict is forced to
+**reject** with reason `invalid_verdict_budget`. The boxes the model returned are
+still recorded and drawn; only the physical path is forced.
+
+The snapshot upload runs **beside** the model call rather than inside the budget:
+n8n HTTP nodes do not pass binary along, so the capture fans out to both the
+model and the upload, and a two-input merge re-joins them before anything is
+persisted. The verdict itself is still sent before any write.
 
 ## Two fixes outside this folder
 
@@ -74,11 +106,18 @@ threshold picks the physical path; it never decides what the operator can see.
 
 If the model times out, is unreachable, returns an error status, returns
 unrenderable boxes, or the frame capture itself fails, the item is **rejected**.
-So is a coverage figure or threshold that cannot be read. A quality-control line
-that lets items through when its brain is unavailable is a safety hazard.
+So is a coverage figure or threshold that cannot be read, and so is a Verdict
+Window budget that cannot be honoured. A quality-control line that lets items
+through when its brain is unavailable is a safety hazard.
+
+Every failure is classified into a named reason by `classifyModelOutcome` and
+recorded in the `system_logs` outcome row, together with the Defect Coverage,
+the coverage threshold, the prompt comparison and whether the ESP32 accepted the
+verdict. A mid-flight prompt change shows up there as `promptMismatch: true`
+rather than being silently applied.
 
 **Expect near-total rejection in production today.** The model server reloads a
-5.83 GB model on CPU per request and cannot currently meet the 2000 ms timeout.
+5.83 GB model on CPU per request and cannot currently meet the 1500 ms timeout.
 That is the fail-safe working, not a workflow bug — but it is a line-stopping
 condition until model latency is fixed.
 
@@ -97,9 +136,11 @@ coordinates, so the overlay will land in the right place once the relay exists.
 ## Duplicate suppression, and its limit
 
 The item-detected webhook body carries no item identity, so a redelivery cannot
-be deduplicated by content. The loop instead suppresses a second verdict for the
-same `camera session + frame sequence` within one Verdict Window using n8n static
-data. That covers webhook redelivery and a schedule/item race on the same frame.
+be deduplicated by content. The loop instead drops a second verdict for the same
+`camera session + frame sequence` within one Verdict Window using n8n static
+data — the duplicate item is discarded so it never reaches the ESP32 or the
+database. That covers webhook redelivery and a schedule/item race on the same
+frame.
 
 It is **per n8n instance and does not survive a restart**. The ESP32 state
 machine remains the real backstop against double actuation.
@@ -107,7 +148,7 @@ machine remains the real backstop against double actuation.
 ## Development
 
 ```sh
-npm test     # 104 tests, no network, no n8n instance required
+npm test     # 157 tests, no network, no n8n instance required
 npm run build  # regenerates workflows/*.json from lib/
 ```
 

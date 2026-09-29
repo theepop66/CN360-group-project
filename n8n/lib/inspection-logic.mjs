@@ -1,6 +1,15 @@
 export const DEFAULT_COVERAGE_THRESHOLD = 0.005;
-export const MODEL_TIMEOUT_MS = 2000;
+
+// The ESP32 auto-passes after 3000 ms, so every stage before the verdict is
+// budgeted: fetch the prompt, capture the frame, then ask the model.
 export const VERDICT_WINDOW_MS = 3000;
+export const MODEL_PROMPT_TIMEOUT_MS = 300;
+export const CAPTURE_TIMEOUT_MS = 900;
+export const MODEL_TIMEOUT_MS = 1500;
+export const VERDICT_POST_TIMEOUT_MS = 250;
+export const PRE_VERDICT_BUDGET_MS =
+  MODEL_PROMPT_TIMEOUT_MS + CAPTURE_TIMEOUT_MS + MODEL_TIMEOUT_MS;
+
 export const MODEL_SUCCESS_STATUS = "success";
 export const DEFAULT_DETECTION_LABEL = "defect";
 
@@ -16,7 +25,8 @@ export const FailureReason = Object.freeze({
   MODEL_INVALID_BOX: "model_invalid_box",
   FRAME_CAPTURE_FAILED: "frame_capture_failed",
   FRAME_CONTEXT_INVALID: "frame_context_invalid",
-  INVALID_THRESHOLD: "invalid_threshold"
+  INVALID_THRESHOLD: "invalid_threshold",
+  INVALID_VERDICT_BUDGET: "invalid_verdict_budget"
 });
 
 const REASON_NO_DEFECT = "no_defect_detected";
@@ -163,7 +173,95 @@ function verifyPrompt(response, instruction) {
   return { promptVerified: verified, promptUsed, promptMismatch: !verified };
 }
 
-export function buildInspectionDecision({ outcome, frameContext, instruction, threshold } = {}) {
+const UNREACHABLE_PATTERN = /ECONNREFUSED|ENOTFOUND|EHOSTUNREACH|ENETUNREACH|fetch failed|socket hang up/i;
+const TIMEOUT_PATTERN = /timed?\s*out|timeout|ETIMEDOUT|ESOCKETTIMEDOUT/i;
+
+// n8n hands an HTTP failure back as an error item. Mapping it here means the
+// fail-safe reasons are decided by tested code, not by node configuration.
+export function classifyModelOutcome(json) {
+  const error = json?.error;
+  if (error === undefined || error === null) {
+    return { kind: "ok", response: json };
+  }
+
+  const detail = String(typeof error === "string" ? error : error?.message ?? error ?? "");
+  const reason = TIMEOUT_PATTERN.test(detail)
+    ? FailureReason.MODEL_TIMEOUT
+    : UNREACHABLE_PATTERN.test(detail)
+      ? FailureReason.MODEL_UNREACHABLE
+      : FailureReason.MODEL_HTTP_ERROR;
+
+  return { kind: "failure", reason, detail };
+}
+
+function suppressionKey(frameContext) {
+  if (!frameContext || typeof frameContext !== "object") return null;
+  const sessionId = readTrimmed(frameContext.sessionId);
+  const sequence = asFiniteNumber(frameContext.sequence);
+  if (!sessionId || sequence === null) return null;
+  return `${sessionId}:${sequence}`;
+}
+
+export function shouldSuppressDuplicate(store, frameContext, nowMs, windowMs = VERDICT_WINDOW_MS) {
+  const key = suppressionKey(frameContext);
+  if (!key) return false;
+
+  const target = store && typeof store === "object" ? store : {};
+  const now = asFiniteNumber(nowMs) ?? Date.now();
+  const last = target.lastVerdictAt?.[key];
+  if (typeof last === "number" && now - last < windowMs) return true;
+
+  target.lastVerdictAt = target.lastVerdictAt ?? {};
+  target.lastVerdictAt[key] = now;
+  return false;
+}
+
+const UNSAFE_NAME_CHARS = /[^A-Za-z0-9._-]/g;
+
+export function buildSnapshotObjectName(frameContext) {
+  const session = readTrimmed(frameContext?.sessionId) ?? "frame";
+  const sequence = asFiniteNumber(frameContext?.sequence);
+  const stamp = sequence === null ? "unknown" : String(sequence);
+  return `${session}-${stamp}.jpg`.replace(UNSAFE_NAME_CHARS, "-");
+}
+
+// The workflow ships the timeout as REPLACE_MODEL_TIMEOUT_MS so it can be tuned
+// per deployment. Whatever it becomes, the whole pre-verdict path has to leave
+// headroom inside the ESP32 Verdict Window, so the budget is checked rather
+// than assumed. An unreadable value falls back to the shipped default instead
+// of disabling the check.
+export function resolveVerdictBudget(configuredModelTimeoutMs) {
+  const requested = asFiniteNumber(configuredModelTimeoutMs);
+  const modelTimeoutMs = requested === null || requested <= 0 ? MODEL_TIMEOUT_MS : requested;
+  const totalMs =
+    PRE_VERDICT_BUDGET_MS - MODEL_TIMEOUT_MS + modelTimeoutMs + VERDICT_POST_TIMEOUT_MS;
+
+  return {
+    configured: configuredModelTimeoutMs ?? null,
+    modelTimeoutMs,
+    totalMs,
+    fits: totalMs < VERDICT_WINDOW_MS
+  };
+}
+
+// Both watchdog probes read a different response shape but share one rule: a
+// throw is a failure, and only a well-formed answer can be healthy.
+export function buildHealthProbe(component, readDetail, isHealthy) {
+  try {
+    const detail = readDetail();
+    return { component, healthy: isHealthy(detail) === true, detail, error: null };
+  } catch (error) {
+    return { component, healthy: false, detail: null, error: String(error?.message ?? error) };
+  }
+}
+
+export function buildInspectionDecision({
+  outcome,
+  frameContext,
+  instruction,
+  threshold,
+  budget
+} = {}) {
   const coverageThreshold = readCoverageThreshold(threshold);
   if (coverageThreshold === null) {
     return rejected(FailureReason.INVALID_THRESHOLD);
@@ -208,9 +306,19 @@ export function buildInspectionDecision({ outcome, frameContext, instruction, th
   const coverage = defectCoverage(detections, frameContext.width, frameContext.height);
   const prompt = verifyPrompt(response, instruction);
 
+  // A budget that cannot fit is a setup error, but it is still a reject. The
+  // measured figures and the boxes survive so the operator can see what the
+  // model found; only the physical path is forced.
+  const budgetFits = budget?.fits !== false;
+  const verdict = budgetFits ? decideVerdict(coverage, coverageThreshold) : VERDICT.REJECT;
+
   return {
-    verdict: decideVerdict(coverage, coverageThreshold),
-    reason: decideVerdict(coverage, coverageThreshold) === VERDICT.REJECT ? REASON_DEFECT : REASON_NO_DEFECT,
+    verdict,
+    reason: budgetFits
+      ? verdict === VERDICT.REJECT
+        ? REASON_DEFECT
+        : REASON_NO_DEFECT
+      : FailureReason.INVALID_VERDICT_BUDGET,
     coverage,
     coverageThreshold,
     boxCount: detections.length,

@@ -8,7 +8,9 @@ import {
   buildInspectionRow,
   buildModelInstruction,
   buildPromptHistoryRow,
-  buildSystemLogRow
+  buildSystemLogRow,
+  parseInspectionTarget,
+  readEsp32Outcome
 } from "../lib/inspection-records.mjs";
 import {
   MODEL_SUCCESS_STATUS,
@@ -340,4 +342,71 @@ test("every row builder tolerates absent optional input", () => {
     buildPromptHistoryRow({ changedAt: INSPECTED_AT, inspectionTarget: TARGET, modelInstruction: "i" })
   );
   assert.doesNotThrow(() => buildSystemLogRow({ loggedAt: INSPECTED_AT, message: "m" }));
+});
+
+// The Inspection Target is the operator's own words. Recovering it from the
+// Model Instruction must go through the canonical template rather than a
+// hand-written split, so a grammar change cannot silently corrupt the record.
+test("the inspection target round-trips through the canonical template", () => {
+  for (const target of ["mold", "bruised spot on fruit", "scratch", "  a dent  "]) {
+    const instruction = buildModelInstruction(target);
+    assert.equal(parseInspectionTarget(instruction), target.trim(), target);
+  }
+});
+
+test("a trailing full stop in the target does not change the recorded target", () => {
+  assert.equal(
+    parseInspectionTarget(buildModelInstruction("mold.")),
+    "mold"
+  );
+});
+
+test("an instruction that is not the canonical template yields no target", () => {
+  for (const instruction of [
+    "find the mold",
+    "",
+    null,
+    undefined,
+    "Locate all the instances that matches the following description: .",
+    "Locate all the instances that matches the following description: mold"
+  ]) {
+    assert.equal(parseInspectionTarget(instruction), null, JSON.stringify(instruction));
+  }
+});
+
+// The firmware answers { accepted, status }; a Control Action that records
+// acceptance has to read the field the firmware actually sends.
+test("an accepted verdict is read from the firmware response", () => {
+  assert.deepEqual(readEsp32Outcome({ accepted: true, status: "applied" }), {
+    esp32Accepted: true,
+    esp32Status: "applied",
+    esp32Error: null
+  });
+});
+
+test("a rejected verdict is recorded as refused by the firmware", () => {
+  const outcome = readEsp32Outcome({ accepted: false, status: "ignored" });
+
+  assert.equal(outcome.esp32Accepted, false);
+  assert.equal(outcome.esp32Status, "ignored");
+});
+
+test("an unreachable ESP32 is recorded as an error rather than as acceptance", () => {
+  const outcome = readEsp32Outcome({ error: { message: "connect ECONNREFUSED 192.168.1.7" } });
+
+  assert.equal(outcome.esp32Accepted, null, "an unreachable board did not accept anything");
+  assert.equal(outcome.esp32Error, "connect ECONNREFUSED 192.168.1.7");
+});
+
+test("a string error from n8n is still recorded", () => {
+  assert.equal(readEsp32Outcome({ error: "socket hang up" }).esp32Error, "socket hang up");
+});
+
+test("an unreadable response records no acceptance at all", () => {
+  for (const json of [{}, null, undefined, { accepted: "yes", status: 7 }]) {
+    const outcome = readEsp32Outcome(json);
+
+    assert.equal(outcome.esp32Accepted, null, JSON.stringify(json));
+    assert.equal(outcome.esp32Status, null, JSON.stringify(json));
+  }
 });

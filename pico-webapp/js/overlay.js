@@ -71,6 +71,16 @@ export function mapBoxToDisplay(box, source, container, fit = "contain") {
   };
 }
 
+// Whether a message should be read as a detection result. Shared by the HUD
+// (js/app.js) and the relay (relay/src/relay.mjs) so they always agree.
+export function hasDetectionFields(payload) {
+  return payload?.type === "detections"
+    || payload?.detections !== undefined
+    || payload?.boxes !== undefined
+    || payload?.bbox !== undefined
+    || payload?.box !== undefined;
+}
+
 export function parseDetectionPayload(rawPayload) {
   const payload = typeof rawPayload === "string" ? JSON.parse(rawPayload) : rawPayload;
 
@@ -130,6 +140,41 @@ export function parseDetectionPayload(rawPayload) {
     sessionId: frame.sessionId ?? payload.sessionId ?? null,
     sequence: asFiniteNumber(frame.sequence ?? payload.sequence),
     timestamp: payload.timestamp ?? null,
+    // The n8n inspection loop sends the Verdict as top-level `status` and, on
+    // a fail-closed reject, the cause as `reason` (n8n/lib/inspection-records.mjs).
+    verdict: typeof payload.status === "string" ? payload.status.toLowerCase() : null,
+    reason: typeof payload.reason === "string" && payload.reason.trim() ? payload.reason.trim() : null,
     detections
   };
+}
+
+const REJECT_STATUSES = new Set(["reject", "rejected"]);
+// Reasons that only restate the Verdict; any other reason explains a
+// fail-closed reject (model timeout, capture failure, ...) and is shown.
+const ROUTINE_REASONS = new Set(["defect_detected", "no_defect_detected"]);
+
+export function verdictKind(result) {
+  if (!result?.verdict) return null;
+  if (PASS_STATUSES.has(result.verdict)) return "pass";
+  if (REJECT_STATUSES.has(result.verdict)) return "reject";
+  return null;
+}
+
+// A reject with zero boxes (model timeout, dead camera) must not read like a
+// clean pass, so the Verdict and its cause lead the summary when present.
+export function describeDetectionResult(result, timeText) {
+  const count = result.detections.length;
+  const boxes = count === 0 ? "no detections" : `${count} detection${count === 1 ? "" : "s"}`;
+  const kind = verdictKind(result);
+
+  if (!kind) {
+    return count === 0 ? "AI reports no detections" : `${boxes} · ${timeText}`;
+  }
+
+  const parts = [kind === "pass" ? "Passed" : "Rejected"];
+  if (result.reason && !ROUTINE_REASONS.has(result.reason)) {
+    parts.push(result.reason.replace(/_/g, " "));
+  }
+  parts.push(boxes, timeText);
+  return parts.join(" · ");
 }

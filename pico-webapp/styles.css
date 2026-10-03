@@ -212,6 +212,16 @@ h2 {
   font-size: 0.82rem;
 }
 
+#detection-summary[data-verdict="reject"] {
+  color: var(--danger);
+  font-weight: 800;
+}
+
+#detection-summary[data-verdict="pass"] {
+  color: var(--accent);
+  font-weight: 800;
+}
+
 .toolbar-actions {
   display: flex;
   flex-wrap: wrap;

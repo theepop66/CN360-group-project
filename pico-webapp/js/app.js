@@ -1,4 +1,11 @@
-import { getCoveredImageRect, mapBoxToDisplay, parseDetectionPayload } from "./overlay.js";
+import {
+  describeDetectionResult,
+  getCoveredImageRect,
+  hasDetectionFields,
+  mapBoxToDisplay,
+  parseDetectionPayload,
+  verdictKind
+} from "./overlay.js";
 import { createDetectionOrderTracker } from "./detection-order.js";
 import { sendPrompt } from "./prompt.js";
 import { parseCameraMessage } from "./camera-message.js";
@@ -10,6 +17,14 @@ import { setMode, setServoAngle, runSweep, sendVerdict } from "./servo.js";
 
 const STORAGE_KEY = "cn360-hud-connections";
 const defaults = window.HUD_CONFIG ?? {};
+// Settings saved before the relay existed hold these unresolvable
+// placeholders ("Save & reconnect" stores every field), which would otherwise
+// shadow the working defaults forever on that headset. Declared before
+// loadConfig() first runs below.
+const LEGACY_PLACEHOLDER_URLS = new Set([
+  "ws://n8n-gateway.local:8081/detections",
+  "http://n8n.local:5678/webhook/detection-prompt"
+]);
 
 const elements = {
   appShell: document.querySelector(".app-shell"),
@@ -60,6 +75,9 @@ const promptFormHome = {
 let config = loadConfig();
 let socket = null;
 let reconnectTimer = null;
+let socketWatchdogTimer = null;
+let socketHeartbeatMs = 0;
+const DEFAULT_SOCKET_HEARTBEAT_MS = 10_000;
 let streamRetryTimer = null;
 let healthPollTimer = null;
 let healthRequestController = null;
@@ -84,6 +102,10 @@ let currentViewMode = VIEW_MODES.FLAT;
 let activeXrController = null;
 let vrRenderLoopHandle = null;
 
+function currentSavedUrl(value) {
+  return LEGACY_PLACEHOLDER_URLS.has(value) ? undefined : value;
+}
+
 function loadConfig() {
   let saved = {};
   try {
@@ -97,8 +119,8 @@ function loadConfig() {
     cameraSource: cameraSource === "remote" ? "remote" : "local",
     streamUrl: saved.streamUrl ?? defaults.raspberryPiStreamUrl ?? "",
     healthUrl: saved.healthUrl ?? defaults.raspberryPiHealthUrl ?? "",
-    websocketUrl: saved.websocketUrl ?? defaults.n8nDetectionWebSocketUrl ?? "",
-    promptUrl: saved.promptUrl ?? defaults.n8nPromptWebhookUrl ?? "",
+    websocketUrl: currentSavedUrl(saved.websocketUrl) ?? defaults.n8nDetectionWebSocketUrl ?? "",
+    promptUrl: currentSavedUrl(saved.promptUrl) ?? defaults.n8nPromptWebhookUrl ?? "",
     servoUrl: saved.servoUrl ?? defaults.controlUnitServoUrl ?? "",
     modeUrl: saved.modeUrl ?? defaults.controlUnitModeUrl ?? "",
     reconnectDelayMs: Number(defaults.reconnectDelayMs) || 2000,
@@ -136,7 +158,11 @@ function hideStaleVideo(message = "Waiting for a camera source…") {
   elements.webcam.classList.add("video-feed--hidden");
   elements.canvas.classList.add("video-feed--hidden");
   setPlaceholder(message);
-  clearDetections();
+  // Boxes belong to a frame that is no longer visible, so they go. The
+  // verdict text stays until detectionTtlMs: a camera failure is exactly
+  // when the operator needs to read why the last item was rejected.
+  latestResult = null;
+  drawDetections();
 }
 
 function revealFreshVideo(mediaElement = elements.stream) {
@@ -371,6 +397,14 @@ function connectCamera() {
 }
 
 function applyRemoteCameraSource(command) {
+  // Re-receiving the camera that is already showing is not a camera switch:
+  // keep the stream, the current verdict and the frame-ordering state.
+  if (
+    config.cameraSource === "remote" &&
+    config.streamUrl === command.streamUrl &&
+    config.healthUrl === command.healthUrl
+  ) return;
+
   config = {
     ...config,
     cameraSource: "remote",
@@ -582,8 +616,34 @@ async function pollCameraHealth(generation) {
   }
 }
 
+// A half-open TCP connection never fires "close", so a HUD could sit on a
+// dead socket forever. Once the gateway proves it sends heartbeats (the relay
+// advertises its interval on connect), three silent intervals mean the
+// connection is gone and it is replaced. Gateways without heartbeats are
+// never watched, so they are not reconnected on a timer.
+function noteSocketActivity(payload, generation) {
+  const advertised = Number(payload?.heartbeatIntervalMs);
+  if (payload?.type === "connected" && Number.isFinite(advertised) && advertised > 0) {
+    socketHeartbeatMs = advertised;
+  } else if (payload?.type === "heartbeat" && socketHeartbeatMs === 0) {
+    socketHeartbeatMs = DEFAULT_SOCKET_HEARTBEAT_MS;
+  }
+  if (socketHeartbeatMs === 0) return;
+
+  window.clearTimeout(socketWatchdogTimer);
+  socketWatchdogTimer = window.setTimeout(() => {
+    if (generation !== connectionGeneration) return;
+    connectWebSocket();
+    // After connectWebSocket(), which sets "connecting", so the operator can
+    // tell a stall-triggered reconnect from an ordinary one.
+    setStatus(elements.socketStatus, "AI data: connection stalled, reconnecting", "busy");
+  }, socketHeartbeatMs * 3);
+}
+
 function connectWebSocket() {
   window.clearTimeout(reconnectTimer);
+  window.clearTimeout(socketWatchdogTimer);
+  socketHeartbeatMs = 0;
   connectionGeneration += 1;
   const generation = connectionGeneration;
 
@@ -615,6 +675,7 @@ function connectWebSocket() {
 
     try {
       const payload = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+      noteSocketActivity(payload, generation);
       const cameraMessage = parseCameraMessage(payload);
 
       if (cameraMessage?.kind === "source") {
@@ -623,11 +684,7 @@ function connectWebSocket() {
         return;
       }
 
-      const hasDetectionData = payload?.type === "detections"
-        || payload?.detections !== undefined
-        || payload?.boxes !== undefined
-        || payload?.bbox !== undefined
-        || payload?.box !== undefined;
+      const hasDetectionData = hasDetectionFields(payload);
       if (cameraMessage?.kind === "frame" && !hasDetectionData) {
         if (config.cameraSource === "remote") {
           showN8nFrame(cameraMessage.imageUrl, {
@@ -647,11 +704,12 @@ function connectWebSocket() {
       }
 
       latestResult = parsed;
-      const count = parsed.detections.length;
-      const eventTime = parsed.timestamp ? new Date(parsed.timestamp) : new Date();
-      setSummary(count === 0
-        ? "AI reports no detections"
-        : `${count} detection${count === 1 ? "" : "s"} · ${eventTime.toLocaleTimeString()}`);
+      const parsedTime = parsed.timestamp ? new Date(parsed.timestamp) : null;
+      const eventTime = parsedTime && !Number.isNaN(parsedTime.getTime()) ? parsedTime : new Date();
+      setSummary(
+        describeDetectionResult(parsed, eventTime.toLocaleTimeString()),
+        verdictKind(parsed)
+      );
       setStatus(elements.socketStatus, "AI data: receiving", "ok");
 
       if (cameraMessage?.kind === "frame" && config.cameraSource === "remote") {
@@ -680,6 +738,7 @@ function connectWebSocket() {
 
   socket.addEventListener("close", () => {
     if (generation !== connectionGeneration) return;
+    window.clearTimeout(socketWatchdogTimer);
     setStatus(elements.socketStatus, "AI data: reconnecting", "busy");
     scheduleReconnect(generation);
   });
@@ -692,8 +751,13 @@ function scheduleReconnect(generation) {
   }, config.reconnectDelayMs);
 }
 
-function setSummary(text) {
+function setSummary(text, verdict = null) {
   elements.summary.textContent = text;
+  if (verdict) {
+    elements.summary.dataset.verdict = verdict;
+  } else {
+    delete elements.summary.dataset.verdict;
+  }
   activeXrController?.setSummaryText?.(text);
 }
 
@@ -851,6 +915,7 @@ async function enterViewMode(targetMode) {
         compositeCanvasId: elements.vrCompositeCanvas.id,
         onEnd: () => { void enterViewMode(VIEW_MODES.FLAT); }
       });
+      activeXrController.setSummaryText(elements.summary.textContent);
       startVrRenderLoop();
       currentViewMode = VIEW_MODES.VR;
       setModeButtonsState(VIEW_MODES.VR);
@@ -1053,10 +1118,21 @@ if ("ResizeObserver" in window) {
 
 window.addEventListener("pagehide", () => {
   connectionGeneration += 1;
+  window.clearTimeout(reconnectTimer);
+  window.clearTimeout(socketWatchdogTimer);
   socket?.close();
   stopLocalWebcam();
   stopRemoteStream();
   stopHealthPolling();
+  setStatus(elements.socketStatus, "AI data: paused", "idle");
+});
+
+// Restored from the back/forward cache (e.g. Back after opening the relay's
+// /health): pagehide tore everything down, so bring it back up.
+window.addEventListener("pageshow", (event) => {
+  if (!event.persisted) return;
+  connectCamera();
+  connectWebSocket();
 });
 
 populateSettings();

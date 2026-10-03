@@ -1,0 +1,25 @@
+[Unit]
+Description=CN360 detection relay (n8n HTTP ingest -> HUD WebSocket)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=cn360
+Group=cn360
+# The relay imports the HUD's parsers from ../pico-webapp, so it runs from a
+# full repository checkout rather than a copy of relay/ on its own.
+WorkingDirectory=/opt/cn360/CN360-group-project/relay
+EnvironmentFile=-/etc/cn360-relay.env
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node src/main.mjs
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=10
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

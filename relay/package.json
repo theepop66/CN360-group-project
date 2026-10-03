@@ -1,0 +1,17 @@
+{
+  "name": "cn360-detection-relay",
+  "version": "0.1.0",
+  "private": true,
+  "description": "HTTP-to-WebSocket relay: n8n POSTs detection events, Pico 4 HUDs receive them over WebSocket.",
+  "type": "module",
+  "engines": {
+    "node": ">=18.17"
+  },
+  "scripts": {
+    "start": "node src/main.mjs",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "ws": "^8.22.0"
+  }
+}

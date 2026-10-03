@@ -27,7 +27,7 @@ goes missing, so this list cannot drift away from the workflows.
 | `REPLACE_MODEL_HOST:8000` | The PC running the model server | **Not `0.0.0.0`** เน€เธยเนยเธเนโฌย that is a bind address, not a connectable target. Use the LAN IP, `127.0.0.1`, or `host.docker.internal` if n8n runs in Docker. |
 | `REPLACE_PI_HOST:8000` | The Raspberry Pi | Must be reachable from the n8n host. |
 | `REPLACE_ESP32_HOST` | The ESP32 | Its static IP on the line. |
-| `REPLACE_RELAY_HOST:8081` | The detection relay | See "The HUD overlay is not done yet". |
+| `REPLACE_RELAY_HOST:8081` | The machine running `relay/` | See "The HUD overlay and the relay". |
 | `REPLACE_SUPABASE_HOST` | `https://<project-ref>.supabase.co` | |
 | `REPLACE_SUPABASE_SERVICE_ROLE_KEY` | The service-role key | Prefer an n8n HTTP Header Auth credential instead of pasting it here. |
 | `REPLACE_SNAPSHOT_BUCKET` | A **public** bucket name | Create the bucket first; the stored `frame_url` points at `/storage/v1/object/public/...`. |
@@ -150,13 +150,20 @@ rather than being silently applied.
 That is the fail-safe working, not a workflow bug เน€เธยเนยเธเนโฌย but it is a line-stopping
 condition until model latency is fixed.
 
-## The HUD overlay is not done yet
+## The HUD overlay and the relay
 
-Stock n8n cannot broadcast to a WebSocket, so the workflow POSTs to a relay's
-HTTP ingest (`/detections`) and that relay fans out to
-`ws://n8n-gateway.local:8081/detections`. The relay does not exist yet; the
-broadcast is a fire-and-forget no-op until it does. The ingest path is a
-proposal and needs confirming with whoever builds it.
+Stock n8n cannot broadcast to a WebSocket, so the workflow POSTs to the relay's
+HTTP ingest and the relay fans out to every connected HUD. The relay lives in
+`relay/` (see `relay/README.md`). The ingest path is confirmed:
+`POST http://REPLACE_RELAY_HOST:8081/detections`, the same path the HUD opens as
+a WebSocket.
+
+The relay validates each body with the HUD's own parser and answers `400` for a
+message the HUD would drop, so a bad payload fails visibly in the n8n execution
+instead of as an empty overlay. `broadcast-hud` continues on error, so a relay
+outage never blocks the verdict path. If `RELAY_INGEST_TOKEN` is set on the
+relay, add `Authorization: Bearer <token>` to `broadcast-hud` from the
+credential store.
 
 The payload itself is verified: the tests feed it to the HUD's real
 `parseDetectionPayload` and assert a box round-trips to the same pixel

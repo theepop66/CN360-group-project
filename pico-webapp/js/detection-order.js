@@ -48,12 +48,24 @@ export function shouldAcceptDetection(
   return true;
 }
 
+// A verdict with no frame identity at all is a fail-closed result decided
+// without a frame (the n8n loop sends one when the Pi capture fails). It
+// cannot be ordered against captured frames, and dropping it would hide the
+// whole outage, so it is shown without becoming the ordering reference.
+function isUnorderedVerdict(candidate) {
+  return Boolean(candidate.verdict)
+    && !sessionId(candidate.sessionId)
+    && !Number.isFinite(candidate.sequence)
+    && timestampMillis(candidate.timestamp) === null;
+}
+
 export function createDetectionOrderTracker() {
   let latest = null;
   const retiredSessionIds = new Set();
 
   return {
     accept(candidate) {
+      if (isUnorderedVerdict(candidate)) return true;
       if (!shouldAcceptDetection(candidate, latest, retiredSessionIds)) {
         return false;
       }

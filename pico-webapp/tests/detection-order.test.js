@@ -114,3 +114,23 @@ test("keeps ordering state across a transport reconnect", () => {
 test("keeps arrival order when the producer supplies no ordering metadata", () => {
   assert.equal(shouldAcceptDetection({}, {}), true);
 });
+
+test("shows a frame-less fail-closed reject after session-aware results without losing ordering", () => {
+  const tracker = createDetectionOrderTracker();
+  assert.equal(tracker.accept({ sessionId: "pi-A", sequence: 5, timestamp: "2026-08-23T12:00:05Z", verdict: "pass" }), true);
+
+  const captureFailed = { sessionId: null, sequence: null, timestamp: null, verdict: "reject" };
+  assert.equal(tracker.accept(captureFailed), true);
+  assert.equal(tracker.accept(captureFailed), true);
+
+  // The capture failure did not become the reference: an older frame is
+  // still refused and a newer one is still accepted.
+  assert.equal(tracker.accept({ sessionId: "pi-A", sequence: 4, timestamp: "2026-08-23T12:00:04Z", verdict: "reject" }), false);
+  assert.equal(tracker.accept({ sessionId: "pi-A", sequence: 6, timestamp: "2026-08-23T12:00:06Z", verdict: "pass" }), true);
+});
+
+test("an identity-less message without a verdict is still treated as legacy", () => {
+  const tracker = createDetectionOrderTracker();
+  assert.equal(tracker.accept({ sessionId: "pi-A", sequence: 5 }), true);
+  assert.equal(tracker.accept({ sessionId: null, sequence: null, timestamp: null }), false);
+});

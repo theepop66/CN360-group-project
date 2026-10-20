@@ -14,7 +14,7 @@ Ticket จาก [สเปก](../../docs/specs/local-model-n8n-defect-output.m
 | 02 | โค้ดและ fixture/runtime contract ผ่าน; real Pi/ESP32 deployment ยังค้าง |
 | 03 | Prompt contract และ real-model readback ผ่าน; physical Pico/DB แยกตรวจรับ |
 | 04 | Resident inference และ timeout isolation ทำงานแล้ว |
-| 05 | CPU benchmark ผ่าน; CUDA Toolkit ไม่มี จึงยังไม่ผ่าน GPU evaluation |
+| 05 | q8 CUDA0 evaluation เสร็จ: p50 1.114 s, ประมาณ 20.6 เท่าจาก CPU; ยังไม่ผ่าน production deadline |
 | 06 | มี fixture/direct-model evidence; real devices และ automatic sorting ยังไม่ผ่าน |
 
 | Ticket | สิ่งที่ส่งมอบ | Blocked by |

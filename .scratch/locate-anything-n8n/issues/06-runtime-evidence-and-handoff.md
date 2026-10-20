@@ -21,4 +21,4 @@
 - [x] มี automated regression ที่ primary webhook boundary ครบสัญญาที่แก้ไข และแยกผล automated fixture, real-service execution และ hardware evidence ไว้ให้ตรวจย้อนหลังได้
 
 
-**Implementation evidence:** เก็บ CPU baseline/resident, fixture workflow executions และ real-model HTTP จาก n8n container แล้ว; real Pi/ESP32/DB/relay และ automatic sorting ยังไม่ผ่านการตรวจรับ งาน #24/#25 ยังคงเป็น dependency
+**Implementation evidence:** เก็บ CPU/CUDA baseline/resident, fixture workflow executions และ real-model HTTP จาก n8n container แล้ว; CUDA resident p50 1.114 s แต่คำขอแรก 1.285 s และยังพบ model_timeout ที่ deadline เดิม ดู docs/evidence/locate-anything-cuda-2026-10-20.md; real Pi/ESP32/DB/relay และ automatic sorting ยังไม่ผ่านการตรวจรับ งาน #24/#25 ยังคงเป็น dependency

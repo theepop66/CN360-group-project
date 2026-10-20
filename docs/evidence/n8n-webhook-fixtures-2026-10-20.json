@@ -1,0 +1,132 @@
+{
+  "runtime": "n8n 2.6.4 disposable server",
+  "boundary": "Real public HTTP webhooks, shipped triggers and response nodes, HTTP fixtures for external services, no real hardware",
+  "reports": [
+    {
+      "scenario": "pass",
+      "path": "inspect-now",
+      "httpStatus": 200,
+      "body": {
+        "status": "success",
+        "result": "pass"
+      },
+      "observed": [
+        {
+          "stage": "model",
+          "validFile": true,
+          "validPrompt": true
+        },
+        {
+          "stage": "actuator-fixture",
+          "action": "pass"
+        }
+      ]
+    },
+    {
+      "scenario": "reject",
+      "path": "inspect-now",
+      "httpStatus": 200,
+      "body": {
+        "status": "success",
+        "result": "reject"
+      },
+      "observed": [
+        {
+          "stage": "model",
+          "validFile": true,
+          "validPrompt": true
+        },
+        {
+          "stage": "actuator-fixture",
+          "action": "reject"
+        }
+      ]
+    },
+    {
+      "scenario": "model-error",
+      "path": "inspect-now",
+      "httpStatus": 200,
+      "body": {
+        "status": "error",
+        "result": "error",
+        "reason": "model_error_status"
+      },
+      "observed": [
+        {
+          "stage": "model",
+          "validFile": true,
+          "validPrompt": true
+        },
+        {
+          "stage": "actuator-fixture",
+          "action": "reject"
+        }
+      ]
+    },
+    {
+      "scenario": "timeout",
+      "path": "inspect-now",
+      "httpStatus": 200,
+      "body": {
+        "status": "error",
+        "result": "error",
+        "reason": "model_timeout"
+      },
+      "observed": [
+        {
+          "stage": "model",
+          "validFile": true,
+          "validPrompt": true
+        },
+        {
+          "stage": "actuator-fixture",
+          "action": "reject"
+        }
+      ]
+    },
+    {
+      "scenario": "pass",
+      "path": "item-detected",
+      "httpStatus": 200,
+      "body": {
+        "status": "success",
+        "result": "pass"
+      },
+      "observed": [
+        {
+          "stage": "model",
+          "validFile": true,
+          "validPrompt": true
+        },
+        {
+          "stage": "actuator-fixture",
+          "action": "pass"
+        }
+      ]
+    },
+    {
+      "scenario": "prompt-ok",
+      "httpStatus": 200,
+      "body": {
+        "status": "updated",
+        "inspectionTarget": "hole"
+      }
+    },
+    {
+      "scenario": "prompt-blank",
+      "httpStatus": 400,
+      "body": {
+        "status": "rejected",
+        "reason": "empty_inspection_target"
+      }
+    },
+    {
+      "scenario": "prompt-error",
+      "httpStatus": 502,
+      "body": {
+        "status": "error",
+        "reason": "model_prompt_update_failed"
+      }
+    }
+  ]
+}

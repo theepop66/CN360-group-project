@@ -1,0 +1,47 @@
+{
+  "health": {
+    "http_status": 200,
+    "body": {
+      "status": "ok",
+      "backend": "cpu",
+      "busy": false
+    }
+  },
+  "set": {
+    "http_status": 200,
+    "body": {
+      "status": "updated",
+      "current_prompt": "Locate all the instances that matches the following description: cat</c>remote."
+    }
+  },
+  "get": {
+    "http_status": 200,
+    "body": {
+      "status": "ok",
+      "current_prompt": "Locate all the instances that matches the following description: cat</c>remote."
+    }
+  },
+  "blank": {
+    "http_status": 400,
+    "body": {
+      "status": "error",
+      "reason": "empty_inspection_target"
+    }
+  },
+  "prediction": {
+    "http_status": 504,
+    "body": {
+      "status": "error",
+      "reason": "model_timeout"
+    },
+    "http_ms": 1130.861753
+  },
+  "after": {
+    "http_status": 503,
+    "body": {
+      "status": "error",
+      "reason": "model_timeout"
+    }
+  },
+  "scope": "Direct HTTP from existing n8n Docker runtime; no workflow activation, Pi, actuator, DB, or relay access"
+}

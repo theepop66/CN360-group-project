@@ -1,0 +1,18 @@
+cmake_minimum_required(VERSION 3.24)
+project(cn360_model_bridge LANGUAGES C CXX)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(LOCATE_ANYTHING_SOURCE "" CACHE PATH "Existing locate-anything.cpp checkout with submodules")
+if(NOT EXISTS "${LOCATE_ANYTHING_SOURCE}/src/engine.cpp")
+  message(FATAL_ERROR "Set LOCATE_ANYTHING_SOURCE to the upstream checkout")
+endif()
+set(LA_BUILD_CLI OFF CACHE BOOL "" FORCE)
+set(LA_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(LA_SHARED OFF CACHE BOOL "" FORCE)
+add_subdirectory("${LOCATE_ANYTHING_SOURCE}" upstream EXCLUDE_FROM_ALL)
+# The upstream project currently uses CMAKE_SOURCE_DIR for its include paths.
+target_include_directories(locate_anything PUBLIC "${LOCATE_ANYTHING_SOURCE}/include"
+  PRIVATE "${LOCATE_ANYTHING_SOURCE}/src" "${LOCATE_ANYTHING_SOURCE}/third_party" "${LOCATE_ANYTHING_SOURCE}/third_party/stb")
+add_library(cn360_model SHARED bridge.cpp)
+target_include_directories(cn360_model PRIVATE "${LOCATE_ANYTHING_SOURCE}/src")
+target_link_libraries(cn360_model PRIVATE locate_anything)

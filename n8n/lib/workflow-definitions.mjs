@@ -44,7 +44,7 @@ export function sharedLogicSource() {
     .trim();
 }
 
-const MODEL_BASE = `https://${PLACEHOLDERS.modelHost}`;
+const MODEL_BASE = `http://${PLACEHOLDERS.modelHost}`;
 const PI_CAPTURE = `http://${PLACEHOLDERS.piHost}/capture`;
 const ESP32_VERDICT = `http://${PLACEHOLDERS.esp32Host}/verdict`;
 const RELAY_DETECTIONS = `http://${PLACEHOLDERS.relayHost}/detections`;
@@ -127,7 +127,7 @@ const source = $('trigger-item-detected').isExecuted
   : $('trigger-inspect-now').isExecuted
     ? 'manual'
     : 'schedule';
-const incoming = $input.first().json ?? {};
+const incoming = $input.first().json.body ?? $input.first().json ?? {};
 return [{ json: {
   source,
   requestedAt: new Date().toISOString(),
@@ -240,8 +240,13 @@ return [{ json: { logRow: buildSystemLogRow({
 `;
 
   const captureEsp32Response = `
-const decided = $input.first().json;
+const decided = $('duplicate-guard').first().json;
 return [{ json: { ...decided, esp32: readEsp32Outcome($('post-verdict').first().json) } }];
+`;
+
+  const buildInspectionResponseNode = `
+const carried = $input.first().json;
+return [{ json: { ...carried, inspectionResponse: buildInspectionResponse(carried.decision) } }];
 `;
 
   const buildSnapshotUrl = `
@@ -345,7 +350,7 @@ return [{ json: { logRow: buildSystemLogRow({
         parameters: {
           httpMethod: "POST",
           path: "item-detected",
-          responseMode: "lastNode",
+          responseMode: "responseNode",
           options: {}
         },
         type: "n8n-nodes-base.webhook",
@@ -359,7 +364,7 @@ return [{ json: { logRow: buildSystemLogRow({
         parameters: {
           httpMethod: "POST",
           path: "inspect-now",
-          responseMode: "lastNode",
+          responseMode: "responseNode",
           options: {}
         },
         type: "n8n-nodes-base.webhook",
@@ -422,7 +427,7 @@ return [{ json: { logRow: buildSystemLogRow({
         contentType: "multipart-form-data",
         bodyParameters: {
           parameters: [
-            { parameterType: "formBinaryData", name: "image", inputDataFieldName: "image" },
+            { parameterType: "formBinaryData", name: "file", inputDataFieldName: "image" },
             {
               parameterType: "formData",
               name: "prompt",
@@ -457,6 +462,19 @@ return [{ json: { logRow: buildSystemLogRow({
         }
       }),
       codeNode("capture-esp32-response", "capture-esp32-response", [2240, 160], captureEsp32Response),
+      codeNode("build-inspection-response", "build-inspection-response", [2350, 160], buildInspectionResponseNode),
+      {
+        parameters: {
+          respondWith: "json",
+          responseBody: "={{ JSON.stringify($json.inspectionResponse) }}",
+          options: {}
+        },
+        type: "n8n-nodes-base.respondToWebhook",
+        typeVersion: 1.1,
+        position: [2460, 160],
+        name: "respond-inspection",
+        id: "cn360-respond-inspection"
+      },
       {
         parameters: {
           conditions: {
@@ -557,7 +575,9 @@ return [{ json: { logRow: buildSystemLogRow({
       // what lets its auto-pass fallback fire on a real item.
       link("duplicate-guard", "post-verdict"),
       link("post-verdict", "capture-esp32-response"),
-      link("capture-esp32-response", "duplicate-or-new"),
+      link("capture-esp32-response", "build-inspection-response"),
+      link("build-inspection-response", "respond-inspection"),
+      link("respond-inspection", "duplicate-or-new"),
       branch("duplicate-or-new", ["build-duplicate-log", "build-snapshot-url"]),
       link("build-duplicate-log", "log-duplicate"),
       link("log-duplicate", "done-duplicate"),
@@ -596,7 +616,8 @@ return [{ json: { promptRow: buildPromptHistoryRow({
 }) } }];
 `;
   const buildInstruction = `
-const target = $input.first().json?.prompt;
+const incoming = $input.first().json ?? {};
+const target = incoming.body?.prompt ?? incoming.prompt;
 const modelInstruction = buildModelInstruction(target);
 return [{ json: {
   inspectionTarget: typeof target === 'string' ? target.trim() : null,
@@ -612,7 +633,7 @@ return [{ json: {
         parameters: {
           httpMethod: "POST",
           path: "detection-prompt",
-          responseMode: "lastNode",
+          responseMode: "responseNode",
           options: {}
         },
         type: "n8n-nodes-base.webhook",
@@ -660,6 +681,38 @@ return [{ json: {
           response: { response: { fullResponse: true } }
         }
       }),
+      {
+        parameters: {
+          conditions: {
+            options: { caseSensitive: true, leftValue: "", typeValidation: "strict", version: 2 },
+            conditions: [{
+              id: "prompt-applied",
+              leftValue: "={{ !$json.error && $json.statusCode === 200 && $json.body?.status === 'updated' && $json.body?.current_prompt === $('build-instruction').first().json.modelInstruction }}",
+              rightValue: true,
+              operator: { type: "boolean", operation: "true", singleValue: true }
+            }],
+            combinator: "and"
+          },
+          options: {}
+        },
+        type: "n8n-nodes-base.if",
+        typeVersion: 2.2,
+        position: [390, -100],
+        name: "prompt-was-applied",
+        id: "cn360-prompt-applied"
+      },
+      {
+        parameters: {
+          respondWith: "json",
+          responseBody: "={{ JSON.stringify({ status: 'error', reason: 'model_prompt_update_failed' }) }}",
+          options: { responseCode: 502 }
+        },
+        type: "n8n-nodes-base.respondToWebhook",
+        typeVersion: 1.1,
+        position: [610, 100],
+        name: "respond-model-error",
+        id: "cn360-respond-model-error"
+      },
       codeNode("build-prompt-record", "build-prompt-record", [500, -100], buildPromptRecord),
       supabaseTable(
         "insert-prompt-history",
@@ -682,9 +735,8 @@ return [{ json: {
       {
         parameters: {
           respondWith: "json",
-          responseCode: 400,
           responseBody: "={{ JSON.stringify({ status: 'rejected', reason: 'empty_inspection_target' }) }}",
-          options: {}
+          options: { responseCode: 400 }
         },
         type: "n8n-nodes-base.respondToWebhook",
         typeVersion: 1.1,
@@ -697,9 +749,11 @@ return [{ json: {
       link("trigger-detection-prompt", "build-instruction"),
       link("build-instruction", "instruction-is-usable"),
       branch("instruction-is-usable", ["set-model-prompt", "respond-rejected"]),
-      link("set-model-prompt", "build-prompt-record"),
+      link("set-model-prompt", "prompt-was-applied"),
+      branch("prompt-was-applied", ["respond-ok", "respond-model-error"]),
+      link("respond-ok", "build-prompt-record"),
+      link("respond-model-error", "build-prompt-record"),
       link("build-prompt-record", "insert-prompt-history"),
-      link("insert-prompt-history", "respond-ok")
     ),
     settings: { executionOrder: "v1" },
     active: false,

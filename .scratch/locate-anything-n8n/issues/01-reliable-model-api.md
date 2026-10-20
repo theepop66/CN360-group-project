@@ -6,6 +6,14 @@
 
 **Status:** implemented
 
+**Updated:** 2026-10-20 (Asia/Bangkok)
+
+**Acceptance scope:** Model API/native bridge ผ่านทั้ง CPU และ CUDA กับโมเดลจริง รวมผลมีกรอบ ผลว่างสำเร็จ และ native decode error; ไม่สร้าง annotated result image
+
+**Remaining:** ไม่มีงานค้างในขอบเขต adapter ใบนี้; real-device integration และ production deadline ตรวจรับใน 06
+
+**Evidence:** [implementation summary](../../../docs/evidence/locate-anything-local-2026-10-20.md), [real native CPU](../../../docs/evidence/native-model-boundary-2026-10-20.json), [real native CUDA](../../../docs/evidence/native-cuda-boundary-2026-10-20.json)
+
 - [x] มีซอร์ส adapter และวิธีติดตั้ง/ตั้งค่า/เปิดบริการที่ทำซ้ำได้จากโปรเจกต์ โดยอ้างอิงโมเดลและ executable/library ที่ติดตั้งแยกผ่าน configuration ไม่รวม weights หรือ build outputs ไว้ใน repository
 - [x] ผู้ดูแลทดสอบ POST `/predict` ด้วย multipart ช่อง `file` และ `prompt` ผ่าน HTTP ได้จริง ผลสำเร็จคง `status`, `prompt_used` และ Detection geometry แบบพิกัด pixel ของภาพที่อัปโหลด
 - [x] คง endpoint สำหรับอ่านและเปลี่ยน global prompt เพื่อให้ workflow เดิมเรียกต่อได้

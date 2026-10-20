@@ -6,6 +6,14 @@
 
 **Status:** implemented — physical Pico/database acceptance separate
 
+**Updated:** 2026-10-20 (Asia/Bangkok)
+
+**Acceptance scope:** prompt webhook/body envelope และ valid/blank/error ผ่าน fixtures; n8n container จริง set/readback กับ model server บน CPU/CUDA ได้ โดย instruction ตรงกันและ blank ถูกปฏิเสธ
+
+**Remaining:** ตรวจการส่งจาก Pico จริง, relay และ Supabase Prompt History persistence ใน deployment acceptance; ใบนี้ไม่รับรองผลของอุปกรณ์หรือฐานข้อมูลจาก fixtures
+
+**Evidence:** [public prompt webhook fixtures](../../../docs/evidence/n8n-webhook-fixtures-2026-10-20.json), [CPU prompt probe](../../../docs/evidence/n8n-real-model-probe-2026-10-20.json), [CUDA prompt probe](../../../docs/evidence/n8n-cuda-probe-2026-10-20.json)
+
 - [x] ตรวจ runtime envelope ของ Webhook request จริง และอ่าน Inspection Target จาก body ที่ถูกต้อง ไม่อาศัยเฉพาะ fixture ที่วาง prompt ไว้ระดับบนสุด
 - [x] ใช้ canonical Model Instruction template เดิมและปฏิเสธ blank/whitespace input โดยไม่เปลี่ยน global prompt ที่ใช้งานอยู่
 - [x] เรียก prompt update และ readback กับ Model API ได้จาก n8n runtime ที่ใช้งานจริง; การอัปเดตล้มเหลวหรือบริการเข้าไม่ถึงไม่ตอบ success ให้ผู้เรียก

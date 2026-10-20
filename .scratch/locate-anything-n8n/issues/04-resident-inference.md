@@ -6,6 +6,14 @@
 
 **Status:** implemented
 
+**Updated:** 2026-10-20 (Asia/Bangkok)
+
+**Acceptance scope:** โมเดลจริง reuse context ผ่าน HTTP ได้ทั้ง CPU/CUDA; positive → empty → empty → native error ยังแยกผลถูกต้อง และ timeout ทำให้ worker ไม่พร้อมใช้งานต่อ การทดสอบ Python ล่าสุดผ่าน 8 รายการพร้อม strict mypy
+
+**Remaining:** ไม่มีงานค้างในขอบเขต resident lifecycle ใบนี้; CUDA resident p50 1.114 s แต่ first prediction 1.285 s และ n8n deadline probe ยัง timeout จึงส่งต่อ production timing ไป 06/#24
+
+**Evidence:** [CPU comparison](../../../docs/evidence/locate-anything-cpu-2026-10-20.json), [CUDA comparison](../../../docs/evidence/locate-anything-cuda-q8-2026-10-20.json), [CUDA lifecycle/error regression](../../../docs/evidence/native-cuda-boundary-2026-10-20.json), [timeout/readiness probe](../../../docs/evidence/n8n-cuda-probe-2026-10-20.json)
+
 - [x] ใช้ engine context ที่โหลดเมื่อเริ่มบริการผ่าน library interface หรือ persistent worker ที่เทียบเท่า และ reuse สำหรับภาพถัดไป ไม่มีการเปิด inference CLI หรือโหลด weights ต่อ Inspection
 - [x] คง public prediction/prompt contract และ explicit engine-failure semantics จาก 01 เพื่อให้ผู้เรียกเดิมใช้งานต่อได้
 - [x] ไม่เปลี่ยนโมเดลเป็น classifier หรือบังคับให้ LocateAnything ตอบคำตัดสินโดยตรง; n8n ยังคำนวณผล `pass` / `reject` / `error` จากผลตรวจและ failure ตามสัญญาเดิม

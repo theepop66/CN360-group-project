@@ -6,6 +6,14 @@
 
 **Status:** implemented — real Pi/ESP32 deployment acceptance pending
 
+**Updated:** 2026-10-20 (Asia/Bangkok)
+
+**Acceptance scope:** โค้ด/contract ของ compact response ผ่าน public n8n webhooks ด้วย HTTP fixtures; n8n container จริงเข้าถึง CPU/CUDA model health/prompt/prediction ได้ โดย prediction ภายใต้ production deadline ยังเป็น timeout
+
+**Remaining:** ตรวจ capture จาก Pi และ HTTP acceptance ของ ESP32 จริง พร้อม Frame Context และ configuration จริงใน 06; fixture success ยังไม่ใช่ successful real-device Inspection
+
+**Evidence:** [public webhook fixtures](../../../docs/evidence/n8n-webhook-fixtures-2026-10-20.json), [workflow fixtures](../../../docs/evidence/n8n-runtime-fixtures-2026-10-20.json), [actual n8n → CUDA](../../../docs/evidence/n8n-cuda-probe-2026-10-20.json)
+
 - [x] ตรวจวิธีรัน n8n จริงว่าอยู่บน Windows โดยตรงหรือ Docker แล้วกำหนด model base URL ที่เข้าถึงได้จาก runtime นั้น ไม่อนุมานจากการเปิดหน้า editor บน localhost
 - [x] Model URLs รวม prediction, prompt และ health ใช้ scheme และ host ที่ตรงกับบริการจริง; แบบ local ปัจจุบันใช้ HTTP และไม่ใช้ bind address เป็นปลายทาง
 - [x] ใช้ ingestion หลักแบบ n8n pull capture จาก Pi เพียงทางเดียวในงานนี้ และส่ง multipart ชื่อ `file` ให้ API ได้ โดยไม่สับสนกับ binary property ภายใน n8n ที่ชื่อ `image`
@@ -20,4 +28,4 @@
 - [x] dependencies ภายนอก เช่น database/relay ใช้ fixture ใน regression ได้โดยติดป้ายชัดเจน ไม่อ้างว่าการผ่าน fixture พิสูจน์ persistence หรือ HUD delivery จริง และเก็บ runtime configuration/credentials ออกจาก shared exports
 
 
-**Implementation evidence:** ผ่าน automated contract tests และ HTTP fixtures ใน n8n จริง; การเชื่อมโมเดลจาก n8n container จริงผ่าน แต่ CPU ไม่ทัน budget ยังไม่ได้ใช้ Pi/ESP32 จริง
+**Implementation evidence:** ผ่าน automated contract tests และ HTTP fixtures ใน n8n จริง; การเชื่อม CPU/CUDA model จาก n8n container จริงผ่าน แต่ยังพบ model_timeout ที่ deadline เดิมบน CUDA และยังไม่ได้ใช้ Pi/ESP32 จริง

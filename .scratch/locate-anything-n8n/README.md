@@ -8,14 +8,22 @@ Ticket จาก [สเปก](../../docs/specs/local-model-n8n-defect-output.m
 
 เลข 01–06 เป็นหมายเลข local เท่านั้น ไม่ใช่เลข GitHub issue สรุปผลและข้อจำกัดอยู่ใน [implementation evidence](../../docs/evidence/locate-anything-local-2026-10-20.md)
 
-| Ticket | สถานะ implementation |
-| --- | --- |
-| 01 | Model API/native bridge และ real-model smoke ทำงานแล้ว |
-| 02 | โค้ดและ fixture/runtime contract ผ่าน; real Pi/ESP32 deployment ยังค้าง |
-| 03 | Prompt contract และ real-model readback ผ่าน; physical Pico/DB แยกตรวจรับ |
-| 04 | Resident inference และ timeout isolation ทำงานแล้ว |
-| 05 | q8 CUDA0 evaluation เสร็จ: p50 1.114 s, ประมาณ 20.6 เท่าจาก CPU; ยังไม่ผ่าน production deadline |
-| 06 | มี fixture/direct-model evidence; real devices และ automatic sorting ยังไม่ผ่าน |
+อัปเดตสถานะล่าสุด: **2026-10-20 (Asia/Bangkok)** จากหลักฐานที่เก็บแล้ว ไม่ได้รันทดสอบใหม่ในการอัปเดตเอกสารครั้งนี้
+
+| Ticket | สถานะ | งานที่ผ่านแล้ว | งานค้าง / ขอบเขตการตรวจรับ |
+| --- | --- | --- | --- |
+| [01](issues/01-reliable-model-api.md) | implemented | Model API/native bridge; โมเดลจริงบน CPU/CUDA แยกผลปกติ ผลว่าง และ error ได้ | เสร็จตามขอบเขต Model API; การตรวจรับทั้งระบบอยู่ 06 |
+| [02](issues/02-compact-inspection-result.md) | implemented | n8n webhook/fixtures คืน pass/reject/error ถูกต้อง; ติดต่อ model จริงจาก n8n container ได้ | ยังไม่ได้ตรวจ capture/คำสั่งกับ Pi และ ESP32 จริง; real-model deadline ยังไม่ผ่าน |
+| [03](issues/03-inspection-target-flow.md) | implemented | prompt webhook, blank/error และ model update/readback ผ่าน | physical Pico, relay และ Supabase persistence ยังไม่ได้ตรวจรับ |
+| [04](issues/04-resident-inference.md) | implemented | reuse โมเดล, readiness, bounded concurrency และหยุด worker หลัง timeout; native CPU/CUDA regression ผ่าน | เสร็จตามขอบเขต resident service; ไม่รับรอง production deadline |
+| [05](issues/05-gpu-and-model-evaluation.md) | implemented | q8 บน CUDA0; resident p50 1.114 s, p95 1.268 s, max 1.285 s; sampled VRAM สูงสุด 5033 MiB | ประเมิน GPU เสร็จ; ยังไม่ผ่าน deadline และยังไม่มี accuracy acceptance ของภาพ defect จริง; ไม่เปลี่ยน quantization |
+| [06](issues/06-runtime-evidence-and-handoff.md) | partial | คู่มือ, CPU/CUDA benchmark, fixture workflows และ direct-model probe จาก n8n จริง | ค้าง real Pi/ESP32/Pico/DB/relay, execution ทั้งเส้นทางและ latency จนรับ Verdict; automatic sorting ยังไม่ผ่าน |
+
+สรุป: **implemented 5 ใบ (01–05), partial 1 ใบ (06)** โดย `implemented` หมายถึงเสร็จตามขอบเขตงานในใบนั้น การตรวจรับอุปกรณ์จริงที่ระบุค้างยังไม่ผ่าน และไม่ถือว่าปิด GitHub #23/#24/#25
+
+หลักฐานล่าสุด: [CUDA evaluation](../../docs/evidence/locate-anything-cuda-2026-10-20.md), [n8n → CUDA probe](../../docs/evidence/n8n-cuda-probe-2026-10-20.json), [native CUDA regression](../../docs/evidence/native-cuda-boundary-2026-10-20.json) การทดสอบ Python ล่าสุดผ่าน 8 รายการพร้อม strict mypy; n8n suite ที่บันทึกไว้ผ่าน 191 รายการ
+
+งานถัดไปใน 06 คือเติม configuration ของบริการจริง ตรวจ manual Inspection/item event/prompt update พร้อม Frame Context และวัดเวลาจน ESP32 รับ Verdict ส่วน #24 ยังต้องแก้ auto-pass หลัง 3000 ms และ late-verdict/item correlation ก่อนรับรอง automatic sorting
 
 | Ticket | สิ่งที่ส่งมอบ | Blocked by |
 | --- | --- | --- |
@@ -28,7 +36,7 @@ Ticket จาก [สเปก](../../docs/specs/local-model-n8n-defect-output.m
 
 ## วิธีเดินงาน
 
-เริ่ม 01 ก่อน จากนั้น 02, 03 และ 04 ไม่มี blocking edge ระหว่างกัน เมื่อ 04 เสร็จจึงทำ 05 และเริ่ม 06 ได้เมื่อ 02, 03, 05 เสร็จทั้งหมด การไม่มี blocking edge ไม่ได้หมายความว่าต้องแก้ checkout เดียวกันพร้อมกันโดยไม่ประสานงาน
+ลำดับพัฒนาเดิมเริ่ม 01 แล้วจึง 02, 03, 04 และ 05 ปัจจุบัน prerequisites ฝั่ง implementation ของ 06 เสร็จแล้ว และเริ่มเก็บหลักฐานใน 06 แล้ว งานที่ค้างคือ runtime configuration, การตรวจรับอุปกรณ์จริง และ end-to-end timing ไม่ต้องรอปิด #24 ก่อนบันทึกผลวัด แต่ต้องรอแก้ #24 และผ่าน deadline ก่อนอนุมัติ automatic sorting
 
 01 รวมงานเตรียม engine outcome เท่าที่จำเป็นให้เส้นอัปโหลดภาพใช้งานได้จริง ไม่แยก refactor กว้างที่ตรวจรับด้วยตัวเองไม่ได้ 02 ตรวจ happy path แบบ deterministic ด้วย HTTP fixtures ได้ก่อนที่ความเร็วโมเดลจริงจะพร้อม โดย real deadline acceptance อยู่ในการสรุปผลของ 06
 

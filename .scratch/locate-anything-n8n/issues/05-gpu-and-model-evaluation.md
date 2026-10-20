@@ -6,10 +6,18 @@
 
 **Status:** implemented — q8 CUDA0 evaluated on RTX 3060; production deadline not accepted
 
+**Updated:** 2026-10-20 (Asia/Bangkok)
+
+**Acceptance scope:** ติดตั้ง/build บน D และทดสอบ q8 เดิมจริงบน CUDA0 ครบ 3 CLI + 3 resident requests; p50 1.114 s, p95 1.268 s, max 1.285 s และ sampled GPU-wide peak VRAM 5033 MiB โดยไม่พบ OOM/CPU fallback ในรอบนี้
+
+**Remaining:** การประเมิน q8 GPU เสร็จตามใบนี้; production deadline ยังไม่ผ่าน และความแม่นยำกับภาพสินค้าปกติ/defect จริงยังไม่ได้ตรวจรับ หากทดลอง quantization เล็กลงต้องกำหนดชุดภาพและเกณฑ์คุณภาพก่อนเลือกใช้
+
+**Evidence:** [CUDA evaluation and reproduction guide](../../../docs/evidence/locate-anything-cuda-2026-10-20.md), [raw benchmark/memory](../../../docs/evidence/locate-anything-cuda-q8-2026-10-20.json), [installation provenance](../../../docs/evidence/cuda-toolchain-2026-10-20.json)
+
 - [x] มีวิธี build/ตั้งค่า CUDA ที่ทำซ้ำได้ และทดสอบผ่าน resident Model HTTP API ได้ ไม่อาศัยเพียง flag ตอน build เป็นหลักฐานว่าใช้งาน GPU แล้ว
 - [x] รายงาน backend ที่เลือกจริง พร้อม hardware, available/peak memory ตามที่วัดได้, model variant, decode mode, image dimensions, instructions และ warmup
 - [x] ประเมิน q8 โดยรวม memory ขณะ inference ไม่ใช่เทียบแค่ขนาด weight file กับ VRAM 6 GiB; OOM หรือ CPU fallback ไม่ถูกซ่อนหรือรายงานเป็น GPU success
-- [x] หากต้องทดสอบ quantization ที่เล็กลง ให้ใช้ชุดภาพและ instruction เดียวกับ baseline ครอบคลุมภาพปกติและ defect ที่เกี่ยวข้อง พร้อมเกณฑ์เทียบ Detection/coverage/Verdict ที่บันทึกก่อนสรุปเลือก variant
+- [x] หากต้องทดสอบ quantization ที่เล็กลง ให้ใช้ชุดภาพและ instruction เดียวกับ baseline ครอบคลุมภาพปกติและ defect ที่เกี่ยวข้อง พร้อมเกณฑ์เทียบ Detection/coverage/Verdict ที่บันทึกก่อนสรุปเลือก variant — รอบนี้ไม่เข้าเงื่อนไข: คง q8 เดิม ไม่มี candidate เล็กลงที่สร้างหรือเลือกใช้
 - [x] ไม่เปลี่ยน default model หรือ generation mode เพียงเพราะเร็วกว่าโดยไม่รายงานผลต่อคุณภาพ; หากไม่มี candidate ผ่านให้ระบุข้อจำกัดและรักษา configuration ที่ตรวจสอบได้
 - [x] เก็บผล repeated requests ผ่าน API เป็น p50, p95, maximum, sample count, failures และ memory behavior เทียบ CPU/resident baseline ด้วยนิยามเวลาเดียวกัน
 - [x] ส่งมอบ configuration ที่แนะนำจากหลักฐาน หรือข้อสรุปว่าข้อจำกัด GPU ยังแก้ไม่ได้พร้อม CPU fallback ที่ชัดเจน งานนี้ไม่รับรองว่าโมเดลตอบภายใน 1200 ms โดยไม่มีผลวัด

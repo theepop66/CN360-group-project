@@ -6,7 +6,17 @@
 
 **Status:** partial — fixture and direct-model evidence collected; real devices pending
 
-- [ ] มีคู่มือเริ่มบริการและตั้ง n8n สำหรับ deployment ที่พบจริง แยก loopback/Docker host/LAN และ test/production webhook URLs พร้อม configuration ที่จำเป็นโดยไม่เผย secrets
+**Updated:** 2026-10-20 (Asia/Bangkok)
+
+**Acceptance scope:** คู่มือและหลักฐาน CPU/CUDA, controlled workflow/webhook fixtures และ direct-model probe จาก n8n container จริงมีแล้ว; prerequisites ฝั่ง implementation ของ 02/03/05 เสร็จ จึงเริ่ม/ทำรายงานใบนี้ต่อได้
+
+**Remaining:** ต้องตั้งค่าและตรวจ Pi capture, ESP32 acceptance, Pico/relay และ Supabase จริง; เก็บ manual Inspection/item event/prompt executions พร้อม Frame Context และวัด end-to-end latency จน ESP32 รับ Verdict ปัจจุบันยังไม่มีหลักฐานเหล่านี้ครบ
+
+**Deadline status:** ไม่ผ่าน — CUDA resident first prediction 1285.119 ms เกิน model budget 1200 ms; actual n8n probe ภายใต้ service deadline 1.1 s คืน model_timeout หลังประมาณ 1236 ms แล้ว health 503 ไม่เพิ่ม timeout เดิมเพื่อข้าม guard และยังไม่รับรอง automatic sorting; #24 ยังต้องแก้ auto-pass/late verdict/item correlation
+
+**Evidence:** [service guide](../../../model-service/README.md), [n8n configuration guide](../../../n8n/README.md), [implementation summary](../../../docs/evidence/locate-anything-local-2026-10-20.md), [CUDA evaluation](../../../docs/evidence/locate-anything-cuda-2026-10-20.md), [actual n8n → CUDA probe](../../../docs/evidence/n8n-cuda-probe-2026-10-20.json), [fixture webhook executions](../../../docs/evidence/n8n-webhook-fixtures-2026-10-20.json)
+
+- [x] มีคู่มือเริ่มบริการและตั้ง n8n สำหรับ deployment ที่พบจริง แยก loopback/Docker host/LAN และ test/production webhook URLs พร้อม configuration ที่จำเป็นโดยไม่เผย secrets — ส่งมอบคู่มือและตัวอย่าง configuration แล้ว; การเติมค่าบริการจริงและทดสอบ deployment ยังอยู่ในข้อค้างด้านล่าง
 - [ ] จาก n8n runtime จริงเข้าถึง capture, prediction, prompt และ health ได้ และ workflow ที่ใช้ทดสอบไม่มี active placeholders ที่ยังชี้ไปบริการสมมติ
 - [ ] เก็บ execution evidence สำหรับ manual Inspection, item event และ prompt update/readback โดยยืนยัน captured bytes, Frame Context, Model Instruction และ prompt echo ที่สอดคล้องกัน
 - [x] ตรวจ successful `pass`, successful `reject` และ `error` จาก model/capture failure โดยกรณี error ยังส่ง internal forced reject; หาก budget จริงยังไม่รองรับ successful real-model Inspection ให้บันทึก deadline failure อย่างตรงไปตรงมา ระบุ success path ที่ใช้ fixtures แยกต่างหาก และไม่ลงนามผ่านการใช้งานอัตโนมัติ

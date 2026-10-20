@@ -1,0 +1,19 @@
+# Supabase CLI project config. Only the settings this project depends on;
+# everything else uses CLI defaults. See supabase/README.md.
+project_id = "cn360-group-project"
+
+[api]
+port = 54321
+schemas = ["public", "storage"]
+
+[db]
+port = 54322
+major_version = 15
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+
+[storage]
+enabled = true
+file_size_limit = "5MiB"

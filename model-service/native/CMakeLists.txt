@@ -16,3 +16,9 @@ target_include_directories(locate_anything PUBLIC "${LOCATE_ANYTHING_SOURCE}/inc
 add_library(cn360_model SHARED bridge.cpp)
 target_include_directories(cn360_model PRIVATE "${LOCATE_ANYTHING_SOURCE}/src")
 target_link_libraries(cn360_model PRIVATE locate_anything)
+option(CN360_BUILD_CLI "Build the upstream CLI with the same backend for benchmarking" OFF)
+if(CN360_BUILD_CLI)
+  add_subdirectory("${LOCATE_ANYTHING_SOURCE}/examples/cli" upstream-cli)
+  target_include_directories(locate-anything-cli PRIVATE "${LOCATE_ANYTHING_SOURCE}/src"
+    "${LOCATE_ANYTHING_SOURCE}/third_party/stb")
+endif()

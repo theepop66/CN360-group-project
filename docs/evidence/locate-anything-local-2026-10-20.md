@@ -103,10 +103,20 @@ correctness, persistence or Pico delivery.
 
 ## GPU and unresolved deployment acceptance
 
-A separate CUDA configure/build attempt was made. It stopped with
-`Could not find nvcc` and `CUDA Toolkit not found`. No toolkit was installed as
-part of this run. A working CUDA build, actual selected GPU, q8 working-set fit,
-peak VRAM, smaller-quantization accuracy and GPU latency remain unverified.
+The initial CUDA attempt stopped at `CUDA Toolkit not found`. In the subsequent
+authorized GPU experiment, CUDA 12.6.3 and a compatible MSVC toolset were installed
+locally on D:. The CUDA build and real q8 API evaluation now pass with backend
+`CUDA0`: resident p50 **1.114 s**, p95 **1.268 s**, maximum **1.285 s**, with
+5033 MiB sampled GPU-wide peak memory and no OOM or CPU fallback in the run.
+This is about 20.6 times faster than the CPU resident p50 on the same fixture.
+All four boxes match the CPU result exactly at the recorded precision. No
+smaller quantization was selected, and product-defect accuracy remains separate.
+See the [CUDA evaluation and raw evidence](locate-anything-cuda-2026-10-20.md).
+
+The actual n8n container reached CUDA health/prompt endpoints, but its first
+prediction still timed out under the unchanged 1.1-second service deadline.
+The error was observed after 1236 ms; this does not meet the outer 1200 ms model
+budget. The worker became unavailable rather than returning clean detections.
 
 The real Pi, ESP32, Supabase schema/credentials and relay were not available as
 confirmed runtime configuration for this work. Their production URLs were not
@@ -114,7 +124,8 @@ invented, existing user workflows were not activated, and no physical command
 was sent. Local inactive workflow exports can be generated after those values
 are supplied.
 
-Automatic sorting is **not accepted**: CPU latency misses the deadline, and
+Automatic sorting is **not accepted**: the CUDA first prediction still misses
+the deployed model deadline (as does the slower CPU path), and
 firmware issue #24 still owns the 3000 ms auto-pass/late-verdict behavior. Issue
 #25 still owns complete hardware acceptance. After a working CUDA/quantization
 evaluation, if measured latency remains insufficient, consider a separate small
@@ -128,6 +139,13 @@ current arbitrary text-target behavior. No replacement model was implemented.
   seven service modules. The external-weight native test is skipped by default.
 - Opt-in real native HTTP regression: 1 passing test, covering positive output,
   repeated genuine empty output and native decode failure (about 51 seconds).
+- Subsequent full Python suite with real CUDA native regression enabled:
+  **8 passing tests** (13.93 seconds); strict mypy still passes. CUDA positive,
+  repeated empty, and genuine native decode-error cases all pass. GPU resources
+  were released after the experiment.
 - Separate Standards/Spec review found no Standards findings. The Spec review
   identified missing genuine-native failure/empty acceptance evidence; the
   opt-in regression and empty-box compatibility fix resolve that finding.
+- Subsequent CUDA follow-up review against `145a602`: Standards 0 actionable
+  findings; Spec 0 actionable findings. The q8 evaluation completes local
+  ticket 05 while ticket 06 and hardware/deadline acceptance remain partial.

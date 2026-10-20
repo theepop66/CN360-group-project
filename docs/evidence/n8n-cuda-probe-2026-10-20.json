@@ -1,0 +1,51 @@
+{
+  "health": {
+    "http_status": 200,
+    "body": {
+      "status": "ok",
+      "backend": "CUDA0",
+      "busy": false
+    }
+  },
+  "set": {
+    "http_status": 200,
+    "body": {
+      "status": "updated",
+      "current_prompt": "Locate all the instances that matches the following description: cat</c>remote."
+    }
+  },
+  "get": {
+    "http_status": 200,
+    "body": {
+      "status": "ok",
+      "current_prompt": "Locate all the instances that matches the following description: cat</c>remote."
+    }
+  },
+  "blank": {
+    "http_status": 400,
+    "body": {
+      "status": "error",
+      "reason": "empty_inspection_target"
+    }
+  },
+  "prediction": {
+    "http_status": 504,
+    "body": {
+      "status": "error",
+      "reason": "model_timeout"
+    },
+    "http_ms": 1235.8773729999998
+  },
+  "after": {
+    "http_status": 503,
+    "body": {
+      "status": "error",
+      "reason": "model_timeout"
+    }
+  },
+  "scope": "Direct HTTP from existing n8n Docker runtime; no workflow activation, Pi, actuator, DB, or relay access",
+  "backend_requested": "CUDA0",
+  "expected_prediction": "timeout",
+  "model_file": "locate-anything-q8_0.gguf",
+  "server_log": "D:\\CN360\\toolchains\\n8n-cuda-probe.log"
+}

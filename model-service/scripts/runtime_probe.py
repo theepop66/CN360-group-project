@@ -22,13 +22,18 @@ def main() -> None:
     parser.add_argument("--library", type=Path, required=True)
     parser.add_argument("--image", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--device", default="cpu")
+    parser.add_argument("--expect", choices=["timeout", "success"], default="timeout")
+    parser.add_argument("--log-file", type=Path)
     args = parser.parse_args()
     with socket.socket() as probe:
         if probe.connect_ex(("127.0.0.1", 8000)) == 0:
             raise SystemExit("Port 8000 already used; stop only the service you own before probing")
     root = Path(__file__).resolve().parents[1]
-    env = {**os.environ, "LA_DEVICE": "cpu", "CN360_MODEL_LIBRARY": str(args.library.resolve()),
+    env = {**os.environ, "LA_DEVICE": args.device, "CN360_MODEL_LIBRARY": str(args.library.resolve()),
            "CN360_MODEL_PATH": str(args.model.resolve()), "CN360_MODEL_THREADS": "6", "CN360_MODEL_REQUEST_TIMEOUT": "1.1"}
+    if args.device.lower() == "auto":
+        env.pop("LA_DEVICE", None)
     script = """
 const { performance } = require('node:perf_hooks');
 const input = JSON.parse(require('node:fs').readFileSync(0, 'utf8'));
@@ -50,7 +55,9 @@ const input = JSON.parse(require('node:fs').readFileSync(0, 'utf8'));
   console.log(JSON.stringify({health, set, get, blank, prediction, after}));
 })().catch(error => { console.error(error.message); process.exit(1); });
 """
-    with (root / "runtime-probe.local.log").open("w", encoding="utf-8") as log:
+    log_path = args.log_file or root / "runtime-probe.local.log"
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    with log_path.open("w", encoding="utf-8") as log:
         server = subprocess.Popen([sys.executable, "-m", "cn360_model"], cwd=root, env=env, stdout=log, stderr=log, creationflags=0x08000000 if os.name == "nt" else 0)
         try:
             with httpx.Client(timeout=2) as client:
@@ -70,14 +77,24 @@ const input = JSON.parse(require('node:fs').readFileSync(0, 'utf8'));
                 raise RuntimeError(result.stderr)
             report = json.loads(result.stdout)
             report["scope"] = "Direct HTTP from existing n8n Docker runtime; no workflow activation, Pi, actuator, DB, or relay access"
+            report["backend_requested"] = args.device
+            report["expected_prediction"] = args.expect
+            report["model_file"] = args.model.name
+            report["server_log"] = str(log_path.resolve())
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
             assert report["health"]["http_status"] == 200
             assert report["set"]["body"]["current_prompt"] == report["get"]["body"]["current_prompt"]
             assert report["blank"]["http_status"] == 400
-            assert report["prediction"]["http_status"] == 504
-            assert report["prediction"]["body"]["reason"] == "model_timeout"
-            assert report["after"]["http_status"] == 503
-            args.output.parent.mkdir(parents=True, exist_ok=True)
-            args.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+            if args.expect == "timeout":
+                assert report["prediction"]["http_status"] == 504
+                assert report["prediction"]["body"]["reason"] == "model_timeout"
+                assert report["after"]["http_status"] == 503
+            else:
+                assert report["prediction"]["http_status"] == 200
+                assert report["prediction"]["body"]["status"] == "success"
+                assert report["prediction"]["body"]["prompt_used"] == report["get"]["body"]["current_prompt"]
+                assert report["after"]["http_status"] == 200
             print(json.dumps(report), flush=True)
         finally:
             server.terminate()

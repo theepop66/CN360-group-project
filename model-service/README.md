@@ -25,18 +25,57 @@ portable CPU build. The script discovers Visual Studio on Windows and builds
 the checked native bridge in a local ignored build directory. On other systems
 it uses the installed compiler. No weights or binaries are committed.
 
-For CUDA, install a compatible NVIDIA CUDA Toolkit and use the separate build:
+For CUDA, use a compatible Toolkit and host compiler. On this PC the Toolkit
+and a supported VS 2022 C++ toolset were extracted from official NVIDIA/Microsoft
+packages to **D:**. The existing VS installation still supplies the Windows SDK
+and Ninja. Package URLs and verified SHA-256 values are recorded in
+[the installation evidence](../docs/evidence/cuda-toolchain-2026-10-20.json).
+The driver remains 566.07; no global PATH changes or driver update were needed.
+
+Build from this directory using the installed Python environment:
 
 ```powershell
-python scripts/build_native.py --source D:\CN360\locate-anything.cpp --cuda --cpu-arch avx2
+$env:TEMP = 'D:\CN360\toolchains\tmp'
+$env:TMP = $env:TEMP
+& 'D:\CN360\locate-anything.cpp\venv\Scripts\python.exe' scripts/build_native.py `
+  --source D:\CN360\locate-anything.cpp --cuda --cpu-arch avx2 `
+  --cuda-root D:\CN360\toolchains\cuda-12.6.3 `
+  --msvc-tools D:\CN360\toolchains\msvc-14.38\VC\Tools\MSVC\14.38.33130 `
+  --cuda-arch 86-real --build-dir D:\CN360\builds\resident-cuda --parallel 3 --with-cli
 ```
 
-The inspected PC has an RTX 3060 Laptop GPU with 6 GiB VRAM, but the CUDA build
-attempt currently stops at `CUDA Toolkit not found`. A driver alone is not
-enough. The q8 file is about 6.26 GB before graph/cache/runtime allocations; GPU
-fit, peak VRAM, GPU latency, and smaller-quantization quality remain unverified.
+`86-real` targets the RTX 3060. Omit it to use the `native` architecture default
+on the GPU present at build time. `--with-cli` builds the original CLI with the
+same CUDA backend for comparison, sharing the compiled libraries. A standard
+compatible Toolkit/compiler installation can omit the two custom root options.
+Keep build directories separate when selecting a different compiler or backend.
+
+The RTX 3060 Laptop GPU has 6 GiB VRAM. The q8 file is about 6.26 GB before
+graph/cache/runtime allocations; an installed Toolkit alone does not establish
+that its working set fits or that inference meets the deadline.
 Check the actual backend in `/health`; a requested GPU can fall back to CPU in
 the upstream backend. Do not describe that fallback as a GPU benchmark.
+
+For the CUDA library, set these in addition to the model settings below:
+
+```powershell
+$env:CUDA_PATH = 'D:\CN360\toolchains\cuda-12.6.3'
+$env:PATH = "$env:CUDA_PATH\bin;$env:PATH"
+$env:CN360_MODEL_LIBRARY = 'D:\CN360\builds\resident-cuda\cn360_model.dll'
+$env:LA_DEVICE = 'CUDA0'
+```
+
+The Python worker adds `CUDA_PATH\bin` to its Windows DLL dependency search
+while loading the bridge. PATH also lets a matching CLI find the runtime DLLs.
+Use these CUDA values after setting the model variables in the example below
+and before launching Python; replace that example's CPU library/device values.
+
+The [measured CUDA evaluation](../docs/evidence/locate-anything-cuda-2026-10-20.md)
+used the unchanged q8/hybrid configuration: resident HTTP p50 1.114 s versus
+22.971 s on CPU, with a 1.285 s first prediction and about 5033 MiB sampled peak
+GPU memory. The first prediction still timed out under the production deadline
+when called from n8n. Use CUDA for further measurement; these three samples do
+not approve automatic sorting or changing the existing deadlines.
 
 ## Start
 
@@ -136,8 +175,9 @@ predictions also report the worker's process peak working-set memory; this is
 host RAM, not peak GPU VRAM. A three-sample smoke run is not a production latency
 distribution or defect-quality validation.
 
-After a working CUDA build exists, pass its library and `--device CUDA0` (or
-`--device auto`) to the same benchmark. The default is CPU. Check the reported
+For CUDA, pass the matching CLI and library and `--device CUDA0` (or
+`--device auto`) to the same benchmark. Use `--log-file` and `--output` on D:
+to keep measurement artifacts there. The default is CPU. Check the reported
 actual backend before comparing runs; requesting CUDA is not proof it was used.
 
 The native empty-result/error regression is opt-in because it requires real

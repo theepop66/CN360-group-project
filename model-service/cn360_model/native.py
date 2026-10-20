@@ -1,7 +1,9 @@
 """Small checked ABI over the upstream ggml pipeline; owns one resident context."""
 
 import ctypes
+from contextlib import ExitStack
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -10,7 +12,14 @@ class NativeModel:
     def __init__(self, library: str, model: str, threads: int = 0) -> None:
         if not Path(library).is_file() or not Path(model).is_file():
             raise RuntimeError("model_or_library_missing")
-        self.library = ctypes.CDLL(str(Path(library).resolve()))
+        # Python's Windows DLL loader does not search PATH for dependencies.
+        # Keep CUDA outside the project and load its runtime from CUDA_PATH.
+        with ExitStack() as directories:
+            if os.name == "nt" and (cuda := os.environ.get("CUDA_PATH")):
+                binary_directory = Path(cuda) / "bin"
+                if binary_directory.is_dir():
+                    directories.enter_context(os.add_dll_directory(str(binary_directory)))
+            self.library = ctypes.CDLL(str(Path(library).resolve()))
         self.library.cn_load.argtypes = [ctypes.c_char_p, ctypes.c_int]
         self.library.cn_load.restype = ctypes.c_void_p
         self.library.cn_predict.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t, ctypes.c_char_p, ctypes.c_int]

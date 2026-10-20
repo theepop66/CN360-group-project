@@ -1,4 +1,4 @@
-"""Reproducible CPU/resident smoke benchmark; never actuates hardware."""
+"""Reproducible CLI/resident smoke benchmark; never actuates hardware."""
 import argparse
 import hashlib
 import json
@@ -6,6 +6,7 @@ import math
 import os
 from pathlib import Path
 import platform
+import re
 import socket
 import subprocess
 import sys
@@ -33,6 +34,7 @@ def main() -> None:
     parser.add_argument("--library", type=Path, required=True)
     parser.add_argument("--image", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--log-file", type=Path, help="Native/server log; defaults to benchmark.local.log")
     parser.add_argument("--samples", type=int, default=3)
     parser.add_argument("--threads", type=int, default=6)
     parser.add_argument("--port", type=int, default=8000)
@@ -65,24 +67,34 @@ def main() -> None:
                                   env=env, capture_output=True, text=True, timeout=180)
         elapsed = (time.perf_counter() - started) * 1000
         if baseline.returncode:
-            report["errors"].append({"stage": "baseline", "returncode": baseline.returncode, "detail": baseline.stderr[-1500:]})
+            report["errors"].append({"stage": "baseline", "returncode": baseline.returncode, "detail": baseline.stderr[-10000:]})
         else:
-            report["baseline"].append({"request_ms": elapsed, **json.loads(baseline.stdout)})
+            selected = re.search(r"la::Backend using device: (\S+)", baseline.stderr)
+            report["baseline"].append({"request_ms": elapsed,
+                                       "backend": selected.group(1) if selected else "cpu",
+                                       "native_log": baseline.stderr[-10000:],
+                                       **json.loads(baseline.stdout)})
         print(f"baseline {index + 1}: {elapsed:.1f} ms", flush=True)
     flags = 0x08000000 if os.name == "nt" else 0
-    with (root / "benchmark.local.log").open("w", encoding="utf-8") as log:
+    log_path = args.log_file or root / "benchmark.local.log"
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    report["server_log"] = str(log_path.resolve())
+    with log_path.open("w", encoding="utf-8") as log:
         server_started = time.perf_counter()
         server = subprocess.Popen([sys.executable, "-m", "cn360_model"], cwd=root, env=env, stdout=log, stderr=log, creationflags=flags)
         try:
             with httpx.Client(base_url=f"http://127.0.0.1:{args.port}", timeout=125) as client:
                 for _ in range(120):
                     if server.poll() is not None:
-                        raise RuntimeError("server exited; see benchmark.local.log")
+                        raise RuntimeError(f"server exited; see {log_path}")
                     try:
                         health = client.get("/health")
                         if health.status_code == 200:
                             report["health"] = health.json()
                             break
+                        if health.status_code == 503:
+                            report["health"] = health.json()
+                            raise RuntimeError(f"model unavailable; see {log_path}")
                     except httpx.HTTPError:
                         pass
                     time.sleep(1)
@@ -111,6 +123,8 @@ def main() -> None:
             server.wait(timeout=20)
     report["baseline_total"] = distribution([row["request_ms"] for row in report["baseline"]])
     report["resident_http"] = distribution([row["http_ms"] for row in report["resident"]])
+    if report["errors"]:
+        report["server_log_tail"] = log_path.read_text(encoding="utf-8", errors="replace")[-20000:]
     report["note"] = "Small-sample descriptive percentiles; includes the first prediction, no omitted warmup. Baseline total includes process/model startup. Native timing includes vision preprocessing and decode."
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2), encoding="utf-8")

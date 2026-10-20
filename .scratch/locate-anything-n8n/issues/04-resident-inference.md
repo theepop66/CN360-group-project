@@ -18,4 +18,4 @@
 - [x] เก็บเวลาของ resident service เทียบ baseline เดิมบนชุดภาพ/instruction/model/mode เดียวกัน แยก cold start, warm request และ queue time พร้อม sample count และ failures; ไม่ตั้งเป้าความเร็วที่ยังไม่มีผลวัดรองรับ
 
 
-**Implementation evidence:** โมเดลจริง reuse ต่อเนื่อง 3 ภาพสำเร็จ p50 ประมาณ 22.971 วินาที เทียบ CLI 38.173 วินาที; real deadline probe คืน 504 และ worker ไม่ถูกนำกลับมาใช้หลัง timeout
+**Implementation evidence:** โมเดลจริง reuse ต่อเนื่อง 3 ภาพสำเร็จ p50 ประมาณ 22.971 วินาที เทียบ CLI 38.173 วินาที; real deadline probe คืน 504 และ worker ไม่ถูกนำกลับมาใช้หลัง timeout เพิ่ม native HTTP regression จริงที่ตรวจภาพมีกรอบแล้วตามด้วยผลว่างสำเร็จสองครั้งบน context เดิม และ RLE8 BMP ที่ล้มเหลวใน native decoder ให้ error ไม่ใช่ผลว่าง แก้การรองรับ empty-box grammar ของโมเดลแล้ว

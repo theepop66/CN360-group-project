@@ -80,6 +80,12 @@ public:
         // malformed/truncated geometry as proof that no defect was detected.
         for (size_t i = 0; i < generated.size(); ++i) {
             if (generated[i] != 151668) continue;
+            // Upstream mtp::handle_pattern encodes a valid absence as
+            // <box>None</box> (NONE=4064), not a malformed coordinate box.
+            if (i + 2 < generated.size() && generated[i + 1] == 4064 && generated[i + 2] == 151669) {
+                i += 2;
+                continue;
+            }
             int coordinates = 0;
             while (++i < generated.size() && generated[i] != 151669) {
                 if (generated[i] >= 151677 && generated[i] <= 152677) {

@@ -136,6 +136,20 @@ predictions also report the worker's process peak working-set memory; this is
 host RAM, not peak GPU VRAM. A three-sample smoke run is not a production latency
 distribution or defect-quality validation.
 
+After a working CUDA build exists, pass its library and `--device CUDA0` (or
+`--device auto`) to the same benchmark. The default is CPU. Check the reported
+actual backend before comparing runs; requesting CUDA is not proof it was used.
+
+The native empty-result/error regression is opt-in because it requires real
+weights. Set `CN360_RUN_NATIVE_TESTS=1`, the same library/model environment
+variables used for startup, and optionally `CN360_NATIVE_REPORT` to a JSON
+output path, then run `python -m pytest tests/test_native_api.py`. It exercises
+the real model through HTTP rather than substituting an inference fixture. Set
+`CN360_NATIVE_POSITIVE_IMAGE` to the upstream parity image to include the
+four-box cat/remote check before the repeated empty-image requests. The native
+failure case is a valid RLE8 BMP supported by Pillow but rejected by the native
+decoder; an unsupported BMP encoding is an explicit error, never a clean result.
+
 Real-service and fixture evidence is kept under the project's documentation.
 Pi/ESP32/database/relay acceptance remains separate. The current ESP32 can
 auto-pass after 3000 ms: automatic sorting still depends on #24 and measured

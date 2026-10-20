@@ -37,6 +37,7 @@ def main() -> None:
     parser.add_argument("--threads", type=int, default=6)
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--mode", choices=["hybrid", "slow", "fast"], default="hybrid")
+    parser.add_argument("--device", default="cpu", help="cpu, auto, or an upstream backend name such as CUDA0")
     parser.add_argument("--prompt", default="Locate all the instances that matches the following description: person.")
     args = parser.parse_args()
     if args.samples < 1:
@@ -45,14 +46,16 @@ def main() -> None:
         if probe.connect_ex(("127.0.0.1", args.port)) == 0:
             raise SystemExit("Port already in use; use --port rather than stopping another service")
     image = args.image.read_bytes()
-    env = {**os.environ, "LA_DEVICE": "cpu", "CN360_MODEL_LIBRARY": str(args.library.resolve()),
+    env = {**os.environ, "LA_DEVICE": args.device, "CN360_MODEL_LIBRARY": str(args.library.resolve()),
            "CN360_MODEL_PATH": str(args.model.resolve()), "CN360_MODEL_THREADS": str(args.threads),
            "CN360_MODEL_MODE": args.mode, "CN360_MODEL_REQUEST_TIMEOUT": "120", "CN360_MODEL_PORT": str(args.port)}
+    if args.device.lower() == "auto":
+        env.pop("LA_DEVICE", None)
     root = Path(__file__).resolve().parents[1]
     report: dict = {"environment": {"platform": platform.platform(), "python": sys.version.split()[0],
-                    "model_bytes": args.model.stat().st_size, "image_sha256": hashlib.sha256(image).hexdigest(),
+                    "model_file": args.model.name, "model_bytes": args.model.stat().st_size, "image_sha256": hashlib.sha256(image).hexdigest(),
                     "image_bytes": len(image), "prompt": args.prompt, "threads": args.threads, "mode": args.mode,
-                    "backend_requested": "cpu"}, "benchmark_only_timeout_seconds": 120,
+                    "backend_requested": args.device}, "benchmark_only_timeout_seconds": 120,
                     "baseline": [], "resident": [], "errors": [],
                     "scope": "real model HTTP only; no Pi, ESP32, database or relay acceptance"}
     for index in range(args.samples):

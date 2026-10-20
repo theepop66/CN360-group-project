@@ -46,6 +46,19 @@ was about 6.05 GiB; GPU memory use was not measured. The raw report separates
 Python image handling, native inference (including native preprocessing), and
 HTTP timing.
 
+Source: [real native HTTP boundary regression](native-model-boundary-2026-10-20.json).
+An opt-in regression loaded the actual checked DLL and q8 model, returned the
+four-box positive fixture, then returned successful empty detections for two
+synthetic white 32×32 images using the same resident context. This exposed the
+model's supported `<box>None</box>` representation; the bridge now accepts that
+exact empty-box grammar while still rejecting malformed coordinate boxes.
+
+The same regression uploaded a valid RLE8 BMP which Pillow can read but the
+upstream native decoder does not support. The failure reached the native
+`image_decode_failed` stage through public HTTP, returned HTTP 503 with
+`inference_failed`, and left readiness unavailable. It was not converted into
+successful empty output. These assertions use no inference mock and passed.
+
 ## Actual n8n runtime → actual model HTTP
 
 Source: [raw runtime probe](n8n-real-model-probe-2026-10-20.json).
@@ -107,3 +120,14 @@ firmware issue #24 still owns the 3000 ms auto-pass/late-verdict behavior. Issue
 evaluation, if measured latency remains insufficient, consider a separate small
 classifier experiment with labelled product images and explicit loss of the
 current arbitrary text-target behavior. No replacement model was implemented.
+
+## Verification and review
+
+- n8n full suite: 191 passing tests.
+- Model HTTP fixture/unit suite: 7 passing tests; strict mypy passes on the
+  seven service modules. The external-weight native test is skipped by default.
+- Opt-in real native HTTP regression: 1 passing test, covering positive output,
+  repeated genuine empty output and native decode failure (about 51 seconds).
+- Separate Standards/Spec review found no Standards findings. The Spec review
+  identified missing genuine-native failure/empty acceptance evidence; the
+  opt-in regression and empty-box compatibility fix resolve that finding.

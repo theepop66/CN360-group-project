@@ -1,0 +1,108 @@
+{
+  "date": "2026-10-20",
+  "installation": "User-local extracted official redistributable archives on D; no system driver update or global PATH modification",
+  "cuda_root": "D:\\CN360\\toolchains\\cuda-12.6.3",
+  "msvc_tools": "D:\\CN360\\toolchains\\msvc-14.38\\VC\\Tools\\MSVC\\14.38.33130",
+  "temporary_files": "D:\\CN360\\toolchains\\tmp",
+  "build_directory": "D:\\CN360\\builds\\resident-cuda",
+  "cuda_release": "12.6.3",
+  "nvcc_version": "12.6.85",
+  "host_compiler": "MSVC 19.38.33145 (VS 2022 v143 toolset)",
+  "system_dependencies": "Uses the Windows SDK and build environment from the existing Visual Studio installation on C; no new SDK installed",
+  "sources": {
+    "cuda_manifest": "https://developer.download.nvidia.com/compute/cuda/redist/redistrib_12.6.3.json",
+    "msvc_channel": "https://aka.ms/vs/17/release.LTSC.17.8/channel",
+    "cuda_windows_guide": "https://docs.nvidia.com/cuda/archive/12.6.3/cuda-installation-guide-microsoft-windows/index.html"
+  },
+  "archive_verification": "Each downloaded archive SHA-256 checked against its official vendor manifest before extraction",
+  "components": [
+    {
+      "url": "https://developer.download.nvidia.com/compute/cuda/redist/cuda_nvcc/windows-x86_64/cuda_nvcc-windows-x86_64-12.6.85-archive.zip",
+      "file": "cuda_nvcc-windows-x86_64-12.6.85-archive.zip",
+      "sha256": "3fb9f76b87c37d02f947354be89b718ad5f2c76b6ab47995265bfa3a068a5e14",
+      "kind": "cuda"
+    },
+    {
+      "url": "https://developer.download.nvidia.com/compute/cuda/redist/cuda_cudart/windows-x86_64/cuda_cudart-windows-x86_64-12.6.77-archive.zip",
+      "file": "cuda_cudart-windows-x86_64-12.6.77-archive.zip",
+      "sha256": "7a313bc0c93b1a50bb03aa9783a199ae70c3b66e2d8084da65e8254a8577b925",
+      "kind": "cuda"
+    },
+    {
+      "url": "https://developer.download.nvidia.com/compute/cuda/redist/libcublas/windows-x86_64/libcublas-windows-x86_64-12.6.4.1-archive.zip",
+      "file": "libcublas-windows-x86_64-12.6.4.1-archive.zip",
+      "sha256": "1a87ec80f8c0e5a39badc87010d479930c5b63abd788b3a05bd688a5980a3d07",
+      "kind": "cuda"
+    },
+    {
+      "url": "https://developer.download.nvidia.com/compute/cuda/redist/cuda_cccl/windows-x86_64/cuda_cccl-windows-x86_64-12.6.77-archive.zip",
+      "file": "cuda_cccl-windows-x86_64-12.6.77-archive.zip",
+      "sha256": "469b783b6731964170b3d27ae214e97e2a63ec93c57ace3ed4052e6d01261f2e",
+      "kind": "cuda"
+    },
+    {
+      "url": "https://download.visualstudio.microsoft.com/download/pr/953580f8-1dbc-41b7-b1de-cbaf49ddadfc/67b5af7f7593c4cc240b73756468394b2858ecd4d75aecd8d67978cd1bdf92bd/Microsoft.VC.14.38.17.8.CRT.Headers.base.vsix",
+      "file": "Microsoft.VC.14.38.17.8.CRT.Headers.base.vsix",
+      "sha256": "67b5af7f7593c4cc240b73756468394b2858ecd4d75aecd8d67978cd1bdf92bd",
+      "kind": "msvc"
+    },
+    {
+      "url": "https://download.visualstudio.microsoft.com/download/pr/618971f5-206f-44a8-9683-bc07bcc809d9/1c99d095c9d085caa07b08c2683ea0983be45889f73a1999ed25a247042811ed/Microsoft.VC.14.38.17.8.CRT.x64.Desktop.base.vsix",
+      "file": "Microsoft.VC.14.38.17.8.CRT.x64.Desktop.base.vsix",
+      "sha256": "1c99d095c9d085caa07b08c2683ea0983be45889f73a1999ed25a247042811ed",
+      "kind": "msvc"
+    },
+    {
+      "url": "https://download.visualstudio.microsoft.com/download/pr/618971f5-206f-44a8-9683-bc07bcc809d9/8df8f5be7aae41aeeed3b06976a31238a98a62ced396443961a66e710e8ace10/Microsoft.VC.14.38.17.8.CRT.x64.Store.base.vsix",
+      "file": "Microsoft.VC.14.38.17.8.CRT.x64.Store.base.vsix",
+      "sha256": "8df8f5be7aae41aeeed3b06976a31238a98a62ced396443961a66e710e8ace10",
+      "kind": "msvc"
+    },
+    {
+      "url": "https://download.visualstudio.microsoft.com/download/pr/793f0c81-ee02-4dc2-8dad-7c1d46cc5f69/e7c837d222252a4abc7191ac7254c6d9f54e4180f2936f63d593c07701a90497/Microsoft.VC.14.38.17.8.Tools.Core.Props.vsix",
+      "file": "Microsoft.VC.14.38.17.8.Tools.Core.Props.vsix",
+      "sha256": "e7c837d222252a4abc7191ac7254c6d9f54e4180f2936f63d593c07701a90497",
+      "kind": "msvc"
+    },
+    {
+      "url": "https://download.visualstudio.microsoft.com/download/pr/7320a60d-18e1-4e9b-9f8d-30ff7ee6cd6d/ea7aeb0e6248888458d162663d7794e1d52d1ec4b9225c68472578afd99983c0/Microsoft.VC.14.38.17.8.Tools.HostX64.TargetX64.base.vsix",
+      "file": "Microsoft.VC.14.38.17.8.Tools.HostX64.TargetX64.base.vsix",
+      "sha256": "ea7aeb0e6248888458d162663d7794e1d52d1ec4b9225c68472578afd99983c0",
+      "kind": "msvc"
+    },
+    {
+      "url": "https://download.visualstudio.microsoft.com/download/pr/7320a60d-18e1-4e9b-9f8d-30ff7ee6cd6d/aad782d941d1af8de389cda8eaebc5278b2af194fba6f7fd8fa87037095d5e27/Microsoft.VC.14.38.17.8.Tools.HostX64.TargetX64.Res.base.enu.vsix",
+      "file": "Microsoft.VC.14.38.17.8.Tools.HostX64.TargetX64.Res.base.enu.vsix",
+      "sha256": "aad782d941d1af8de389cda8eaebc5278b2af194fba6f7fd8fa87037095d5e27",
+      "kind": "msvc"
+    },
+    {
+      "url": "https://download.visualstudio.microsoft.com/download/pr/793f0c81-ee02-4dc2-8dad-7c1d46cc5f69/bd8e1ea966c5d2fbe27660adfd0c9fafacc44f612a340680e244d4269dc6a650/Microsoft.VisualCpp.Tools.Common.Utils.vsix",
+      "file": "Microsoft.VisualCpp.Tools.Common.Utils.vsix",
+      "sha256": "bd8e1ea966c5d2fbe27660adfd0c9fafacc44f612a340680e244d4269dc6a650",
+      "kind": "msvc"
+    },
+    {
+      "url": "https://download.visualstudio.microsoft.com/download/pr/793f0c81-ee02-4dc2-8dad-7c1d46cc5f69/5636b31a5c2b76824092746b91ff9d15c330d2be63b175bbde13b877c52c744f/Microsoft.VisualCpp.Tools.Core.x86.vsix",
+      "file": "Microsoft.VisualCpp.Tools.Core.x86.vsix",
+      "sha256": "5636b31a5c2b76824092746b91ff9d15c330d2be63b175bbde13b877c52c744f",
+      "kind": "msvc"
+    },
+    {
+      "url": "https://download.visualstudio.microsoft.com/download/pr/7320a60d-18e1-4e9b-9f8d-30ff7ee6cd6d/c1d2735d8352f18f9a8d131dbf134dd0ea60f69b15eb1ced1e279a8da84ea19f/Microsoft.VisualCpp.Tools.HostX64.TargetX64.vsix",
+      "file": "Microsoft.VisualCpp.Tools.HostX64.TargetX64.vsix",
+      "sha256": "c1d2735d8352f18f9a8d131dbf134dd0ea60f69b15eb1ced1e279a8da84ea19f",
+      "kind": "msvc"
+    }
+  ],
+  "gpu_smoke": {
+    "result": "PASS",
+    "gpu": "NVIDIA GeForce RTX 3060 Laptop GPU",
+    "compute_capability": "8.6",
+    "device_memory_bytes": 6441926656,
+    "verification": "Compiled CUDA kernel with nvcc and MSVC, allocated GPU memory, copied 32 integers to device, added thread indices on GPU, synchronized, copied back and verified all 32 results",
+    "source": "D:\\CN360\\toolchains\\probe.cu",
+    "runner": "D:\\CN360\\toolchains\\probe_runner.py"
+  },
+  "system_gpu": "NVIDIA GeForce RTX 3060 Laptop GPU, 566.07, 6144, 0, 5996"
+}

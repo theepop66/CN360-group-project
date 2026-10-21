@@ -1,0 +1,324 @@
+{
+  "environment": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.13.12",
+    "model_bytes": 6259931712,
+    "image_sha256": "84f76df27bc3f67833203919fa7639b436680854a7dbee5b5246507a386a8457",
+    "image_bytes": 417418,
+    "prompt": "Locate all the instances that matches the following description: cat</c>remote.",
+    "threads": 6,
+    "mode": "hybrid",
+    "backend_requested": "cpu"
+  },
+  "benchmark_only_timeout_seconds": 120,
+  "baseline": [
+    {
+      "request_ms": 35920.58580000048,
+      "detections": [
+        {
+          "label": "cat",
+          "box": [
+            3.14,
+            50.62,
+            221.76,
+            443.52
+          ]
+        },
+        {
+          "label": "cat",
+          "box": [
+            241.92,
+            23.3,
+            447.1,
+            347.2
+          ]
+        },
+        {
+          "label": "remote",
+          "box": [
+            27.78,
+            68.99,
+            123.2,
+            109.76
+          ]
+        },
+        {
+          "label": "remote",
+          "box": [
+            233.86,
+            71.68,
+            258.94,
+            174.27
+          ]
+        }
+      ]
+    },
+    {
+      "request_ms": 38173.31279999962,
+      "detections": [
+        {
+          "label": "cat",
+          "box": [
+            3.14,
+            50.62,
+            221.76,
+            443.52
+          ]
+        },
+        {
+          "label": "cat",
+          "box": [
+            241.92,
+            23.3,
+            447.1,
+            347.2
+          ]
+        },
+        {
+          "label": "remote",
+          "box": [
+            27.78,
+            68.99,
+            123.2,
+            109.76
+          ]
+        },
+        {
+          "label": "remote",
+          "box": [
+            233.86,
+            71.68,
+            258.94,
+            174.27
+          ]
+        }
+      ]
+    },
+    {
+      "request_ms": 39745.74489999941,
+      "detections": [
+        {
+          "label": "cat",
+          "box": [
+            3.14,
+            50.62,
+            221.76,
+            443.52
+          ]
+        },
+        {
+          "label": "cat",
+          "box": [
+            241.92,
+            23.3,
+            447.1,
+            347.2
+          ]
+        },
+        {
+          "label": "remote",
+          "box": [
+            27.78,
+            68.99,
+            123.2,
+            109.76
+          ]
+        },
+        {
+          "label": "remote",
+          "box": [
+            233.86,
+            71.68,
+            258.94,
+            174.27
+          ]
+        }
+      ]
+    }
+  ],
+  "resident": [
+    {
+      "http_ms": 23250.9543999995,
+      "status": "success",
+      "prompt_used": "Locate all the instances that matches the following description: cat</c>remote.",
+      "detections": [
+        {
+          "label": "cat",
+          "box": [
+            3.13600016,
+            50.6240005,
+            221.76001,
+            443.52002
+          ]
+        },
+        {
+          "label": "cat",
+          "box": [
+            241.920013,
+            23.2960014,
+            447.104004,
+            347.199982
+          ]
+        },
+        {
+          "label": "remote",
+          "box": [
+            27.7759991,
+            68.9919968,
+            123.200005,
+            109.760002
+          ]
+        },
+        {
+          "label": "remote",
+          "box": [
+            233.856003,
+            71.6800003,
+            258.944,
+            174.272003
+          ]
+        }
+      ],
+      "frame_width": 448,
+      "frame_height": 448,
+      "backend": "cpu",
+      "peak_working_set_bytes": 6494015488,
+      "timings_ms": {
+        "inference": 23240.136499999608,
+        "image_handling": 0.5570000002990128,
+        "request": 23247.699600000487
+      }
+    },
+    {
+      "http_ms": 22817.81570000021,
+      "status": "success",
+      "prompt_used": "Locate all the instances that matches the following description: cat</c>remote.",
+      "detections": [
+        {
+          "label": "cat",
+          "box": [
+            3.13600016,
+            50.6240005,
+            221.76001,
+            443.52002
+          ]
+        },
+        {
+          "label": "cat",
+          "box": [
+            241.920013,
+            23.2960014,
+            447.104004,
+            347.199982
+          ]
+        },
+        {
+          "label": "remote",
+          "box": [
+            27.7759991,
+            68.9919968,
+            123.200005,
+            109.760002
+          ]
+        },
+        {
+          "label": "remote",
+          "box": [
+            233.856003,
+            71.6800003,
+            258.944,
+            174.272003
+          ]
+        }
+      ],
+      "frame_width": 448,
+      "frame_height": 448,
+      "backend": "cpu",
+      "peak_working_set_bytes": 6494130176,
+      "timings_ms": {
+        "inference": 22808.0987000003,
+        "image_handling": 0.38690000019414583,
+        "request": 22814.863999999943
+      }
+    },
+    {
+      "http_ms": 22970.933999999943,
+      "status": "success",
+      "prompt_used": "Locate all the instances that matches the following description: cat</c>remote.",
+      "detections": [
+        {
+          "label": "cat",
+          "box": [
+            3.13600016,
+            50.6240005,
+            221.76001,
+            443.52002
+          ]
+        },
+        {
+          "label": "cat",
+          "box": [
+            241.920013,
+            23.2960014,
+            447.104004,
+            347.199982
+          ]
+        },
+        {
+          "label": "remote",
+          "box": [
+            27.7759991,
+            68.9919968,
+            123.200005,
+            109.760002
+          ]
+        },
+        {
+          "label": "remote",
+          "box": [
+            233.856003,
+            71.6800003,
+            258.944,
+            174.272003
+          ]
+        }
+      ],
+      "frame_width": 448,
+      "frame_height": 448,
+      "backend": "cpu",
+      "peak_working_set_bytes": 6494130176,
+      "timings_ms": {
+        "inference": 22960.287699999753,
+        "image_handling": 0.3204000004188856,
+        "request": 22967.594400000053
+      }
+    }
+  ],
+  "errors": [],
+  "scope": "real model HTTP only; no Pi, ESP32, database or relay acceptance",
+  "health": {
+    "status": "ok",
+    "backend": "cpu",
+    "busy": false
+  },
+  "startup_ms": 9524.181299999327,
+  "prompt_update": {
+    "status": "updated",
+    "current_prompt": "Locate all the instances that matches the following description: cat</c>remote."
+  },
+  "blank_prompt_status": 400,
+  "invalid_image_status": 400,
+  "baseline_total": {
+    "samples": 3,
+    "p50_ms": 38173.31279999962,
+    "p95_ms": 39588.50168999943,
+    "max_ms": 39745.74489999941
+  },
+  "resident_http": {
+    "samples": 3,
+    "p50_ms": 22970.933999999943,
+    "p95_ms": 23222.952359999545,
+    "max_ms": 23250.9543999995
+  },
+  "note": "Small-sample descriptive percentiles; includes the first prediction, no omitted warmup. Baseline total includes process/model startup. Native timing includes vision preprocessing and decode."
+}

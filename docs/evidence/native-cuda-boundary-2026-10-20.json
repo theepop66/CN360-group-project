@@ -1,0 +1,111 @@
+{
+  "scope": "Real native worker through public Model HTTP API; synthetic input images, no physical devices",
+  "empty_requests": [
+    {
+      "http_status": 200,
+      "body": {
+        "status": "success",
+        "prompt_used": "Locate all the instances that matches the following description: cat.",
+        "detections": [],
+        "frame_width": 32,
+        "frame_height": 32,
+        "backend": "CUDA0",
+        "peak_working_set_bytes": 6791163904,
+        "timings_ms": {
+          "inference": 197.97409999955562,
+          "image_handling": 0.07989999903657008,
+          "request": 199.06690000061644
+        }
+      }
+    },
+    {
+      "http_status": 200,
+      "body": {
+        "status": "success",
+        "prompt_used": "Locate all the instances that matches the following description: cat.",
+        "detections": [],
+        "frame_width": 32,
+        "frame_height": 32,
+        "backend": "CUDA0",
+        "peak_working_set_bytes": 6804365312,
+        "timings_ms": {
+          "inference": 148.04329999969923,
+          "image_handling": 0.08290000005217735,
+          "request": 148.78979999957664
+        }
+      }
+    }
+  ],
+  "health_before": {
+    "status": "ok",
+    "backend": "CUDA0",
+    "busy": false
+  },
+  "positive_request": {
+    "http_status": 200,
+    "body": {
+      "status": "success",
+      "prompt_used": "Locate all the instances that matches the following description: cat</c>remote.",
+      "detections": [
+        {
+          "label": "cat",
+          "box": [
+            3.13600016,
+            50.6240005,
+            221.76001,
+            443.52002
+          ]
+        },
+        {
+          "label": "cat",
+          "box": [
+            241.920013,
+            23.2960014,
+            447.104004,
+            347.199982
+          ]
+        },
+        {
+          "label": "remote",
+          "box": [
+            27.7759991,
+            68.9919968,
+            123.200005,
+            109.760002
+          ]
+        },
+        {
+          "label": "remote",
+          "box": [
+            233.856003,
+            71.6800003,
+            258.944,
+            174.272003
+          ]
+        }
+      ],
+      "frame_width": 448,
+      "frame_height": 448,
+      "backend": "CUDA0",
+      "peak_working_set_bytes": 6772350976,
+      "timings_ms": {
+        "inference": 1244.920600000114,
+        "image_handling": 0.3245999996579485,
+        "request": 1252.459799999997
+      }
+    }
+  },
+  "native_failure": {
+    "http_status": 503,
+    "body": {
+      "status": "error",
+      "reason": "inference_failed"
+    }
+  },
+  "health_after": {
+    "http_status": 503
+  },
+  "native_stage_logs": [
+    "Model worker failure: image_decode_failed"
+  ]
+}

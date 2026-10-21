@@ -1,0 +1,127 @@
+{
+  "runtime": "n8n 2.6.4 disposable container",
+  "boundary": "CLI manual trigger running shipped graph; external services are HTTP fixtures, no real hardware",
+  "reports": [
+    {
+      "scenario": "pass",
+      "response": {
+        "status": "success",
+        "result": "pass"
+      },
+      "frame": {
+        "sessionId": "fixture-session",
+        "sequence": 7,
+        "capturedAt": "2026-10-20T00:00:00Z",
+        "width": 448,
+        "height": 448
+      },
+      "action": "pass",
+      "observed": [
+        {
+          "stage": "model",
+          "validFile": true,
+          "validPrompt": true
+        },
+        {
+          "stage": "actuator-fixture",
+          "action": "pass"
+        }
+      ]
+    },
+    {
+      "scenario": "reject",
+      "response": {
+        "status": "success",
+        "result": "reject"
+      },
+      "frame": {
+        "sessionId": "fixture-session",
+        "sequence": 7,
+        "capturedAt": "2026-10-20T00:00:00Z",
+        "width": 448,
+        "height": 448
+      },
+      "action": "reject",
+      "observed": [
+        {
+          "stage": "model",
+          "validFile": true,
+          "validPrompt": true
+        },
+        {
+          "stage": "actuator-fixture",
+          "action": "reject"
+        }
+      ]
+    },
+    {
+      "scenario": "model-error",
+      "response": {
+        "status": "error",
+        "result": "error",
+        "reason": "model_error_status"
+      },
+      "frame": {
+        "sessionId": "fixture-session",
+        "sequence": 7,
+        "capturedAt": "2026-10-20T00:00:00Z",
+        "width": 448,
+        "height": 448
+      },
+      "action": "reject",
+      "observed": [
+        {
+          "stage": "model",
+          "validFile": true,
+          "validPrompt": true
+        },
+        {
+          "stage": "actuator-fixture",
+          "action": "reject"
+        }
+      ]
+    },
+    {
+      "scenario": "timeout",
+      "response": {
+        "status": "error",
+        "result": "error",
+        "reason": "model_timeout"
+      },
+      "frame": {
+        "sessionId": "fixture-session",
+        "sequence": 7,
+        "capturedAt": "2026-10-20T00:00:00Z",
+        "width": 448,
+        "height": 448
+      },
+      "action": "reject",
+      "observed": [
+        {
+          "stage": "model",
+          "validFile": true,
+          "validPrompt": true
+        },
+        {
+          "stage": "actuator-fixture",
+          "action": "reject"
+        }
+      ]
+    },
+    {
+      "scenario": "prompt-ok",
+      "status": "updated",
+      "instructionUnchanged": null
+    },
+    {
+      "scenario": "prompt-blank",
+      "status": "rejected",
+      "instructionUnchanged": true
+    },
+    {
+      "scenario": "prompt-error",
+      "status": "error",
+      "instructionUnchanged": true
+    }
+  ]
+}

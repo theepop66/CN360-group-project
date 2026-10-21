@@ -39,6 +39,16 @@ export const FailureReason = Object.freeze({
 const REASON_NO_DEFECT = "no_defect_detected";
 const REASON_DEFECT = "defect_detected";
 
+// A forced reject is an operational error, not a successful inspection.
+export function buildInspectionResponse(decision) {
+  const evaluated = decision &&
+    [REASON_DEFECT, REASON_NO_DEFECT].includes(decision.reason) &&
+    [VERDICT.PASS, VERDICT.REJECT].includes(decision.verdict);
+  return evaluated
+    ? { status: "success", result: decision.verdict }
+    : { status: "error", result: "error", reason: decision?.reason ?? FailureReason.MODEL_INVALID_RESPONSE };
+}
+
 const FRAME_HEADERS = Object.freeze({
   sessionId: "x-camera-session",
   sequence: "x-frame-sequence",

@@ -240,7 +240,7 @@ test("the model is asked over multipart with the image and the instruction", () 
   assert.equal(detect.parameters.contentType, "multipart-form-data");
 
   const fields = detect.parameters.bodyParameters.parameters;
-  const image = fields.find((field) => field.name === "image");
+  const image = fields.find((field) => field.name === "file");
   const prompt = fields.find((field) => field.name === "prompt");
 
   assert.equal(image.parameterType, "formBinaryData");
@@ -267,7 +267,7 @@ test("the model timeout is the budget-clamped value, not the raw placeholder", (
 test("the model server is asked for the prompt before every inspection", () => {
   assert.equal(
     nodeNamed(inspection, "fetch-current-prompt").parameters.url,
-    `=https://${PLACEHOLDERS.modelHost}/get_prompt`
+    `=http://${PLACEHOLDERS.modelHost}/get_prompt`
   );
   assert.ok(
     dominates(inspection, "resolve-instruction", "detect-defects"),
@@ -496,9 +496,15 @@ test("a duplicate is logged rather than vanishing", () => {
 
 test("the firmware answer is read once, upstream of the record", () => {
   const captured = runCode(inspection, "capture-esp32-response", {
-    items: [{ json: { action: "pass", frameContext: FRAME_CONTEXT } }],
-    nodes: { "post-verdict": { accepted: false, status: "ignored" } }
+    items: [{ json: { accepted: false, status: "ignored" } }],
+    nodes: {
+      "duplicate-guard": { action: "pass", frameContext: FRAME_CONTEXT, decision: DECISION_PASS },
+      "post-verdict": { accepted: false, status: "ignored" }
+    }
   });
+
+  assert.deepEqual(captured[0].json.frameContext, FRAME_CONTEXT, "the HTTP response must not replace Inspection context");
+  assert.equal(captured[0].json.action, "pass");
 
   assert.deepEqual(captured[0].json.esp32, {
     esp32Accepted: false,
@@ -945,7 +951,7 @@ test("the health watchdog records transitions rather than every poll", () => {
 test("the health watchdog probes the model server and the capture service", () => {
   assert.equal(
     nodeNamed(healthWatchdog, "probe-model-health").parameters.url,
-    `=https://${PLACEHOLDERS.modelHost}/health`
+    `=http://${PLACEHOLDERS.modelHost}/health`
   );
   assert.equal(
     nodeNamed(healthWatchdog, "probe-capture").parameters.url,

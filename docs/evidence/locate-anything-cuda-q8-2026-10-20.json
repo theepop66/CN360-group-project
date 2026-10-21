@@ -1,0 +1,390 @@
+{
+  "environment": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.13.12",
+    "model_file": "locate-anything-q8_0.gguf",
+    "model_bytes": 6259931712,
+    "image_sha256": "84f76df27bc3f67833203919fa7639b436680854a7dbee5b5246507a386a8457",
+    "image_bytes": 417418,
+    "prompt": "Locate all the instances that matches the following description: cat</c>remote.",
+    "threads": 6,
+    "mode": "hybrid",
+    "backend_requested": "CUDA0"
+  },
+  "benchmark_only_timeout_seconds": 120,
+  "baseline": [
+    {
+      "request_ms": 26840.79179999935,
+      "backend": "CUDA0",
+      "native_log": "ggml_cuda_init: found 1 CUDA devices (Total VRAM: 6143 MiB):\n  Device 0: NVIDIA GeForce RTX 3060 Laptop GPU, compute capability 8.6, VMM: yes, VRAM: 6143 MiB\n[la] la::Backend using device: CUDA0\n[la] offload_weights: 768 weights -> CUDA0 (2 host-read tensors kept on CPU)\n4 detections\n",
+      "detections": [
+        {
+          "label": "cat",
+          "box": [
+            3.14,
+            50.62,
+            221.76,
+            443.52
+          ]
+        },
+        {
+          "label": "cat",
+          "box": [
+            241.92,
+            23.3,
+            447.1,
+            347.2
+          ]
+        },
+        {
+          "label": "remote",
+          "box": [
+            27.78,
+            68.99,
+            123.2,
+            109.76
+          ]
+        },
+        {
+          "label": "remote",
+          "box": [
+            233.86,
+            71.68,
+            258.94,
+            174.27
+          ]
+        }
+      ]
+    },
+    {
+      "request_ms": 13193.741900000532,
+      "backend": "CUDA0",
+      "native_log": "ggml_cuda_init: found 1 CUDA devices (Total VRAM: 6143 MiB):\n  Device 0: NVIDIA GeForce RTX 3060 Laptop GPU, compute capability 8.6, VMM: yes, VRAM: 6143 MiB\n[la] la::Backend using device: CUDA0\n[la] offload_weights: 768 weights -> CUDA0 (2 host-read tensors kept on CPU)\n4 detections\n",
+      "detections": [
+        {
+          "label": "cat",
+          "box": [
+            3.14,
+            50.62,
+            221.76,
+            443.52
+          ]
+        },
+        {
+          "label": "cat",
+          "box": [
+            241.92,
+            23.3,
+            447.1,
+            347.2
+          ]
+        },
+        {
+          "label": "remote",
+          "box": [
+            27.78,
+            68.99,
+            123.2,
+            109.76
+          ]
+        },
+        {
+          "label": "remote",
+          "box": [
+            233.86,
+            71.68,
+            258.94,
+            174.27
+          ]
+        }
+      ]
+    },
+    {
+      "request_ms": 15058.92589999894,
+      "backend": "CUDA0",
+      "native_log": "ggml_cuda_init: found 1 CUDA devices (Total VRAM: 6143 MiB):\n  Device 0: NVIDIA GeForce RTX 3060 Laptop GPU, compute capability 8.6, VMM: yes, VRAM: 6143 MiB\n[la] la::Backend using device: CUDA0\n[la] offload_weights: 768 weights -> CUDA0 (2 host-read tensors kept on CPU)\n4 detections\n",
+      "detections": [
+        {
+          "label": "cat",
+          "box": [
+            3.14,
+            50.62,
+            221.76,
+            443.52
+          ]
+        },
+        {
+          "label": "cat",
+          "box": [
+            241.92,
+            23.3,
+            447.1,
+            347.2
+          ]
+        },
+        {
+          "label": "remote",
+          "box": [
+            27.78,
+            68.99,
+            123.2,
+            109.76
+          ]
+        },
+        {
+          "label": "remote",
+          "box": [
+            233.86,
+            71.68,
+            258.94,
+            174.27
+          ]
+        }
+      ]
+    }
+  ],
+  "resident": [
+    {
+      "http_ms": 1285.1185999988957,
+      "status": "success",
+      "prompt_used": "Locate all the instances that matches the following description: cat</c>remote.",
+      "detections": [
+        {
+          "label": "cat",
+          "box": [
+            3.13600016,
+            50.6240005,
+            221.76001,
+            443.52002
+          ]
+        },
+        {
+          "label": "cat",
+          "box": [
+            241.920013,
+            23.2960014,
+            447.104004,
+            347.199982
+          ]
+        },
+        {
+          "label": "remote",
+          "box": [
+            27.7759991,
+            68.9919968,
+            123.200005,
+            109.760002
+          ]
+        },
+        {
+          "label": "remote",
+          "box": [
+            233.856003,
+            71.6800003,
+            258.944,
+            174.272003
+          ]
+        }
+      ],
+      "frame_width": 448,
+      "frame_height": 448,
+      "backend": "CUDA0",
+      "peak_working_set_bytes": 6772899840,
+      "timings_ms": {
+        "inference": 1274.3044999988342,
+        "image_handling": 0.57820000074571,
+        "request": 1281.9701000007626
+      }
+    },
+    {
+      "http_ms": 1114.316699999108,
+      "status": "success",
+      "prompt_used": "Locate all the instances that matches the following description: cat</c>remote.",
+      "detections": [
+        {
+          "label": "cat",
+          "box": [
+            3.13600016,
+            50.6240005,
+            221.76001,
+            443.52002
+          ]
+        },
+        {
+          "label": "cat",
+          "box": [
+            241.920013,
+            23.2960014,
+            447.104004,
+            347.199982
+          ]
+        },
+        {
+          "label": "remote",
+          "box": [
+            27.7759991,
+            68.9919968,
+            123.200005,
+            109.760002
+          ]
+        },
+        {
+          "label": "remote",
+          "box": [
+            233.856003,
+            71.6800003,
+            258.944,
+            174.272003
+          ]
+        }
+      ],
+      "frame_width": 448,
+      "frame_height": 448,
+      "backend": "CUDA0",
+      "peak_working_set_bytes": 6783979520,
+      "timings_ms": {
+        "inference": 1105.0986999998713,
+        "image_handling": 0.36720000025525223,
+        "request": 1111.407300000792
+      }
+    },
+    {
+      "http_ms": 1067.4238999999943,
+      "status": "success",
+      "prompt_used": "Locate all the instances that matches the following description: cat</c>remote.",
+      "detections": [
+        {
+          "label": "cat",
+          "box": [
+            3.13600016,
+            50.6240005,
+            221.76001,
+            443.52002
+          ]
+        },
+        {
+          "label": "cat",
+          "box": [
+            241.920013,
+            23.2960014,
+            447.104004,
+            347.199982
+          ]
+        },
+        {
+          "label": "remote",
+          "box": [
+            27.7759991,
+            68.9919968,
+            123.200005,
+            109.760002
+          ]
+        },
+        {
+          "label": "remote",
+          "box": [
+            233.856003,
+            71.6800003,
+            258.944,
+            174.272003
+          ]
+        }
+      ],
+      "frame_width": 448,
+      "frame_height": 448,
+      "backend": "CUDA0",
+      "peak_working_set_bytes": 6783979520,
+      "timings_ms": {
+        "inference": 1058.0824999997276,
+        "image_handling": 0.3623000011430122,
+        "request": 1064.5132999998168
+      }
+    }
+  ],
+  "errors": [],
+  "scope": "real model HTTP only; no Pi, ESP32, database or relay acceptance",
+  "server_log": "D:\\CN360\\toolchains\\locate-anything-cuda-q8-2026-10-20.log",
+  "health": {
+    "status": "ok",
+    "backend": "CUDA0",
+    "busy": false
+  },
+  "startup_ms": 13132.934600000226,
+  "prompt_update": {
+    "status": "updated",
+    "current_prompt": "Locate all the instances that matches the following description: cat</c>remote."
+  },
+  "blank_prompt_status": 400,
+  "invalid_image_status": 400,
+  "baseline_total": {
+    "samples": 3,
+    "p50_ms": 15058.92589999894,
+    "p95_ms": 25662.60520999931,
+    "max_ms": 26840.79179999935
+  },
+  "resident_http": {
+    "samples": 3,
+    "p50_ms": 1114.316699999108,
+    "p95_ms": 1268.038409998917,
+    "max_ms": 1285.1185999988957
+  },
+  "note": "Small-sample descriptive percentiles; includes the first prediction, no omitted warmup. Baseline total includes process/model startup. Native timing includes vision preprocessing and decode.",
+  "gpu_sampling": {
+    "scope": "GPU-wide nvidia-smi metrics; not process-exclusive; sampled peaks may miss shorter spikes; WDDM shared host memory is not measured",
+    "interval_ms": 100,
+    "samples": 632,
+    "raw_file": "D:\\CN360\\toolchains\\locate-anything-cuda-q8-2026-10-20-gpu.csv",
+    "first": {
+      "timestamp": "2026/10/20 16:36:44.147",
+      "gpu": "NVIDIA GeForce RTX 3060 Laptop GPU",
+      "driver": "566.07",
+      "total_mib": 6144,
+      "used_mib": 0,
+      "free_mib": 5996,
+      "utilization_percent": 0
+    },
+    "peak_used_mib": 5033,
+    "minimum_free_mib": 964,
+    "maximum_utilization_percent": 96,
+    "last": {
+      "timestamp": "2026/10/20 16:37:58.447",
+      "gpu": "NVIDIA GeForce RTX 3060 Laptop GPU",
+      "driver": "566.07",
+      "total_mib": 6144,
+      "used_mib": 4989,
+      "free_mib": 1008,
+      "utilization_percent": 76
+    }
+  },
+  "compatibility": {
+    "scope": "Unchanged q8 and hybrid mode; single upstream cat/remote parity fixture. Not product-defect accuracy validation.",
+    "cpu_reference": "locate-anything-cpu-2026-10-20.json",
+    "cpu_coverage": 0.7913170086209392,
+    "cpu_verdict_at_threshold_0_005": "reject",
+    "resident_samples": [
+      {
+        "sample": 1,
+        "labels_and_count_match_cpu": true,
+        "max_box_coordinate_delta_pixels": 0.0,
+        "coverage": 0.7913170086209392,
+        "verdict_at_threshold_0_005": "reject"
+      },
+      {
+        "sample": 2,
+        "labels_and_count_match_cpu": true,
+        "max_box_coordinate_delta_pixels": 0.0,
+        "coverage": 0.7913170086209392,
+        "verdict_at_threshold_0_005": "reject"
+      },
+      {
+        "sample": 3,
+        "labels_and_count_match_cpu": true,
+        "max_box_coordinate_delta_pixels": 0.0,
+        "coverage": 0.7913170086209392,
+        "verdict_at_threshold_0_005": "reject"
+      }
+    ],
+    "cpu_to_gpu_resident_p50_ratio": 20.61436753125779,
+    "comparison_limit": "CPU bridge uses MSVC 19.51; CUDA bridge uses supported MSVC 19.38. Both CPU components use Release AVX2. This compares deployed configurations rather than isolating only CUDA."
+  }
+}

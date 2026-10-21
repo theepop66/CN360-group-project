@@ -23,7 +23,6 @@ export const PLACEHOLDERS = Object.freeze({
   esp32Host: "REPLACE_ESP32_HOST",
   relayHost: "REPLACE_RELAY_HOST:8081",
   supabaseHost: "REPLACE_SUPABASE_HOST",
-  supabaseKey: "REPLACE_SUPABASE_SERVICE_ROLE_KEY",
   coverageThreshold: "REPLACE_COVERAGE_THRESHOLD",
   modelTimeoutMs: "REPLACE_MODEL_TIMEOUT_MS",
   snapshotBucket: "REPLACE_SNAPSHOT_BUCKET"
@@ -49,6 +48,11 @@ const PI_CAPTURE = `http://${PLACEHOLDERS.piHost}/capture`;
 const ESP32_VERDICT = `http://${PLACEHOLDERS.esp32Host}/verdict`;
 const RELAY_DETECTIONS = `http://${PLACEHOLDERS.relayHost}/detections`;
 const SUPABASE_REST = `https://${PLACEHOLDERS.supabaseHost}/rest/v1`;
+
+// The service-role key never enters the workflow files. Every Supabase node
+// authenticates through this one n8n Custom Auth credential, which carries
+// both the apikey and the Authorization header (see n8n/README.md).
+export const SUPABASE_CREDENTIAL_NAME = "CN360 Supabase service role";
 
 function codeNode(slug, name, position, glue) {
   return {
@@ -81,6 +85,7 @@ function supabaseTable(name, position, table, jsonBody) {
     __continueOnError: true,
     method: "POST",
     url: `=${SUPABASE_REST}/${table}`,
+    ...supabaseAuth(),
     sendHeaders: true,
     headerParameters: supabaseHeaders([{ name: "Prefer", value: "return=representation" }]),
     sendBody: true,
@@ -89,17 +94,20 @@ function supabaseTable(name, position, table, jsonBody) {
     options: {}
   });
   delete node.parameters.__continueOnError;
-  return node;
+  return withSupabaseCredential(node);
 }
 
+function supabaseAuth() {
+  return { authentication: "genericCredentialType", genericAuthType: "httpCustomAuth" };
+}
+
+function withSupabaseCredential(node) {
+  return { ...node, credentials: { httpCustomAuth: { name: SUPABASE_CREDENTIAL_NAME } } };
+}
+
+// Only the per-request headers; the key headers come from the credential.
 function supabaseHeaders(extra = []) {
-  return {
-    parameters: [
-      { name: "apikey", value: `=${PLACEHOLDERS.supabaseKey}` },
-      { name: "Authorization", value: `=Bearer ${PLACEHOLDERS.supabaseKey}` },
-      ...extra
-    ]
-  };
+  return { parameters: extra };
 }
 
 function link(from, to) {
@@ -395,10 +403,11 @@ return [{ json: { logRow: buildSystemLogRow({
       // carry the frame forward. n8n's HTTP node only copies the input binary
       // through when responseFormat is 'file', so this node answers that way and
       // posts as binaryData; 'binary' is not a real content type.
-      httpNode("upload-snapshot", "upload-snapshot", [920, 280], {
+      withSupabaseCredential(httpNode("upload-snapshot", "upload-snapshot", [920, 280], {
         __continueOnError: true,
         method: "POST",
         url: `=https://${PLACEHOLDERS.supabaseHost}/storage/v1/object/${PLACEHOLDERS.snapshotBucket}/{{ $json.snapshotObjectName }}`,
+        ...supabaseAuth(),
         sendHeaders: true,
         headerParameters: supabaseHeaders([
           { name: "Content-Type", value: "image/jpeg" },
@@ -411,7 +420,7 @@ return [{ json: { logRow: buildSystemLogRow({
           timeout: SNAPSHOT_UPLOAD_TIMEOUT_MS,
           response: { response: { responseFormat: "file" } }
         }
-      }),
+      })),
       httpNode("detect-defects", "detect-defects", [1140, 40], {
         __continueOnError: true,
         method: "POST",

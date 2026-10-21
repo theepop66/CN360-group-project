@@ -988,7 +988,8 @@ test("the inlined logic drops module syntax the Code node cannot resolve", () =>
 
 test("no credential is committed to the workflow files", () => {
   const text = allWorkflowText();
-  assert.equal(text.includes(PLACEHOLDERS.supabaseKey), true, "the key must be a named placeholder");
+  // The key lives only in the n8n credential; see schema-contract.test.mjs.
+  assert.equal(/apikey/i.test(text), false, "the Supabase key must come from the n8n credential");
 
   const secrets = [
     /eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\./,
@@ -1025,9 +1026,9 @@ test("the setup guide warns about the bind-address trap and the fail-safe defaul
   );
 });
 
-test("the setup guide is explicit that the Supabase schema is assumed", () => {
+test("the setup guide points at the versioned Supabase schema", () => {
   const readme = readFileSync(join(WORKFLOW_DIR, "..", "README.md"), "utf8");
-  assert.ok(/assum/i.test(readme), "the assumed schema must be labelled as an assumption");
+  assert.ok(readme.includes("supabase/migrations"), "the schema must be traced to its migrations");
 });
 
 test("no workflow points at an unresolvable n8n host", () => {

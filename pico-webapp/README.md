@@ -115,7 +115,7 @@ The configured WebSocket gateway should broadcast messages in this shape:
 - Include a capture `timestamp`, increasing `frame.sequence`, and producer `frame.sessionId`; the HUD ignores older results that arrive after a newer n8n execution and accepts a reset sequence after a new producer session. If `timestamp` is omitted, ordering falls back to `sequence` rather than inventing a receive-time timestamp. The n8n flow should copy these values from the Pi capture response headers.
 - The parser also accepts `boxes`, `imageWidth`, and `imageHeight` as compatibility aliases.
 
-> **WebSocket ownership:** a standard n8n Webhook node is HTTP-only and does not automatically create `ws://n8n...` routes. The n8n side must provide a real WebSocket-capable gateway/community node or change this transport by agreement. The default `n8n-gateway.local` URL is a placeholder, not a built-in n8n endpoint.
+> **WebSocket ownership:** a standard n8n Webhook node is HTTP-only and does not create `ws://` routes. The WebSocket is served by the [detection relay](../detection-relay/README.md), which runs on the n8n machine on port 8081. The default `ws://n8n.local:8081/detections` assumes that machine answers to `n8n.local`; change it in Connection settings if not.
 
 ### Prompt update to n8n
 

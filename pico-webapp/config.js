@@ -5,9 +5,9 @@ window.HUD_CONFIG = Object.freeze({
   cameraSource: "local",
   raspberryPiStreamUrl: "http://raspberrypi.local:8000/stream.mjpg",
   raspberryPiHealthUrl: "http://raspberrypi.local:8000/health",
-  // Stock n8n does not expose an arbitrary WebSocket broadcast route. Point
-  // this at the gateway/proxy owned by the n8n integration.
-  n8nDetectionWebSocketUrl: "ws://n8n-gateway.local:8081/detections",
+  // Stock n8n has no WebSocket broadcast route; detection-relay/ serves this
+  // on the n8n machine.
+  n8nDetectionWebSocketUrl: "ws://n8n.local:8081/detections",
   n8nPromptWebhookUrl: "http://n8n.local:5678/webhook/detection-prompt",
   // 360ControlUnit (ESP32) defaults — matches the static IP in
   // 360ControlUnit/src/main.cpp. /verdict is derived from servoUrl at

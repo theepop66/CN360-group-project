@@ -140,6 +140,7 @@ Three design decisions carry the weight:
   - **Prompt history** — one row per Inspection Target change: what changed, the resulting instruction, its source, and the model server's HTTP status.
   - **System logs** — health-watchdog and error-path entries: severity, component, message, details.
 - The actual Supabase column names and types are **not known yet**. The mappings are written against a documented **assumed schema** and every assumption is flagged as such in the setup document, so nobody mistakes a guess for a contract. These are the first thing to reconcile when the real schema is available.
+  - **Update 2026-10-20 (#26):** the schema is now versioned in `supabase/migrations`, and `n8n/test/schema-contract.test.mjs` fails if a row builder drifts from it.
 - A row written to Inspection results is the anchor: the frame URL and the control action both reference it, so results can be joined back to evidence and to the hardware response.
 
 ### Snapshots
@@ -171,6 +172,7 @@ Three design decisions carry the weight:
 - Before a production run, n8n verifies it can actually reach the model server: a plain `0.0.0.0` is a **bind address, not a connectable target**. Using it in a workflow produces a connection error that looks like a dead server. The setup document states this explicitly and requires a real LAN IP, `127.0.0.1`, or `host.docker.internal` depending on deployment.
 - **No token is committed to the repository.** This is enforced by a test that scans the workflow JSON for JWTs, `sk-` keys, and 40-character secrets after the Supabase table names.
 - **Deviation, recorded deliberately:** the Supabase service-role key ships as the `REPLACE_SUPABASE_SERVICE_ROLE_KEY` header placeholder rather than an n8n credential-store reference. The HTTP Request node needs two headers (`apikey` and `Authorization: Bearer`) and a single header credential would half-configure it, so the placeholder is the honest option until the Supabase nodes are reworked onto credentials as a set. The setup guide says so rather than implying the credential store is in use.
+  - **Resolved 2026-10-20 (#26):** the Supabase nodes now share one n8n Custom Auth credential, `CN360 Supabase service role`, which supplies both headers. The key placeholder is gone from the workflows, so user story 37 holds.
 
 ## Testing Decisions
 
@@ -261,6 +263,8 @@ Rationale for one seam, not several: the project already has strong, consistent 
 **Frame identity is load-bearing for the HUD.** The Pi's README states it directly: copy the capture headers into the HUD payload "so ordering still works after the Pi process restarts and its sequence resets." Dropping session or sequence silently reintroduces stale-frame flicker, and no test would catch it except the round-trip payload test above.
 
 **The assumed schema is the biggest open risk in the persistence layer.** Every column name here is a guess pending the real schema. Reconcile before the first production run; the workflow JSON is the single place these names live, so the fix is mechanical.
+
+**Update 2026-10-20 (#26):** resolved by `supabase/migrations`; see `supabase/README.md`.
 
 **A note on the n8n host address.** The ESP32 firmware secrets and the HUD config both advertise an n8n hostname that does not resolve. Two zero-value changes fix it. They are one-line edits in member-owned files and are called out rather than made.
 

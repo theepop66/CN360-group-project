@@ -94,7 +94,8 @@ exist yet.
 
 ## Naming in the database
 
-Table and column names are an **assumption** until the real Supabase schema is
-confirmed. `n8n/README.md` lists the assumed mapping. If you change a column
-name, change it in the workflow HTTP node and in
-`n8n/lib/inspection-records.mjs` together, then run `npm run build` in `n8n/`.
+Table and column names are defined by the migrations in `supabase/migrations`.
+If you change a column name, change it in a new migration and in
+`n8n/lib/inspection-records.mjs` together, then run `npm run build` and
+`npm test` in `n8n/`. `n8n/test/schema-contract.test.mjs` fails if the two
+disagree.

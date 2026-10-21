@@ -28,21 +28,38 @@ goes missing, so this list cannot drift away from the workflows.
 | `REPLACE_PI_HOST:8000` | The Raspberry Pi | Must be reachable from the n8n host. |
 | `REPLACE_ESP32_HOST` | The ESP32 | Its static IP on the line. |
 | `REPLACE_RELAY_HOST:8081` | The detection relay | See "The HUD overlay is not done yet". |
-| `REPLACE_SUPABASE_HOST` | `https://<project-ref>.supabase.co` | |
-| `REPLACE_SUPABASE_SERVICE_ROLE_KEY` | The service-role key | Prefer an n8n HTTP Header Auth credential instead of pasting it here. |
-| `REPLACE_SNAPSHOT_BUCKET` | A **public** bucket name | Create the bucket first; the stored `frame_url` points at `/storage/v1/object/public/...`. |
+| `REPLACE_SUPABASE_HOST` | `<project-ref>.supabase.co` | Host only. The workflows already prefix `https://`, so pasting the full URL produces `https://https://...`. |
+| `REPLACE_SNAPSHOT_BUCKET` | `inspection-snapshots` | Created public by `supabase/migrations`. The stored `frame_url` points at `/storage/v1/object/public/...`, which the HUD loads with no key. |
 | `REPLACE_COVERAGE_THRESHOLD` | e.g. `0.005` | Or set an n8n variable named `COVERAGE_THRESHOLD`. |
 | `REPLACE_MODEL_TIMEOUT_MS` | `1200` | Must fit the Verdict Window budget. The workflow refuses a value it cannot fit rather than trusting it. |
 
 ### Secrets and n8n credentials
 
-Supabase is reached with the service-role key as a header placeholder
-(`REPLACE_SUPABASE_SERVICE_ROLE_KEY`), not an n8n credential-store reference.
-That is a deliberate, documented deviation from the spec: the HTTP Request node
-needs *two* headers (`apikey` and `Authorization: Bearer`) and a credential
-supplies one, so a naive header-auth credential would half-configure the node.
-Replace the placeholder in place, or rework the Supabase nodes onto credentials
-together. Do not paste a key into this file.
+The service-role key is never in the workflow files. Every Supabase node
+(the four table inserts, the health log and `upload-snapshot`) authenticates
+with one n8n **Custom Auth** credential, because Supabase needs *two* headers
+and a Header Auth credential only supplies one.
+
+1. In n8n, **Credentials -> Add credential -> Custom Auth**.
+2. Name it exactly `CN360 Supabase service role`; the workflows reference it
+   by that name.
+3. Paste the JSON below with the real key from **Supabase -> Project Settings ->
+   API -> service_role**:
+
+   ```json
+   {
+     "headers": {
+       "apikey": "<service-role key>",
+       "Authorization": "Bearer <service-role key>"
+     }
+   }
+   ```
+
+4. After importing the workflows, open each Supabase node once and confirm the
+   credential is selected; n8n asks if it could not match it on import.
+
+Use the service-role key here and nowhere else. It bypasses row-level security,
+so it must never reach the HUD, the Pi or Git. Do not paste a key into this file.
 
 ## The Verdict Window budget
 
@@ -103,22 +120,32 @@ HUD cannot reach n8n at all:
 - The ESP32 firmware secrets advertise `n8n.local:5678`, which does not resolve.
 - The HUD config points at the same unusable host.
 
-## Assumed Supabase schema
+## Supabase schema
 
-**The real column names are not known yet.** These mappings are an assumption.
-Reconcile them before the first production run เน€เธยเนยเธเนโฌย the names live in one place
-(the `inspection_results` / `control_actions` / `prompt_history` /
-`system_logs` HTTP nodes) so the fix is mechanical.
+The schema is no longer an assumption. It is versioned in
+[`supabase/migrations`](../supabase/migrations), and
+[`supabase/README.md`](../supabase/README.md) covers applying it and checking a
+live project.
 
-- `inspection_results` เน€เธยเนยเธเนโฌย `inspection_at`, `inspection_target`,
+- `inspection_results`: `inspection_at`, `inspection_target`,
   `model_instruction`, `camera_session`, `frame_sequence`, `frame_width`,
   `frame_height`, `box_count`, `defect_coverage`, `coverage_threshold`,
   `verdict`, `prompt_verified`, `frame_url`
-- `control_actions` เน€เธยเนยเธเนโฌย `inspection_id`, `action`, `esp32_accepted`,
-  `esp32_status`, `requested_at`
-- `prompt_history` เน€เธยเนยเธเนโฌย `changed_at`, `inspection_target`, `model_instruction`,
-  `source`, `model_http_status`
-- `system_logs` เน€เธยเนยเธเนโฌย `logged_at`, `severity`, `component`, `message`, `details`
+- `control_actions`: `inspection_id`, `action`, `esp32_accepted`,
+  `esp32_status`, `esp32_http_status`, `esp32_error`, `requested_at`
+- `prompt_history`: `changed_at`, `inspection_target`, `model_instruction`,
+  `source`, `model_http_status`, `model_error`
+- `system_logs`: `logged_at`, `severity`, `component`, `message`, `details`
+
+PostgREST rejects a body key with no matching column, and every insert runs
+with `onError: continue`, so a renamed column would lose rows without failing a
+run. `test/schema-contract.test.mjs` reads the migrations and fails if a row
+builder sends a key the table does not have.
+
+The database also enforces the domain. A `pass` row needs a readable Defect
+Coverage below a readable Coverage Threshold, both in [0, 1]. Each Inspection
+has at most one Control Action. An Inspection cannot be deleted while its
+Control Action exists.
 
 ## Why there is no confidence threshold
 
@@ -177,7 +204,7 @@ machine remains the real backstop against double actuation.
 ## Development
 
 ```sh
-npm test     # 178 tests, no network, no n8n instance required
+npm test     # 193 tests, no network, no n8n instance required
 npm run build  # regenerates workflows/*.json from lib/
 ```
 

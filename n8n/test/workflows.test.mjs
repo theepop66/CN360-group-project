@@ -842,6 +842,11 @@ test("a model failure cannot stop the loop before the verdict", () => {
 test("the broadcast targets the relay ingest rather than the HUD websocket", () => {
   const broadcast = nodeNamed(inspection, "broadcast-hud");
   assert.equal(broadcast.parameters.url, `=http://${PLACEHOLDERS.relayHost}/detections`);
+  assert.deepEqual(
+    broadcast.parameters.headerParameters.parameters.find((header) => header.name === "X-CN360-Relay-Token"),
+    { name: "X-CN360-Relay-Token", value: PLACEHOLDERS.relayIngestToken },
+    "the optional relay ingest token must travel as a header"
+  );
   assert.equal(
     JSON.stringify(workflows).includes("n8n-nodes-base.websocket"),
     false,

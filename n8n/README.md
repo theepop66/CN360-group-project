@@ -27,7 +27,8 @@ goes missing, so this list cannot drift away from the workflows.
 | `REPLACE_MODEL_HOST:8000` | The PC running the model server | **Not `0.0.0.0`** เน€เธยเนยเธเนโฌย that is a bind address, not a connectable target. Use the LAN IP, `127.0.0.1`, or `host.docker.internal` if n8n runs in Docker. |
 | `REPLACE_PI_HOST:8000` | The Raspberry Pi | Must be reachable from the n8n host. |
 | `REPLACE_ESP32_HOST` | The ESP32 | Its static IP on the line. |
-| `REPLACE_RELAY_HOST:8081` | The detection relay | See "The HUD overlay is not done yet". |
+| `REPLACE_RELAY_HOST:8081` | The detection relay | Runs on the n8n machine: `localhost:8081`, or `host.docker.internal:8081` when n8n is in Docker. See [`detection-relay/`](../detection-relay/README.md). |
+| `REPLACE_RELAY_INGEST_TOKEN` | The relay ingest token | Empty by default, which leaves the check off. If set, it must equal the relay's `RELAY_INGEST_TOKEN` and use only `A-Z a-z 0-9 . _ ~ -`. |
 | `REPLACE_SUPABASE_HOST` | `<project-ref>.supabase.co` | Hostname only; the workflow already includes `https://`. |
 | `REPLACE_SUPABASE_SERVICE_ROLE_KEY` | The service-role key | Prefer an n8n HTTP Header Auth credential instead of pasting it here. |
 | `REPLACE_SNAPSHOT_BUCKET` | A **public** bucket name | Create the bucket first; the stored `frame_url` points at `/storage/v1/object/public/...`. |
@@ -151,17 +152,22 @@ in `model-service/`, but its measured runtime must still satisfy the 1200 ms
 model timeout. A workflow-level forced reject does not fix the ESP32's existing
 3000 ms auto-pass fallback; automatic sorting remains dependent on issue #24.
 
-## The HUD overlay is not done yet
+## The HUD overlay relay
 
-Stock n8n cannot broadcast to a WebSocket, so the workflow POSTs to a relay's
-HTTP ingest (`/detections`) and that relay fans out to
-`ws://n8n-gateway.local:8081/detections`. The relay does not exist yet; the
-broadcast is a fire-and-forget no-op until it does. The ingest path is a
-proposal and needs confirming with whoever builds it.
+Stock n8n cannot broadcast to a WebSocket, so `broadcast-hud` POSTs the HUD
+payload to the [detection relay](../detection-relay/README.md) at
+`POST /detections`, and the relay fans it out to every HUD connected to
+`ws://<n8n machine>:8081/detections`. The relay runs on the same machine as
+n8n. The broadcast is fire-and-forget: a relay that is down or slow never
+delays or changes a verdict.
 
-The payload itself is verified: the tests feed it to the HUD's real
-`parseDetectionPayload` and assert a box round-trips to the same pixel
-coordinates, so the overlay will land in the right place once the relay exists.
+The `X-CN360-Relay-Token` header carries `relayIngestToken`. It is empty by
+default and the relay ignores it unless `RELAY_INGEST_TOKEN` is set there.
+
+The payload is verified end to end: the tests feed it to the HUD's real
+`parseDetectionPayload`, and `detection-relay/test/contract.test.mjs` sends it
+through a running relay, asserting a box round-trips to the same pixel
+coordinates and frame identity.
 
 ## Duplicate suppression, and its limit
 
@@ -178,7 +184,7 @@ machine remains the real backstop against double actuation.
 ## Development
 
 ```sh
-npm test     # 178 tests, no network, no n8n instance required
+npm test     # 193 tests, no network, no n8n instance required
 npm run build  # regenerates workflows/*.json from lib/
 ```
 
@@ -221,7 +227,8 @@ For reproducible local configuration:
 
 1. Copy `runtime.example.json` to `runtime.local.json` and fill the actual Pi,
    ESP32, relay, Supabase origin and snapshot bucket. The model origin example
-   already matches Docker Desktop. Every URL value is a complete origin; do
+   already matches Docker Desktop. Leave `relayIngestToken` empty unless the
+   relay sets `RELAY_INGEST_TOKEN`. Every URL value is a complete origin; do
    not add a second `https://`.
 2. Set `CN360_SUPABASE_SERVICE_ROLE_KEY` only in the local environment.
 3. Run `node configure.mjs`. It validates origins and the Verdict Window budget,

@@ -580,6 +580,10 @@
             {
               "name": "Content-Type",
               "value": "application/json"
+            },
+            {
+              "name": "X-CN360-Relay-Token",
+              "value": "REPLACE_RELAY_INGEST_TOKEN"
             }
           ]
         },

@@ -77,9 +77,10 @@ reintroduces stale-frame flicker.
 **`0.0.0.0` is a bind address, not a host.** Pointing a workflow at it produces
 a connection failure that looks like a dead server.
 
-**Stock n8n cannot broadcast to a WebSocket.** The HUD's `ws://n8n-gateway.local:8081/detections`
-needs a relay. The workflow POSTs to a relay HTTP ingest; the relay does not
-exist yet.
+**Stock n8n cannot broadcast to a WebSocket.** The workflow POSTs each HUD
+payload to `detection-relay/`, which runs on the n8n machine and fans it out to
+HUDs on `ws://<n8n machine>:8081/detections`. The relay never replays an old
+frame to a HUD that connects late.
 
 ## Where things live
 

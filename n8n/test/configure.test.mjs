@@ -22,3 +22,21 @@ test("runtime configuration refuses invalid targets, missing credentials and uns
   }
   assert.throws(() => configureWorkflows(config, ""));
 });
+
+const relayTokenHeader = workflows => {
+  const inspection = Object.values(workflows).find(workflow => workflow.nodes.some(node => node.name === "broadcast-hud"));
+  return inspection.nodes.find(node => node.name === "broadcast-hud").parameters.headerParameters.parameters
+    .find(header => header.name === "X-CN360-Relay-Token").value;
+};
+
+test("the relay ingest token is off unless configured", () => {
+  assert.equal(relayTokenHeader(configureWorkflows(config, "fixture-key")), "");
+  assert.equal(relayTokenHeader(configureWorkflows({ ...config, relayIngestToken: "" }, "fixture-key")), "");
+  assert.equal(relayTokenHeader(configureWorkflows({ ...config, relayIngestToken: "abc123-XYZ" }, "fixture-key")), "abc123-XYZ");
+});
+
+test("a relay ingest token that n8n could misread is refused", () => {
+  for (const relayIngestToken of ["has space", "={{ $env.X }}", "REPLACE_RELAY_INGEST_TOKEN", 42]) {
+    assert.throws(() => configureWorkflows({ ...config, relayIngestToken }, "fixture-key"), /relayIngestToken/);
+  }
+});

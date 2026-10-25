@@ -26,24 +26,36 @@ function loadAframe() {
   return aframeLoadPromise;
 }
 
+let currentOnFrame = null;
+
 function registerScreenTextureComponent() {
   if (globalThis.AFRAME.components["screen-texture-updater"]) return;
 
   // A three.js CanvasTexture only re-uploads pixels when flagged, so the
   // live composite canvas needs an explicit needsUpdate tick each frame.
+  // In WebXR immersive mode, DOM window.requestAnimationFrame is paused by
+  // the browser, so the canvas must be redrawn here inside the XR loop.
   globalThis.AFRAME.registerComponent("screen-texture-updater", {
     tick() {
+      if (typeof currentOnFrame === "function") {
+        try {
+          currentOnFrame();
+        } catch (error) {
+          console.warn("Error compositing VR frame:", error);
+        }
+      }
       const map = this.el.getObject3D("mesh")?.material?.map;
       if (map) map.needsUpdate = true;
     }
   });
 }
 
-export async function startVrCinema({ compositeCanvasId, onEnd } = {}) {
+export async function startVrCinema({ compositeCanvasId, onEnd, onFrame } = {}) {
   if (!compositeCanvasId) {
     throw new Error("startVrCinema requires the id of the composite canvas element.");
   }
 
+  currentOnFrame = onFrame ?? null;
   await loadAframe();
   registerScreenTextureComponent();
 
@@ -86,6 +98,7 @@ export async function startVrCinema({ compositeCanvasId, onEnd } = {}) {
   const cleanUp = () => {
     if (ended) return;
     ended = true;
+    currentOnFrame = null;
     scene.removeEventListener("exit-vr", cleanUp);
     scene.remove();
     onEnd?.();

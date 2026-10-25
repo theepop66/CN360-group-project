@@ -4,7 +4,7 @@ import { sendPrompt } from "./prompt.js";
 import { parseCameraMessage } from "./camera-message.js";
 import { VIEW_MODES, isImmersiveArSupported, isImmersiveVrSupported } from "./xr-modes.js";
 import { startArPassthrough } from "./ar-passthrough.js";
-import { startVrCinema } from "./vr-cinema.js";
+import { startVrCinema } from "./vr-cinema.js?v=2";
 import { installXrEmulatorIfRequested } from "./dev-xr-emulator.js";
 import { setMode, setServoAngle, runSweep, sendVerdict } from "./servo.js";
 import {
@@ -881,6 +881,7 @@ async function enterViewMode(targetMode) {
     try {
       activeXrController = await startVrCinema({
         compositeCanvasId: elements.vrCompositeCanvas.id,
+        onFrame: compositeVrFrame,
         onEnd: () => { void enterViewMode(VIEW_MODES.FLAT); }
       });
       startVrRenderLoop();

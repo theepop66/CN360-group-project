@@ -37,6 +37,11 @@ the board answers `status: "stale"` to a verdict naming an earlier item, so a
 late verdict can never decide the next one. Verdicts without `item_id` (manual
 or scheduled inspections) apply to whichever item is waiting.
 
+**Line Latency** — per item, the time from the ESP32's debounced IR detection
+to the verdict it accepts (or to the Verdict Window, recorded as a timeout).
+The board keeps its newest 32 on `GET /cycles`; `360ControlUnit/tools/line_latency.py`
+reports p50/p95/max from them.
+
 **Inspection** — one pass through the loop: one frame, one model call, one
 verdict.
 

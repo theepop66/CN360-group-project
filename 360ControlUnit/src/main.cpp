@@ -304,6 +304,32 @@ static void handleStatus() {
   sendJson(200, res);
 }
 
+static const char* outcomeName(Cycle::Outcome o) {
+  switch (o) {
+    case Cycle::Outcome::Reject: return "reject";
+    case Cycle::Outcome::Timeout: return "timeout";
+    default: return "pass";
+  }
+}
+
+// Recent items with their detection -> verdict time, oldest first. Polled by
+// tools/line_latency.py to report p50/p95/max against the Verdict Window.
+static void handleCycles() {
+  Cycle cycles[kCycleHistory];
+  uint8_t n = machine.recentCycles(cycles, kCycleHistory);
+  JsonDocument res;
+  res["verdict_window_ms"] = machineConfig.verdictTimeoutMs;
+  res["recorded"] = machine.cyclesRecorded();
+  JsonArray list = res["cycles"].to<JsonArray>();
+  for (uint8_t i = 0; i < n; ++i) {
+    JsonObject row = list.add<JsonObject>();
+    row["item_id"] = cycles[i].itemId;
+    row["latency_ms"] = cycles[i].latencyMs;
+    row["outcome"] = outcomeName(cycles[i].outcome);
+  }
+  sendJson(200, res);
+}
+
 static void handleHealth() {
   JsonDocument res;
   res["status"] = "ok";
@@ -348,6 +374,8 @@ void setup() {
   server.on("/servo", HTTP_OPTIONS, handlePreflight);
   server.on("/status", HTTP_GET, handleStatus);
   server.on("/status", HTTP_OPTIONS, handlePreflight);
+  server.on("/cycles", HTTP_GET, handleCycles);
+  server.on("/cycles", HTTP_OPTIONS, handlePreflight);
   server.on("/health", HTTP_GET, handleHealth);
   server.on("/health", HTTP_OPTIONS, handlePreflight);
   server.begin();

@@ -16,6 +16,8 @@ void ControlUnit::init(uint32_t now, Config config) {
   rejectCount_ = 0;
   timeoutCount_ = 0;
   itemId_ = 0;
+  detectedAt_ = now;
+  cyclesRecorded_ = 0;
   rejectSequenceAlerted_ = false;
 }
 
@@ -47,6 +49,7 @@ uint8_t ControlUnit::step(uint32_t now, bool sensorPresent, Action* out, uint8_t
     phaseStart_ = now;
     awaitClear_ = true;
     itemId_++;
+    detectedAt_ = now;
     idx = emit(Action::Kind::Notify, 0, out, cap, idx);
   }
 
@@ -54,6 +57,7 @@ uint8_t ControlUnit::step(uint32_t now, bool sensorPresent, Action* out, uint8_t
     case Phase::AwaitVerdict:
       if ((now - phaseStart_) >= config_.verdictTimeoutMs) {
         timeoutCount_++;
+        recordCycle(now, Cycle::Outcome::Timeout);
         idx = (config_.timeoutVerdict == Verdict::Pass) ? resolvePass(now, out, cap, idx)
                                                          : resolveReject(now, out, cap, idx);
       }
@@ -118,6 +122,7 @@ uint8_t ControlUnit::acceptVerdict(uint32_t now, Verdict verdict, uint32_t itemI
     return 0;
   }
   if (result) *result = VerdictResult::Accepted;
+  recordCycle(now, verdict == Verdict::Pass ? Cycle::Outcome::Pass : Cycle::Outcome::Reject);
   if (verdict == Verdict::Pass) {
     return resolvePass(now, out, cap, 0);
   }
@@ -194,6 +199,26 @@ uint32_t ControlUnit::rejectCount() const { return rejectCount_; }
 uint32_t ControlUnit::timeoutCount() const { return timeoutCount_; }
 
 uint32_t ControlUnit::currentItemId() const { return itemId_; }
+
+void ControlUnit::recordCycle(uint32_t now, Cycle::Outcome outcome) {
+  Cycle& slot = history_[cyclesRecorded_ % kCycleHistory];
+  slot.itemId = itemId_;
+  slot.latencyMs = now - detectedAt_;
+  slot.outcome = outcome;
+  cyclesRecorded_++;
+}
+
+uint32_t ControlUnit::cyclesRecorded() const { return cyclesRecorded_; }
+
+uint8_t ControlUnit::recentCycles(Cycle* out, uint8_t cap) const {
+  uint32_t available = cyclesRecorded_ < kCycleHistory ? cyclesRecorded_ : kCycleHistory;
+  uint32_t count = available < cap ? available : cap;
+  uint32_t first = cyclesRecorded_ - count;  // oldest of the ones returned
+  for (uint32_t i = 0; i < count; ++i) {
+    out[i] = history_[(first + i) % kCycleHistory];
+  }
+  return (uint8_t)count;
+}
 
 uint8_t ControlUnit::resolvePass(uint32_t now, Action* out, uint8_t cap, uint8_t idx) {
   passCount_++;

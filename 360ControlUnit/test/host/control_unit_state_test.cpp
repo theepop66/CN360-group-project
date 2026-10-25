@@ -423,6 +423,79 @@ void testCountersTrackRepeatedCycles() {
   CHECK(u.state() == State::Idle);
 }
 
+// Line latency: detection -> verdict, per item, for p50/p95 reports (#24).
+void testCycleLatencyRecordedPerItem() {
+  ControlUnit u;
+  u.init(0, fastConfig());
+  Action a[4];
+  CHECK(u.cyclesRecorded() == 0);
+
+  detectItem(u, 20, 41);                     // item 1 opens at 41
+  CHECK(u.acceptVerdict(41 + 350, Verdict::Reject, a, 4) >= 1);
+  stepRange(u, 392, 1000, false);
+
+  detectItem(u, 1100, 1120);                 // item 2 opens at 1120
+  CHECK(u.acceptVerdict(1120 + 90, Verdict::Pass, a, 4) >= 1);
+  stepRange(u, 1211, 1400, false);
+
+  Cycle c[4];
+  uint8_t n = u.recentCycles(c, 4);
+  CHECK(n == 2);
+  CHECK(c[0].itemId == 1);
+  CHECK(c[0].latencyMs == 350);
+  CHECK(c[0].outcome == Cycle::Outcome::Reject);
+  CHECK(c[1].itemId == 2);
+  CHECK(c[1].latencyMs == 90);
+  CHECK(c[1].outcome == Cycle::Outcome::Pass);
+}
+
+void testTimeoutCycleRecordsTheWindow() {
+  ControlUnit u;
+  u.init(0, fastConfig());
+  detectItem(u, 20, 41);
+  stepRange(u, 42, 1500, true);
+  Cycle c[2];
+  CHECK(u.recentCycles(c, 2) == 1);
+  CHECK(c[0].outcome == Cycle::Outcome::Timeout);
+  CHECK(c[0].latencyMs == fastConfig().verdictTimeoutMs);
+}
+
+void testStaleAndIgnoredVerdictsAreNotRecorded() {
+  ControlUnit u;
+  u.init(0, fastConfig());
+  Action a[4];
+  CHECK(u.acceptVerdict(5, Verdict::Pass, a, 4) == 0);  // nothing waiting
+  detectItem(u, 20, 41);
+  VerdictResult r;
+  CHECK(u.acceptVerdict(60, Verdict::Pass, 99, a, 4, &r) == 0);  // stale id
+  CHECK(u.cyclesRecorded() == 0);
+}
+
+void testCycleHistoryKeepsTheNewest() {
+  ControlUnit u;
+  u.init(0, fastConfig());
+  Action a[4];
+  uint32_t t = 0;
+  const uint32_t items = kCycleHistory + 5;
+  for (uint32_t i = 1; i <= items; ++i) {
+    detectItem(u, t + 20, t + 40);
+    CHECK(u.acceptVerdict(t + 40 + i, Verdict::Pass, a, 4) >= 1);  // latency = i ms
+    stepRange(u, t + 41 + i, t + 200, false);
+    t += 300;
+  }
+  CHECK(u.cyclesRecorded() == items);
+  Cycle c[kCycleHistory];
+  uint8_t n = u.recentCycles(c, kCycleHistory);
+  CHECK(n == kCycleHistory);
+  CHECK(c[0].itemId == items - kCycleHistory + 1);  // oldest kept
+  CHECK(c[n - 1].itemId == items);                  // newest last
+  CHECK(c[n - 1].latencyMs == items);
+
+  Cycle few[3];
+  CHECK(u.recentCycles(few, 3) == 3);
+  CHECK(few[2].itemId == items);                    // a short read is the newest ones
+}
+
 int main() {
   testDetectionOpensCycleAndNotifies();
   testRejectSweepSequencedAndCounted();
@@ -445,6 +518,10 @@ int main() {
   testManualSweepRefusedWhileBusy();
   testManualRejectAlertsWithoutServo();
   testCountersTrackRepeatedCycles();
+  testCycleLatencyRecordedPerItem();
+  testTimeoutCycleRecordsTheWindow();
+  testStaleAndIgnoredVerdictsAreNotRecorded();
+  testCycleHistoryKeepsTheNewest();
 
   std::printf("%d checks, %d failures\n", checks, failures);
   return failures == 0 ? 0 : 1;

@@ -2,8 +2,10 @@
 // POST /mode {mode}, POST /servo {angle|sweep}, POST /verdict {action}.
 // Mirrors the request/timeout pattern in js/prompt.js.
 
-function deriveVerdictUrl(servoUrl) {
-  const parsed = new URL(servoUrl);
+function deriveVerdictUrl(servoUrl, base = globalThis.location?.href) {
+  // Same-origin paths such as "/esp/servo" need the page URL as a base;
+  // absolute deployments still work unchanged.
+  const parsed = new URL(servoUrl, base);
   parsed.pathname = parsed.pathname.replace(/\/[^/]*\/?$/, "/verdict");
   parsed.search = "";
   parsed.hash = "";

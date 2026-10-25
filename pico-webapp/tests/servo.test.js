@@ -80,6 +80,13 @@ test("derives /verdict from a /servo URL on the same host", () => {
   assert.equal(deriveVerdictUrl("http://192.168.1.50:8080/api/servo"), "http://192.168.1.50:8080/api/verdict");
 });
 
+test("derives /verdict from a same-origin /esp path", () => {
+  assert.equal(
+    deriveVerdictUrl("/esp/servo", "https://172.20.10.3:8443/?xrdebug=1"),
+    "https://172.20.10.3:8443/esp/verdict"
+  );
+});
+
 test("sends a verdict action to the derived endpoint", async () => {
   let request = null;
   const fetchImpl = async (url, options) => {

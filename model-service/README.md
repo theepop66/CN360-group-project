@@ -194,3 +194,37 @@ Real-service and fixture evidence is kept under the project's documentation.
 Pi/ESP32/database/relay acceptance remains separate. The current ESP32 can
 auto-pass after 3000 ms: automatic sorting still depends on #24 and measured
 end-to-end deadlines. Do not raise just the model timeout to bypass the budget.
+
+## Measuring accuracy on real product photos
+
+`scripts/evaluate_accuracy.py` answers "does the model catch real defects, and
+how many good items does it throw out?" It needs labelled photos, not hardware:
+
+```text
+dataset/
+  good/     items that should PASS      (aim for 20+ photos)
+  defect/   items that should be REJECTED (aim for 20+ photos)
+```
+
+Start the service as usual (accuracy is separate from speed, so a
+measurement-only `CN360_MODEL_REQUEST_TIMEOUT=120` is fine here), then:
+
+```powershell
+python scripts/evaluate_accuracy.py --dataset D:\CN360\dataset --target "scratch" `
+  --output D:\CN360\evidence\accuracy.json --csv D:\CN360\evidence\accuracy.csv
+```
+
+The verdict uses the n8n rule exactly (Defect Coverage, reject at or above the
+Coverage Threshold, default `0.005`); a test runs both implementations on the
+same inputs. The report gives:
+
+- **model_quality**: caught / missed defects, false rejects, catch rate,
+  false reject rate, with errored images left out;
+- **as_deployed**: the same with every error counted as a reject, as the line does;
+- **sweep**: those figures at several thresholds;
+- **recommended**: the highest threshold that still catches as many defects as
+  any threshold can, then the fewest false rejects. It never suggests `0`
+  (reject everything); if no threshold catches any defect it says so.
+
+Photos should look like what the Pi camera sees on the line: same lighting box,
+distance and background. The suggestion is only as good as the photos.

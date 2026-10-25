@@ -14,6 +14,9 @@ void ControlUnit::init(uint32_t now, Config config) {
   phase_ = Phase::Idle;
   passCount_ = 0;
   rejectCount_ = 0;
+  timeoutCount_ = 0;
+  itemId_ = 0;
+  rejectSequenceAlerted_ = false;
 }
 
 uint8_t ControlUnit::emit(Action::Kind kind, int angle, Action* out, uint8_t cap,
@@ -43,13 +46,16 @@ uint8_t ControlUnit::step(uint32_t now, bool sensorPresent, Action* out, uint8_t
     phase_ = Phase::AwaitVerdict;
     phaseStart_ = now;
     awaitClear_ = true;
+    itemId_++;
     idx = emit(Action::Kind::Notify, 0, out, cap, idx);
   }
 
   switch (phase_) {
     case Phase::AwaitVerdict:
       if ((now - phaseStart_) >= config_.verdictTimeoutMs) {
-        idx = resolvePass(now, out, cap, idx);
+        timeoutCount_++;
+        idx = (config_.timeoutVerdict == Verdict::Pass) ? resolvePass(now, out, cap, idx)
+                                                         : resolveReject(now, out, cap, idx);
       }
       break;
     case Phase::RejectRising:
@@ -98,29 +104,39 @@ uint8_t ControlUnit::step(uint32_t now, bool sensorPresent, Action* out, uint8_t
 }
 
 uint8_t ControlUnit::acceptVerdict(uint32_t now, Verdict verdict, Action* out, uint8_t cap) {
+  return acceptVerdict(now, verdict, 0, out, cap, nullptr);
+}
+
+uint8_t ControlUnit::acceptVerdict(uint32_t now, Verdict verdict, uint32_t itemId,
+                                   Action* out, uint8_t cap, VerdictResult* result) {
   if (phase_ != Phase::AwaitVerdict) {
+    if (result) *result = VerdictResult::NotWaiting;
     return 0;
   }
+  if (itemId != 0 && itemId != itemId_) {
+    if (result) *result = VerdictResult::Stale;
+    return 0;
+  }
+  if (result) *result = VerdictResult::Accepted;
   if (verdict == Verdict::Pass) {
     return resolvePass(now, out, cap, 0);
   }
+  return resolveReject(now, out, cap, 0);
+}
 
+uint8_t ControlUnit::resolveReject(uint32_t now, Action* out, uint8_t cap, uint8_t idx) {
   rejectCount_++;
+  phaseStart_ = now;
   if (mode_ == Mode::Auto) {
     rejectSequenceAlerted_ = true;
     phase_ = Phase::RejectRising;
-    phaseStart_ = now;
-    uint8_t idx = emit(Action::Kind::ServoAngle, config_.rejectAngle, out, cap, 0);
+    idx = emit(Action::Kind::ServoAngle, config_.rejectAngle, out, cap, idx);
     idx = emit(Action::Kind::RedLedOn, 0, out, cap, idx);
-    idx = emit(Action::Kind::BuzzerOn, 0, out, cap, idx);
-    return idx;
+    return emit(Action::Kind::BuzzerOn, 0, out, cap, idx);
   }
-
   phase_ = Phase::AlertHold;
-  phaseStart_ = now;
-  uint8_t idx = emit(Action::Kind::RedLedOn, 0, out, cap, 0);
-  idx = emit(Action::Kind::BuzzerOn, 0, out, cap, idx);
-  return idx;
+  idx = emit(Action::Kind::RedLedOn, 0, out, cap, idx);
+  return emit(Action::Kind::BuzzerOn, 0, out, cap, idx);
 }
 
 bool ControlUnit::setMode(uint32_t now, Mode mode) {
@@ -174,6 +190,10 @@ bool ControlUnit::itemPresent() const { return itemPresent_; }
 uint32_t ControlUnit::passCount() const { return passCount_; }
 
 uint32_t ControlUnit::rejectCount() const { return rejectCount_; }
+
+uint32_t ControlUnit::timeoutCount() const { return timeoutCount_; }
+
+uint32_t ControlUnit::currentItemId() const { return itemId_; }
 
 uint8_t ControlUnit::resolvePass(uint32_t now, Action* out, uint8_t cap, uint8_t idx) {
   passCount_++;

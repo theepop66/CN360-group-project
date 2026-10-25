@@ -104,7 +104,31 @@ does not change the workflow budget or approve automatic sorting.
 
 Additional local settings: `CN360_MODEL_BIND`, `CN360_MODEL_PORT`,
 `CN360_MODEL_MODE` (`hybrid`, `slow`, `fast`), and
-`CN360_MODEL_STARTUP_TIMEOUT`. Changing decode modes or quantization requires
+`CN360_MODEL_STARTUP_TIMEOUT`.
+
+### Warm-up and worker replacement
+
+The first native prediction pays one-off costs and measured 1285 ms on CUDA,
+over the 1.1 s deadline, so it timed out the first real item from n8n. The
+service now runs one warm-up prediction on a plain 448×448 grey frame before
+it reports ready. `/health` answers 503 `model_warming_up` until that pass
+finishes, then `200` with `warmup_ms` and `restarts`. If the warm-up itself
+fails, health stays 503 `model_warmup_failed`; the service never serves an
+unwarmed worker.
+
+A worker that times out is still killed, never reused. After
+`CN360_MODEL_RESTART_DELAY` seconds (default `2`) a fresh worker is started and
+warmed again; previously the service stayed at 503 until restarted by hand.
+Requests during warm-up or replacement are refused with 503, not queued.
+
+| Variable | Default | Meaning |
+| :--- | :--- | :--- |
+| `CN360_MODEL_WARMUP` | `1` | `0` turns the warm-up pass off |
+| `CN360_MODEL_WARMUP_TIMEOUT` | `60` | Seconds allowed for the warm-up prediction |
+| `CN360_MODEL_RESTART_DELAY` | `2` | Seconds before a killed worker is replaced |
+
+Warm-up removes the cold first request; it does not by itself prove the
+p95 fits the deadline. Re-run the benchmark against a warmed service. Changing decode modes or quantization requires
 comparing Detection/coverage/Verdict quality on representative images.
 
 ## Public HTTP contract

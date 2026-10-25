@@ -28,7 +28,7 @@ goes missing, so this list cannot drift away from the workflows.
 | `REPLACE_PI_HOST:8000` | The Raspberry Pi | Must be reachable from the n8n host. |
 | `REPLACE_ESP32_HOST` | The ESP32 | Its static IP on the line. |
 | `REPLACE_RELAY_HOST:8081` | The machine running `relay/` | See "The HUD overlay and the relay". |
-| `REPLACE_SUPABASE_HOST` | `https://<project-ref>.supabase.co` | |
+| `REPLACE_SUPABASE_HOST` | `<project-ref>.supabase.co` | Hostname only; the workflow already includes `https://`. |
 | `REPLACE_SUPABASE_SERVICE_ROLE_KEY` | The service-role key | Prefer an n8n HTTP Header Auth credential instead of pasting it here. |
 | `REPLACE_SNAPSHOT_BUCKET` | A **public** bucket name | Create the bucket first; the stored `frame_url` points at `/storage/v1/object/public/...`. |
 | `REPLACE_COVERAGE_THRESHOLD` | e.g. `0.005` | Or set an n8n variable named `COVERAGE_THRESHOLD`. |
@@ -145,10 +145,11 @@ the coverage threshold, the prompt comparison and whether the ESP32 accepted the
 verdict. A mid-flight prompt change shows up there as `promptMismatch: true`
 rather than being silently applied.
 
-**Expect near-total rejection in production today.** The model server reloads a
-5.83 GB model on CPU per request and cannot currently meet the 1200 ms timeout.
-That is the fail-safe working, not a workflow bug เน€เธยเนยเธเนโฌย but it is a line-stopping
-condition until model latency is fixed.
+**The model budget is still a deployment constraint.** The legacy model adapter
+reloads the q8 weights per request. The project now includes a resident adapter
+in `model-service/`, but its measured runtime must still satisfy the 1200 ms
+model timeout. A workflow-level forced reject does not fix the ESP32's existing
+3000 ms auto-pass fallback; automatic sorting remains dependent on issue #24.
 
 ## The HUD overlay and the relay
 
@@ -196,3 +197,55 @@ tested logic and the shipped logic cannot drift.
 
 After changing anything in `lib/` or in the graph definitions, run
 `npm run build` and commit the regenerated JSON.
+
+## Local resident model and compact results
+
+The project-owned [resident model service](../model-service/README.md) preserves
+the Detection/prompt HTTP contract without generating annotated images.
+Model URLs now use HTTP to match that service. The inspected local n8n instance
+runs in Docker: its model origin is `http://host.docker.internal:8000`.
+The model multipart field is **`file`**; the n8n binary property remains `image`.
+
+`POST /webhook/inspect-now` and `POST /webhook/item-detected` use Respond to
+Webhook mode. They return a compact result after the verdict POST, before
+database writes and relay delivery. Successful evaluation returns
+`status: success` with `result: pass` or `result: reject` according to coverage.
+Evaluation failures return `status: error`, `result: error`, and `reason`, while
+the internal Control Action remains reject. A pass can still have small boxes:
+it means below the threshold, not proof that there are no Detections. All boxes
+and Frame Context remain available to the record and HUD paths.
+
+This result describes the inspection decision; inspect Control Action records
+separately to confirm the ESP32 accepted it. Database or relay failure after the
+response does not retrospectively change that inspection result.
+
+Prompt Capture reads the HTTP Webhook `body.prompt` and checks the model's
+update status and echoed instruction before reporting success. Blank input is
+HTTP 400, and a failed model update is HTTP 502. The response is sent before the
+Prompt History write; history still records the attempt on either model branch.
+
+For reproducible local configuration:
+
+1. Copy `runtime.example.json` to `runtime.local.json` and fill the actual Pi,
+   ESP32, relay, Supabase origin and snapshot bucket. The model origin example
+   already matches Docker Desktop. Every URL value is a complete origin; do
+   not add a second `https://`.
+2. Set `CN360_SUPABASE_SERVICE_ROLE_KEY` only in the local environment.
+3. Run `node configure.mjs`. It validates origins and the Verdict Window budget,
+   refuses unresolved configuration, and writes inactive exports to the ignored
+   `workflows-local/` directory. These exports contain local credentials; use
+   the clean `workflows/` files for shared commits.
+4. Import the configured exports into n8n after the other service requirements
+   are satisfied. Test-mode URLs use `/webhook-test/` and require a listening
+   test execution; production `/webhook/` URLs require published active workflows.
+
+`node scripts/runtime-smoke.mjs <fixture-image>` runs the shipped graphs in
+disposable containers using the locally available `n8n-backup:latest` image.
+Set `CN360_DOCKER` to the Docker executable if it is not on PATH. It exercises
+HTTP fixture capture/model/storage/relay/actuator services and prompt updates,
+not real hardware. CLI executions replace the manual trigger only in temporary
+copies; they are not evidence of a live production webhook or database schema.
+It also starts a disposable server with a fresh SQLite database to verify the
+real public inspection and prompt webhooks. Only temporary workflow copies are
+published in that server; it is stopped and removed after the test. No workflows
+are imported into the user's running n8n instance.

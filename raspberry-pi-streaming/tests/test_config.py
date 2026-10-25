@@ -14,6 +14,48 @@ def test_defaults_match_the_pico_stream_contract() -> None:
     assert settings.stream_width == 1280
 
 
+def test_push_defaults_keep_outbound_pushing_disabled() -> None:
+    settings = Settings.from_env({})
+
+    assert settings.n8n_webhook_url == ""
+    assert settings.push_interval_seconds == 0.0
+    assert settings.push_timeout_seconds == 10.0
+    assert settings.push_retry_seconds == 2.0
+    assert settings.push_max_attempts == 3
+
+
+def test_push_settings_parse_from_environment() -> None:
+    settings = Settings.from_env(
+        {
+            "N8N_WEBHOOK_URL": "http://n8n.local:5678/webhook/image-ingestion",
+            "PUSH_INTERVAL_SECONDS": "5",
+            "PUSH_TIMEOUT_SECONDS": "7.5",
+            "PUSH_RETRY_SECONDS": "1.5",
+            "PUSH_MAX_ATTEMPTS": "5",
+        }
+    )
+
+    assert (
+        settings.n8n_webhook_url == "http://n8n.local:5678/webhook/image-ingestion"
+    )
+    assert settings.push_interval_seconds == 5.0
+    assert settings.push_timeout_seconds == 7.5
+    assert settings.push_retry_seconds == 1.5
+    assert settings.push_max_attempts == 5
+
+
+def test_public_webhook_url_removes_credentials_and_query_secrets() -> None:
+    settings = Settings.from_env(
+        {
+            "N8N_WEBHOOK_URL": (
+                "https://user:secret@n8n.local:5678/webhook/image?token=hidden"
+            )
+        }
+    )
+
+    assert settings.public_webhook_url() == "https://n8n.local:5678/webhook/image"
+
+
 def test_camera_source_parses_device_indexes_and_urls() -> None:
     assert Settings.from_env({"CAMERA_SOURCE": "2"}).camera_source == 2
     assert (
@@ -49,6 +91,13 @@ def test_malformed_network_camera_url_fails_at_startup() -> None:
         ("CAMERA_READ_TIMEOUT_SECONDS", "0", "CAMERA_READ_TIMEOUT_SECONDS"),
         ("CORS_ALLOWED_ORIGIN", "", "CORS_ALLOWED_ORIGIN"),
         ("LOG_LEVEL", "VERBOSE", "LOG_LEVEL"),
+        ("N8N_WEBHOOK_URL", "ftp://n8n.local/webhook", "N8N_WEBHOOK_URL"),
+        ("N8N_WEBHOOK_URL", "n8n.local/webhook", "N8N_WEBHOOK_URL"),
+        ("N8N_WEBHOOK_URL", "http://:5678/webhook", "N8N_WEBHOOK_URL"),
+        ("PUSH_INTERVAL_SECONDS", "-1", "PUSH_INTERVAL_SECONDS"),
+        ("PUSH_TIMEOUT_SECONDS", "0", "PUSH_TIMEOUT_SECONDS"),
+        ("PUSH_RETRY_SECONDS", "0", "PUSH_RETRY_SECONDS"),
+        ("PUSH_MAX_ATTEMPTS", "0", "PUSH_MAX_ATTEMPTS"),
     ],
 )
 def test_invalid_configuration_fails_at_startup(name: str, value: str, message: str) -> None:

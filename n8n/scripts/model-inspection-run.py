@@ -47,11 +47,12 @@ def main() -> None:
     args.output.mkdir(parents=True, exist_ok=True)
     subprocess.run([sys.executable, str(root / "n8n/scripts/prepare-inspection-images.py"), "--assets", str(root / "test-assets/product-defects"), "--output", str(args.output), "--max-side", str(args.max_side)], check=True)
     cases = json.loads((args.output / "cases.json").read_text(encoding="utf-8"))
-    cold: dict[str, object] = {"scope": "Fresh real model workers, default 1100 ms request deadline; no hardware", "startupLimitSeconds": args.startup_timeout, "maxSide": args.max_side, "samples": []}
+    cold: dict[str, object] = {"scope": "Fresh real model workers after representative warm-up, default 1100 ms admitted-request deadline; no hardware", "startupLimitSeconds": args.startup_timeout, "maxSide": args.max_side, "samples": []}
     samples: list[dict[str, object]] = []
     cold["samples"] = samples
     url = "http://127.0.0.1:8002"
     env = {**os.environ, "CN360_MODEL_LIBRARY": str(args.library.resolve()), "CN360_MODEL_PATH": str(args.weights.resolve()), "LA_DEVICE": args.device, "CN360_MODEL_PORT": "8002", "CN360_MODEL_THREADS": "6", "CN360_MODEL_STARTUP_TIMEOUT": str(args.startup_timeout)}
+    env["CN360_MODEL_WARMUP_IMAGE"] = str(Path(cases[0]["file"]).resolve())
     if args.cuda_root:
         env["CUDA_PATH"] = str(args.cuda_root.resolve())
         env["PATH"] = str(args.cuda_root.resolve() / "bin") + os.pathsep + env["PATH"]
@@ -68,7 +69,7 @@ def main() -> None:
             started = time.perf_counter()
             try:
                 health: dict[str, object] = {}
-                while time.perf_counter() - started < args.startup_timeout + 10:
+                while time.perf_counter() - started < args.startup_timeout + 70:
                     if process.poll() is not None:
                         raise RuntimeError(f"Model service exited; see {log_path}")
                     try:

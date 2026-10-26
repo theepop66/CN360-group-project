@@ -1,9 +1,7 @@
 export const DEFAULT_COVERAGE_THRESHOLD = 0.005;
 
-// The ESP32 auto-passes after 3000 ms, so every stage before the verdict is
-// budgeted: fetch the prompt, capture the frame, store the snapshot, ask the
-// model. The snapshot upload is in here on purpose — see the note on the
-// capture fan-out in workflow-definitions.mjs.
+// Controller-local expiry rejects. Leave headroom for a timely evaluated Verdict;
+// snapshot upload happens after the control attempt and does not consume this budget.
 export const VERDICT_WINDOW_MS = 3000;
 export const MODEL_PROMPT_TIMEOUT_MS = 250;
 export const CAPTURE_TIMEOUT_MS = 800;
@@ -13,7 +11,6 @@ export const VERDICT_POST_TIMEOUT_MS = 250;
 export const PRE_VERDICT_BUDGET_MS =
   MODEL_PROMPT_TIMEOUT_MS +
   CAPTURE_TIMEOUT_MS +
-  SNAPSHOT_UPLOAD_TIMEOUT_MS +
   MODEL_TIMEOUT_MS;
 
 export const MODEL_SUCCESS_STATUS = "success";
@@ -225,6 +222,9 @@ export function shouldSuppressDuplicate(store, frameContext, nowMs, windowMs = V
 
   const target = store && typeof store === "object" ? store : {};
   const now = asFiniteNumber(nowMs) ?? Date.now();
+  for (const [oldKey, at] of Object.entries(target.lastVerdictAt ?? {})) {
+    if (now - at >= windowMs) delete target.lastVerdictAt[oldKey];
+  }
   const last = target.lastVerdictAt?.[key];
   if (typeof last === "number" && now - last < windowMs) return true;
 
@@ -248,22 +248,20 @@ export function buildSnapshotObjectName(frameContext) {
 // than assumed. An unreadable value falls back to the shipped default instead
 // of disabling the check — but the substitution is reported, never silent,
 // because a configured value that quietly went unread is a deployment fault.
-export function resolveVerdictBudget(configuredModelTimeoutMs) {
+export function resolveVerdictBudget(configuredModelTimeoutMs, windowMs = VERDICT_WINDOW_MS) {
   const requested = asFiniteNumber(configuredModelTimeoutMs);
   const readable = requested !== null && requested > 0;
   const modelTimeoutMs = readable ? requested : MODEL_TIMEOUT_MS;
   const totalMs =
     PRE_VERDICT_BUDGET_MS - MODEL_TIMEOUT_MS + modelTimeoutMs + VERDICT_POST_TIMEOUT_MS;
-  const fits = totalMs < VERDICT_WINDOW_MS;
+  const fits = totalMs < windowMs;
 
   return {
     configured: configuredModelTimeoutMs ?? null,
     readable,
     substituted: !readable,
     modelTimeoutMs,
-    // Refusing the load means nothing if the wire wait is untouched — the
-    // ESP32's auto-pass would fire first. The timeout the HTTP node applies is
-    // clamped inside the window so the forced reject is the thing that arrives.
+    // Configuration arithmetic is a guard, not evidence of physical timing.
     appliedModelTimeoutMs: fits ? modelTimeoutMs : MODEL_TIMEOUT_MS,
     totalMs,
     fits

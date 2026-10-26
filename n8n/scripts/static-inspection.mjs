@@ -58,13 +58,13 @@ const baseCase = cases.find(c => c.id.startsWith("bottle__good"));
 const check = (row, condition, message) => { if (!condition) row.failures.push(message); };
 async function post(path, body) {
   const started = performance.now();
-  const response = await fetch(runtime.origin + "/webhook/" + path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...body, testCaseId: fixture.current.id }), signal: AbortSignal.timeout(15000) });
+  const response = await fetch(runtime.origin + "/webhook/" + path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...(["inspect-now", "item-detected"].includes(path) ? fixture.current.itemContext : {}), ...body, testCaseId: fixture.current.id }), signal: AbortSignal.timeout(15000) });
   const text = await response.text();
   let parsed; try { parsed = JSON.parse(text); } catch { parsed = { invalidJson: text.slice(0, 200) }; }
   return { httpStatus: response.status, body: parsed, elapsedMs: performance.now() - started };
 }
 async function inspect(id, scenario = {}, c = baseCase, count = 1) {
-  const context = fixture.select({ id, frame: frameFor(c), target: c.target, ...scenario });
+  const context = fixture.select({ id, frame: frameFor(c), target: c.target, itemContext: { controller_session: "fixture-" + (scenario.repeatFrame ? "fresh-for-duplicate" : id), item_id: "1", verdict_window_ms: 3000 }, ...scenario });
   const row = { id, caseId: c.id, runType: count > 1 ? "concurrent" : scenario.realModel ? "sequential" : "controlled", hasDefect: c.hasDefect, target: c.target, originalSha256: c.originalSha256, servedSha256: c.servedSha256, failures: [], events: context.events, completions: context.completions };
   let inspectionStarted;
   try {
@@ -97,7 +97,10 @@ async function inspect(id, scenario = {}, c = baseCase, count = 1) {
     }
     if (scenario.expected) check(row, responses.every(r => r.body.result === scenario.expected), `Expected ${scenario.expected}, received ${row.result}`);
     for (const e of context.events.filter(e => e.stage === "model-start")) check(row, e.validFile && e.validPrompt, "Multipart/prompt contract failed");
-    for (const e of context.events.filter(e => e.stage === "snapshot-upload")) check(row, e.matchesCapture, "Uploaded snapshot differs from source bytes");
+    for (const e of context.events.filter(e => e.stage === "snapshot-upload")) {
+      check(row, e.matchesCapture, "Uploaded snapshot differs from source bytes");
+      check(row, e.matchesObjectName, "Uploaded snapshot object path differs from captured frame identity");
+    }
     for (const e of context.events.filter(e => e.stage === "hud-delivery")) {
       try { parseDetectionPayload(e.payload); } catch (error) { row.failures.push("HUD parser: " + error.message); }
     }
@@ -143,7 +146,7 @@ try {
       ["capture-offline", { captureOffline: true, expected: "error" }], ["invalid-frame-headers", { invalidHeaders: true, expected: "error" }],
       ["prompt-echo-mismatch", { echoMismatch: true, coverage: 0.01, expected: "reject" }],
       ["ignored-verdict", { verdictIgnored: true, expected: "pass" }], ["verdict-offline", { verdictOffline: true, expected: "pass" }],
-      ["snapshot-offline", { snapshotError: true, expected: "error" }], ["database-offline", { databaseError: true, expected: "pass" }],
+      ["snapshot-offline", { snapshotError: true, expected: "pass" }], ["database-offline", { databaseError: true, expected: "pass" }],
       ["relay-offline", { relayError: true, expected: "pass" }], ["item-event", { path: "item-detected", expected: "pass" }],
       ["fresh-for-duplicate", { expected: "pass" }], ["repeat-frame", { repeatFrame: true, verdictIgnored: true, expected: "pass" }],
       ["fresh-sequence", { expected: "pass" }],

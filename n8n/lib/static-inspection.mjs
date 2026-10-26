@@ -4,6 +4,7 @@ import { randomUUID, createHash } from "node:crypto";
 import { performance } from "node:perf_hooks";
 import { setTimeout as delay } from "node:timers/promises";
 import { buildModelInstruction } from "./inspection-records.mjs";
+import { buildSnapshotObjectName } from "./inspection-logic.mjs";
 
 const hash = bytes => createHash("sha256").update(bytes).digest("hex");
 
@@ -28,7 +29,7 @@ function multipart(body, contentType) {
   return fields;
 }
 
-export async function startInspectionFixture({ port = 0, upstream = null } = {}) {
+export async function startInspectionFixture({ port = 0, upstream = null, verdictHandler = null } = {}) {
   let session = randomUUID();
   let sequence = 0;
   let active = null;
@@ -40,7 +41,7 @@ export async function startInspectionFixture({ port = 0, upstream = null } = {})
     if (!context) { res.writeHead(503).end(); return; }
     const start = performance.now();
     let isPrediction = false;
-    const event = (stage, detail = {}) => context.events.push({ stage, atMs: performance.now(), caseId: context.id, ...detail });
+    const event = (stage, detail = {}) => context.events.push({ stage, atMs: performance.now(), caseId: context.id, executionId: req.headers["x-cn360-test-execution"] ?? null, ...detail });
     const reply = (status, value, mime = "application/json") => {
       if (!res.destroyed) res.writeHead(status, { "content-type": mime }).end(mime === "application/json" ? JSON.stringify(value) : value);
     };
@@ -76,7 +77,10 @@ export async function startInspectionFixture({ port = 0, upstream = null } = {})
           "x-frame-width": String(context.frame.width), "x-frame-height": String(context.frame.height)
         };
         if (context.invalidHeaders) delete headers["x-frame-width"];
-        event("capture-end", { session, sequence, sha256: hash(bytes), durationMs: performance.now() - start });
+        const captured = { snapshotObjectName: buildSnapshotObjectName({ sessionId: session, sequence }), sha256: hash(bytes) };
+        context.framesByExecution ??= new Map();
+        context.framesByExecution.set(req.headers["x-cn360-test-execution"] ?? "direct", captured);
+        event("capture-end", { session, sequence, ...captured, durationMs: performance.now() - start });
         if (!res.destroyed) res.writeHead(200, headers).end(bytes);
         return;
       }
@@ -113,9 +117,17 @@ export async function startInspectionFixture({ port = 0, upstream = null } = {})
         }
         if (context.modelDelayMs) await delay(context.modelDelayMs);
         if (upstream && context.realModel) {
-          // Continue observing late upstream results even after the n8n client expires.
-          const response = await fetch(upstream + "/predict", { method: "POST", headers: { "content-type": req.headers["content-type"] }, body, signal: AbortSignal.timeout(125000) });
-          const result = await response.json();
+          // Diagnostic runs drain late results. Production tests propagate the
+          // disconnect so they exercise real timeout/worker-recovery behavior.
+          const disconnect = new AbortController();
+          const onClose = () => { if (context.productionModel && !res.writableEnded) disconnect.abort(); };
+          res.once("close", onClose);
+          let response; let result;
+          try {
+            response = await fetch(upstream + "/predict", { method: "POST", headers: { "content-type": req.headers["content-type"] }, body,
+              signal: AbortSignal.any([AbortSignal.timeout(125000), disconnect.signal]) });
+            result = await response.json();
+          } finally { res.off("close", onClose); }
           event("model-end", { httpStatus: response.status, body: result, durationMs: performance.now() - start, clientExpired: res.destroyed });
           reply(response.status, result); return;
         }
@@ -131,14 +143,24 @@ export async function startInspectionFixture({ port = 0, upstream = null } = {})
         return;
       }
       if (url.pathname === "/verdict") {
-        const command = JSON.parse(body.toString());
+        let command;
+        try { command = JSON.parse(body.toString()); }
+        catch { reply(400, { accepted: false, status: "ignored", reason: "invalid_request" }); return; }
         event("verdict-received", { command });
         if (context.verdictDelayMs) await delay(context.verdictDelayMs);
-        reply(context.verdictOffline ? 503 : 200, { accepted: !context.verdictIgnored && !context.verdictOffline, status: context.verdictIgnored ? "ignored" : "accepted" }); return;
+        if (verdictHandler && !context.verdictOffline) {
+          const receipt = await verdictHandler(command, context);
+          event("controller-receipt", receipt);
+          reply(receipt.httpStatus, receipt.body); return;
+        }
+        reply(context.verdictOffline ? 503 : 200, { ...command, accepted: !context.verdictIgnored && !context.verdictOffline, status: context.verdictIgnored ? "ignored" : "accepted", reason: context.verdictIgnored ? "already_resolved" : "accepted" }); return;
       }
       if (url.pathname.startsWith("/storage/")) {
         if (req.method === "GET") { reply(200, context.frame.bytes, context.frame.mimeType); return; }
-        event("snapshot-upload", { sha256: hash(body), matchesCapture: body.equals(context.frame.bytes), contentType: req.headers["content-type"] });
+        const captured = context.framesByExecution?.get(req.headers["x-cn360-test-execution"] ?? "direct");
+        const objectName = decodeURIComponent(url.pathname.split("/").at(-1));
+        event("snapshot-upload", { sha256: hash(body), matchesCapture: captured ? hash(body) === captured.sha256 : body.equals(context.frame.bytes),
+          objectName, storagePath: url.pathname, matchesObjectName: objectName === captured?.snapshotObjectName, contentType: req.headers["content-type"] });
         if (context.snapshotDelayMs) await delay(context.snapshotDelayMs);
         reply(context.snapshotError ? 503 : 200, { Key: "test/snapshot.jpg" }); return;
       }

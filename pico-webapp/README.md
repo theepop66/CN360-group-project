@@ -137,12 +137,18 @@ The **360ControlUnit servo** panel (`js/servo.js`) talks directly to the ESP32 f
 ```http
 POST {modeUrl}          {"mode":"auto"|"manual"}       -> {"accepted":bool,"mode":"auto"|"manual"}
 POST {servoUrl}         {"angle":0-180} or {"sweep":true} -> {"accepted":bool}
-POST {servoUrl}/../verdict  {"action":"reject"|"pass"}  -> {"accepted":bool,"status":"rejected"|"passed"|"ignored"}
+POST {servoUrl}/../verdict  {"action":"reject"|"pass","controller_session":"...","item_id":"..."}  -> {"accepted":bool,"status":"rejected"|"passed"|"ignored"}
 ```
 
 The `/verdict` endpoint is derived from `servoUrl` by replacing its last path segment (e.g. `http://192.168.1.50/servo` → `http://192.168.1.50/verdict`) rather than being a third configured field.
 
-The firmware's own state machine decides whether a request actually does anything — for example, the servo angle/sweep only apply in **Manual** mode while idle, and `/verdict` only applies while the unit is awaiting a verdict (an item is in the beam). A rejected-by-firmware request still returns HTTP 200 with `"accepted": false`; the panel treats that as informational feedback ("ignored — wrong mode or mid-cycle"), not an error. A thrown error (timeout, network failure, non-2xx) means the request never reached the firmware at all.
+The panel reads `/status` on the same controller before a manual Verdict and
+requires `awaiting_verdict` plus its active session/item. The original deadline
+is retained; a later reply for A cannot control B. Manual angle/sweep still
+require Manual mode and an idle controller. An ignored command reports its
+reason. Acceptance requires a boolean `accepted` and a matching echoed item;
+missing or mismatched replies display unknown acceptance. A network timeout
+can occur after the controller acted, so it does not prove non-delivery.
 
 The ESP32 firmware sends permissive CORS headers (`Access-Control-Allow-Origin: *`) so the browser can call it directly without a gateway.
 

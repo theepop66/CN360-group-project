@@ -32,7 +32,7 @@ export const PLACEHOLDERS = Object.freeze({
 // n8n Code nodes cannot import from the filesystem, so the tested modules are
 // inlined verbatim. The workflow tests fail if this stops matching the sources.
 export function sharedLogicSource() {
-  const sources = ["inspection-logic.mjs", "inspection-records.mjs"].map(
+  const sources = ["inspection-logic.mjs", "inspection-records.mjs", "item-control.mjs"].map(
     (name) => readFileSync(join(LIB, name), "utf8")
   );
 
@@ -110,6 +110,15 @@ function branch(from, targets) {
   return { [from]: { main: targets.map((node) => [{ node, type: "main", index: 0 }]) } };
 }
 
+function booleanIfNode(name, position, expression) {
+  return { id: `cn360-${name}`, name, position, type: "n8n-nodes-base.if", typeVersion: 2.2,
+    parameters: { conditions: {
+      options: { caseSensitive: true, leftValue: "", typeValidation: "strict", version: 2 },
+      conditions: [{ id: name, leftValue: expression, rightValue: true,
+        operator: { type: "boolean", operation: "true", singleValue: true } }], combinator: "and"
+    }, options: {} } };
+}
+
 function mergeLinks(...sources) {
   return sources.reduce((all, source) => {
     for (const [from, outputs] of Object.entries(source)) {
@@ -128,15 +137,18 @@ const source = $('trigger-item-detected').isExecuted
     ? 'manual'
     : 'schedule';
 const incoming = $input.first().json.body ?? $input.first().json ?? {};
+const physical = parsePhysicalItem(source, incoming);
 return [{ json: {
   source,
+  itemContext: physical.item,
+  itemContextError: physical.error,
   requestedAt: new Date().toISOString(),
   inspectionTarget: typeof incoming.inspectionTarget === 'string' ? incoming.inspectionTarget : null
 } }];
 `;
 
   const verifyVerdictBudget = `
-const budget = resolveVerdictBudget('${PLACEHOLDERS.modelTimeoutMs}');
+const budget = resolveVerdictBudget('${PLACEHOLDERS.modelTimeoutMs}', $('begin-inspection').first().json.itemContext?.verdict_window_ms ?? VERDICT_WINDOW_MS);
 return [{ json: { budget } }];
 `;
 
@@ -146,7 +158,7 @@ const promptResponse = $('fetch-current-prompt').first().json ?? {};
 const current = typeof promptResponse.current_prompt === 'string' ? promptResponse.current_prompt.trim() : '';
 const instruction = current || buildModelInstruction(begun.inspectionTarget);
 return [{ json: {
-  source: begun.source,
+  ...begun,
   requestedAt: begun.requestedAt ?? new Date().toISOString(),
   instruction,
   modelPromptMissing: current === '',
@@ -159,7 +171,7 @@ const frameContext = parseFrameContext($json.headers ?? {});
 return [{ json: {
   frameContext,
   snapshotObjectName: buildSnapshotObjectName(frameContext)
-}, binary: { image: $binary.data } }];
+}, binary: $binary.data ? { image: $binary.data } : {} }];
 `;
 
   // NB: a local must not shadow an inlined name. The compile test enforces it.
@@ -181,6 +193,7 @@ const decision = buildInspectionDecision({
   frameCaptureFailed: capture.error !== undefined && capture.error !== null
 });
 return [{ json: {
+  ...resolved,
   frameContext,
   instruction: resolved.instruction,
   inspectionTarget: resolved.inspectionTarget,
@@ -192,19 +205,15 @@ return [{ json: {
 } }];
 `;
 
-  // A repeated frame inside the Verdict Window must not move the machinery
-  // twice, so the duplicate is flagged and its *record* suppressed. It is NOT
-  // dropped here: the ESP32 is waiting out its 3000 ms auto-pass for whatever
-  // physically arrived, and staying silent here would let that fallback pass a
-  // real item. Re-posting is safe because the firmware's acceptVerdict ignores
-  // any verdict once it has left AwaitVerdict, answering `accepted: false`.
+  // Suppress repeated records for the same physical item, never for a different
+  // item sharing the frame. Only the controller decides physical idempotency.
   const duplicateGuard = `
 const store = $getWorkflowStaticData('global');
 const carried = $input.first().json;
 const { frameContext } = carried;
 return [{ json: {
   ...carried,
-  duplicate: shouldSuppressDuplicate(store, frameContext),
+  duplicate: shouldSuppressDuplicate(store, inspectionDedupContext(frameContext, carried.itemContext)),
   duplicateSuppressedAt: new Date().toISOString()
 } }];
 `;
@@ -213,7 +222,7 @@ return [{ json: {
   // means an unrecognised verdict can never fall through to the pass branch.
   const toControlAction = `
 const { decision } = $input.first().json;
-return [{ json: { ...$input.first().json, action: decision.verdict === VERDICT.PASS ? 'pass' : 'reject' } }];
+return [{ json: { ...$input.first().json, action: $input.first().json.itemContext ? (decision.verdict === VERDICT.PASS ? 'pass' : 'reject') : null } }];
 `;
 
   // A duplicate was still told to the ESP32; only the record is suppressed. It
@@ -229,6 +238,12 @@ return [{ json: { logRow: buildSystemLogRow({
   details: {
     verdict: base.decision?.verdict ?? null,
     action: base.action,
+    controllerSession: base.itemContext?.controller_session ?? null,
+    itemId: base.itemContext?.item_id ?? null,
+    controlOutcome: base.esp32?.controlOutcome ?? null,
+    controlReason: base.esp32?.controlReason ?? null,
+    acknowledgedControllerSession: base.esp32?.acknowledgedControllerSession ?? null,
+    acknowledgedItemId: base.esp32?.acknowledgedItemId ?? null,
     cameraSession: base.frameContext?.sessionId ?? null,
     frameSequence: base.frameContext?.sequence ?? null,
     esp32Accepted: base.esp32?.esp32Accepted ?? null,
@@ -241,17 +256,20 @@ return [{ json: { logRow: buildSystemLogRow({
 
   const captureEsp32Response = `
 const decided = $('duplicate-guard').first().json;
-return [{ json: { ...decided, esp32: readEsp32Outcome($('post-verdict').first().json) } }];
+const receipt = $('post-verdict').isExecuted ? $('post-verdict').first().json : null;
+return [{ json: { ...decided, esp32: readControlReceipt(receipt, decided.itemContext) } }];
 `;
 
   const buildInspectionResponseNode = `
 const carried = $input.first().json;
-return [{ json: { ...carried, inspectionResponse: buildInspectionResponse(carried.decision) } }];
+return [{ json: { ...carried, inspectionResponse: {
+  ...buildInspectionResponse(carried.decision), item: carried.itemContext ?? null, control: carried.esp32
+} } }];
 `;
 
   const buildSnapshotUrl = `
 const decided = $('capture-esp32-response').first().json;
-const upload = $('upload-snapshot').first().json ?? {};
+const upload = $('upload-snapshot').isExecuted ? $('upload-snapshot').first().json ?? {} : { error: 'capture_binary_missing' };
 const objectName = $('read-frame-context').first().json.snapshotObjectName;
 const stored = upload.error === undefined || upload.error === null;
 const publicBase = 'https://${PLACEHOLDERS.supabaseHost}/storage/v1/object/public/${PLACEHOLDERS.snapshotBucket}/';
@@ -266,7 +284,8 @@ return [{ json: { ...base, inspectionRow: buildInspectionRow(base.decision, {
   inspectionTarget: base.inspectionTarget,
   modelInstruction: base.instruction,
   inspectedAt: base.decidedAt,
-  frameUrl: base.frameUrl
+  frameUrl: base.frameUrl,
+  itemContext: base.itemContext
 }) } }];
 `;
 
@@ -284,7 +303,12 @@ return [{ json: { ...base, inspectionId, controlActionRow: buildControlActionRow
   esp32Status: base.esp32?.esp32Status ?? null,
   esp32HttpStatus: base.esp32?.esp32HttpStatus ?? null,
   esp32Error: base.esp32?.esp32Error ?? null,
-  requestedAt: base.decidedAt
+  requestedAt: base.decidedAt,
+  itemContext: base.itemContext,
+  controlOutcome: base.esp32?.controlOutcome,
+  controlReason: base.esp32?.controlReason,
+  acknowledgedControllerSession: base.esp32?.acknowledgedControllerSession,
+  acknowledgedItemId: base.esp32?.acknowledgedItemId
 }) } }];
 `;
 
@@ -318,6 +342,12 @@ return [{ json: { logRow: buildSystemLogRow({
     coverageThreshold: decision.coverageThreshold,
     boxCount: decision.boxCount,
     source: base.source,
+    controllerSession: base.itemContext?.controller_session ?? null,
+    itemId: base.itemContext?.item_id ?? null,
+    controlOutcome: base.esp32?.controlOutcome ?? null,
+    controlReason: base.esp32?.controlReason ?? null,
+    acknowledgedControllerSession: base.esp32?.acknowledgedControllerSession ?? null,
+    acknowledgedItemId: base.esp32?.acknowledgedItemId ?? null,
     cameraSession: base.frameContext?.sessionId ?? null,
     frameSequence: base.frameContext?.sequence ?? null,
     inspectionId: base.inspectionId ?? null,
@@ -375,6 +405,12 @@ return [{ json: { logRow: buildSystemLogRow({
         webhookId: "6c1a0f1e-0b4d-4a5e-9a0b-2f4d1c7e5a12"
       },
       codeNode("begin-inspection", "begin-inspection", [-400, 160], beginInspection),
+      booleanIfNode("valid-item-context", [-300, 160], "={{ $json.itemContextError === null }}"),
+      {
+        id: "cn360-respond-invalid-item", name: "respond-invalid-item", position: [-180, 440],
+        type: "n8n-nodes-base.respondToWebhook", typeVersion: 1.1,
+        parameters: { respondWith: "json", responseBody: '={{ JSON.stringify({status: "error", result: "error", reason: $json.itemContextError}) }}', options: { responseCode: 400 } }
+      },
       codeNode("verify-verdict-budget", "verify-verdict-budget", [-180, 160], verifyVerdictBudget),
       httpNode("fetch-current-prompt", "fetch-current-prompt", [40, 160], {
         __continueOnError: true,
@@ -396,10 +432,13 @@ return [{ json: { logRow: buildSystemLogRow({
         }
       }),
       codeNode("read-frame-context", "read-frame-context", [700, 160], readFrameContext),
-      // The snapshot upload is serialised ahead of the model call — and it must
-      // carry the frame forward. n8n's HTTP node only copies the input binary
-      // through when responseFormat is 'file', so this node answers that way and
-      // posts as binaryData; 'binary' is not a real content type.
+      codeNode("restore-snapshot", "restore-snapshot", [2570, 300], `
+const capturedItem = $('read-frame-context').first();
+return [{ json: { ...$input.first().json, snapshotObjectName: capturedItem.json.snapshotObjectName }, binary: capturedItem.binary ?? {} }];
+`),
+      booleanIfNode("snapshot-available", [2630, 300], "={{ $binary.image !== undefined }}"),
+      // Upload runs after the control attempt; restore the original captured
+      // binary explicitly because HTTP decision/receipt nodes replace it.
       httpNode("upload-snapshot", "upload-snapshot", [920, 280], {
         __continueOnError: true,
         method: "POST",
@@ -413,8 +452,7 @@ return [{ json: { logRow: buildSystemLogRow({
         contentType: "binaryData",
         inputDataFieldName: "image",
         options: {
-          timeout: SNAPSHOT_UPLOAD_TIMEOUT_MS,
-          response: { response: { responseFormat: "file" } }
+          timeout: SNAPSHOT_UPLOAD_TIMEOUT_MS
         }
       }),
       httpNode("detect-defects", "detect-defects", [1140, 40], {
@@ -436,15 +474,14 @@ return [{ json: { logRow: buildSystemLogRow({
           ]
         },
         options: {
-          // The budget is computed upstream and already clamped inside the
-          // Verdict Window, so a misconfigured value can never outrun the
-          // ESP32's auto-pass fallback.
+          // Controller-local expiry remains authoritative if this call is late.
           timeout: "={{ $('verify-verdict-budget').first().json.budget.appliedModelTimeoutMs }}"
         }
       }),
       codeNode("decide-inspection", "decide-inspection", [1360, 160], decideInspection),
       codeNode("to-control-action", "to-control-action", [1580, 160], toControlAction),
       codeNode("duplicate-guard", "duplicate-guard", [1800, 160], duplicateGuard),
+      booleanIfNode("physical-item", [1910, 160], "={{ $json.itemContext !== null }}"),
       httpNode("post-verdict", "post-verdict", [2020, 160], {
         __continueOnError: true,
         method: "POST",
@@ -453,7 +490,7 @@ return [{ json: { logRow: buildSystemLogRow({
         headerParameters: { parameters: [{ name: "Content-Type", value: "application/json" }] },
         sendBody: true,
         specifyBody: "json",
-        jsonBody: "={{ JSON.stringify({ action: $json.action }) }}",
+        jsonBody: "={{ JSON.stringify({ action: $json.action, controller_session: $json.itemContext.controller_session, item_id: $json.itemContext.item_id }) }}",
         options: {
           timeout: VERDICT_POST_TIMEOUT_MS,
           // The Control Action records whether the board accepted and the HTTP
@@ -559,26 +596,26 @@ return [{ json: { logRow: buildSystemLogRow({
       link("trigger-schedule", "begin-inspection"),
       link("trigger-item-detected", "begin-inspection"),
       link("trigger-inspect-now", "begin-inspection"),
-      link("begin-inspection", "verify-verdict-budget"),
+      link("begin-inspection", "valid-item-context"),
+      branch("valid-item-context", ["verify-verdict-budget", "respond-invalid-item"]),
       link("verify-verdict-budget", "fetch-current-prompt"),
       link("fetch-current-prompt", "resolve-instruction"),
       link("resolve-instruction", "capture-frame"),
       link("capture-frame", "read-frame-context"),
-      // One capture, one consumer at a time. The HTTP nodes that follow cannot
-      // pass binary along, so serialising is what keeps the bytes reachable.
-      link("read-frame-context", "upload-snapshot"),
-      link("upload-snapshot", "detect-defects"),
+      link("read-frame-context", "detect-defects"),
       link("detect-defects", "decide-inspection"),
       link("decide-inspection", "to-control-action"),
       link("to-control-action", "duplicate-guard"),
-      // The ESP32 is told on every event, duplicate or not: silence here is
-      // what lets its auto-pass fallback fire on a real item.
-      link("duplicate-guard", "post-verdict"),
+      link("duplicate-guard", "physical-item"),
+      branch("physical-item", ["post-verdict", "capture-esp32-response"]),
       link("post-verdict", "capture-esp32-response"),
       link("capture-esp32-response", "build-inspection-response"),
       link("build-inspection-response", "respond-inspection"),
       link("respond-inspection", "duplicate-or-new"),
-      branch("duplicate-or-new", ["build-duplicate-log", "build-snapshot-url"]),
+      branch("duplicate-or-new", ["build-duplicate-log", "restore-snapshot"]),
+      link("restore-snapshot", "snapshot-available"),
+      branch("snapshot-available", ["upload-snapshot", "build-snapshot-url"]),
+      link("upload-snapshot", "build-snapshot-url"),
       link("build-duplicate-log", "log-duplicate"),
       link("log-duplicate", "done-duplicate"),
       link("build-snapshot-url", "build-inspection-record"),

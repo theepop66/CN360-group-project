@@ -80,17 +80,35 @@ test("derives /verdict from a /servo URL on the same host", () => {
   assert.equal(deriveVerdictUrl("http://192.168.1.50:8080/api/servo"), "http://192.168.1.50:8080/api/verdict");
 });
 
-test("sends a verdict action to the derived endpoint", async () => {
+test("sends a verdict bound to the current item to the derived endpoint", async () => {
   let request = null;
   const fetchImpl = async (url, options) => {
     request = { url, options };
-    return jsonResponse({ accepted: true, status: "rejected" });
+    if (url.endsWith("/status")) return jsonResponse({ state: "awaiting_verdict", controller_session: "boot", item_id: "9007199254740993" });
+    return jsonResponse({ accepted: true, status: "rejected", controller_session: "boot", item_id: "9007199254740993" });
   };
 
   await sendVerdict({ fetchImpl, servoUrl: SERVO_URL, action: "reject", timeoutMs: 100 });
 
   assert.equal(request.url, "http://192.168.1.50/verdict");
-  assert.equal(request.options.body, '{"action":"reject"}');
+  assert.equal(request.options.body, '{"action":"reject","controller_session":"boot","item_id":"9007199254740993"}');
+});
+
+test("unbound idle requests cannot send a physical verdict", async () => {
+  let posts = 0;
+  await assert.rejects(sendVerdict({ servoUrl: SERVO_URL, action: "pass", fetchImpl: async (_url, options) => {
+    if (options.method === "POST") posts++;
+    return jsonResponse({ state: "idle" });
+  } }), /No active item/);
+  assert.equal(posts, 0);
+});
+
+test("legacy or mismatched replies cannot imply accepted physical control", async () => {
+  for (const response of [{ accepted: true }, { accepted: true, controller_session: "boot", item_id: "next" }]) {
+    const result = await sendVerdict({ servoUrl: SERVO_URL, action: "pass", item: { controller_session: "boot", item_id: "1" }, fetchImpl: async () => jsonResponse(response) });
+    assert.equal(result.accepted, null);
+    assert.equal(result.status, "delivery_unknown");
+  }
 });
 
 test("rejects an invalid verdict action before making a request", async () => {

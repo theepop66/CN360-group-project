@@ -1,0 +1,41 @@
+✔ rejects a result captured before the latest accepted result (1.4995ms)
+✔ uses sequence when timestamps are identical (0.2903ms)
+✔ uses sequence when the producer omits timestamps (1.93ms)
+✔ uses monotonic sequence ahead of a corrected wall clock (0.2828ms)
+✔ accepts a reset sequence from a new camera session (20.5377ms)
+✔ accepts a new producer session even when its wall clock moved backward (0.5009ms)
+✔ rejects a delayed result from a retired camera session (0.4025ms)
+✔ keeps ordering state across a transport reconnect (1.4968ms)
+✔ keeps arrival order when the producer supplies no ordering metadata (0.4156ms)
+✔ parses the documented pixel-coordinate payload (4.6468ms)
+✔ parses an optional frame sequence for result ordering (0.3827ms)
+✔ accepts normalized boxes without frame dimensions (2.8702ms)
+✔ maps normalized boxes using the video aspect ratio (0.5699ms)
+✔ calculates letterboxing for a contained image (0.2201ms)
+✔ maps a pixel box onto the visible image instead of the full container (0.2038ms)
+✔ rejects pixel boxes when source dimensions are missing (25.8849ms)
+✔ rejects null, blank, and boolean coordinates instead of coercing them to zero (1.128ms)
+✔ posts only the documented prompt JSON (3.0762ms)
+✔ aborts a prompt request after the configured timeout (9.653ms)
+✔ reports non-success n8n responses (0.7198ms)
+✔ posts the documented mode JSON (50.0911ms)
+✔ rejects an invalid mode before making a request (45.4323ms)
+✔ posts an integer angle to the servo endpoint (0.9654ms)
+✔ rejects an out-of-range angle before making a request (2.5957ms)
+✔ posts a sweep request to the servo endpoint (0.5169ms)
+✔ surfaces accepted:false instead of throwing (firmware no-op, not an error) (0.6637ms)
+✔ derives /verdict from a /servo URL on the same host (0.804ms)
+✔ sends a verdict bound to the current item to the derived endpoint (1.3024ms)
+✔ unbound idle requests cannot send a physical verdict (31.1777ms)
+✔ legacy or mismatched replies cannot imply accepted physical control (1.1408ms)
+✔ rejects an invalid verdict action before making a request (0.3567ms)
+✔ aborts a servo request after the configured timeout (10.6062ms)
+✔ reports non-success control unit responses (0.5313ms)
+ℹ tests 33
+ℹ suites 0
+ℹ pass 33
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1281.1412

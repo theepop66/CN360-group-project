@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-26 (Asia/Bangkok)",
+  "baselineCommit": "69c53da3c33637ec4b4a1b9fd6f4e1eed6fe0d4c",
+  "python": "3.13.12",
+  "node": "v24.15.0",
+  "profile": {
+    "serviceRequestMs": 1100,
+    "n8nModelMs": 1200,
+    "verdictWindowMs": 3000,
+    "imageGeometry": "original geometry, JPEG95/subsampling0; no automatic adoption of 448 diagnostic profile"
+  },
+  "files": {
+    "D:/CN360/builds/resident-cuda/cn360_model.dll": {
+      "bytes": 130323456,
+      "sha256": "c7170d830fb0c1f8c6c224643b4050678b3740c9b46cec4032d19f1d8cb5663c"
+    },
+    "D:/CN360/locate-anything.cpp/models/locate-anything-q8_0.gguf": {
+      "bytes": 6259931712,
+      "sha256": "0909d8a1aba584b482d501baae032611d1559878be1b7f6606ba516687c5380d"
+    }
+  }
+}

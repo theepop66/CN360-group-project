@@ -1,9 +1,8 @@
 # CN360 n8n Workflows
 
 Importable n8n workflows that close the inspection loop between the Pi capture
-service, the local vision model, the ESP32 actuator and the Pico 4 HUD. Nothing
-outside this folder is modified: the workflows adapt to the contracts the other
-components already expose.
+service, the local vision model, the ESP32 actuator and the Pico 4 HUD. The controller, workflow and resident service share the item-bound contract
+defined in [local ticket 07](../.scratch/locate-anything-n8n/issues/07-item-verdict-deadline-safety.md).
 
 | File | Workflow | Job |
 | :--- | :--- | :--- |
@@ -46,18 +45,17 @@ together. Do not paste a key into this file.
 
 ## The Verdict Window budget
 
-The ESP32 auto-passes 3000 ms after it asks for a verdict, so every stage before
-the verdict POST is budgeted and the stages are checked as a whole:
+The controller rejects at its local 3000 ms expiry. Every stage before the
+Verdict POST is budgeted to leave headroom for an evaluated decision:
 
 | Stage | Timeout |
 | :--- | :--- |
 | `fetch-current-prompt` | 250 ms |
 | `capture-frame` | 800 ms |
-| `upload-snapshot` | 300 ms |
 | `detect-defects` | `REPLACE_MODEL_TIMEOUT_MS` (default 1200 ms) |
 | `post-verdict` | 250 ms |
 
-That is 2800 ms of work inside the ESP32's 3000 ms Verdict Window.
+That is 2500 ms of configured work inside the ESP32's 3000 ms Verdict Window.
 
 `verify-verdict-budget` runs before the model call. If the configured model
 timeout cannot leave headroom inside the window, the Verdict is forced to
@@ -75,25 +73,37 @@ unconfigured placeholder takes the documented **0.5%** default, while a value
 that *was* set but cannot be read fails closed with `invalid_threshold`. A
 threshold is never guessed at, because it decides pass or reject.
 
-The snapshot upload is **serialised ahead of the model call** rather than fanned
-out beside it, and it is paid for in that budget. n8n HTTP nodes do not pass
-binary along, so a parallel upload would need a merge to re-join the branches.
-Serialising costs 300 ms and cannot hang. The Verdict itself is still sent before
-any write.
+The snapshot upload runs **after the Verdict attempt and webhook response**.
+`restore-snapshot` explicitly retrieves the binary from `read-frame-context`;
+HTTP result nodes cannot substitute the saved capture. Upload has its own
+300 ms timeout and storage failure cannot delay inference or physical dispatch.
+Configured sums do not prove elapsed-time or physical acceptance.
 
-## Repeat frames
+## Item identity and repeat frames
 
-A repeat of the same `camera-session` + `frame-sequence` inside the Verdict
-Window still gets a verdict POSTed to the ESP32 เนโฌโ€ only its database record and
-HUD broadcast are suppressed, and the suppression is logged to `system_logs` as
-`duplicate frame suppressed`.
+An automatic `item-detected` event must carry opaque string fields
+`controller_session`, `item_id`, and the integer `verdict_window_ms` (3000 in
+this prototype). Missing, malformed or partial identity returns HTTP 400 before
+capture/inference. Keep the controller-issued values throughout the workflow.
+The Verdict body is `{action, controller_session, item_id}`.
 
-This is deliberate. The ESP32 auto-passes whatever physically arrived if nothing
-arrives within 3000 ms, so *silently dropping* a duplicate event would let that
-fallback pass a real item. Re-posting is safe: the firmware's `acceptVerdict`
-returns 0 for any verdict once it has left `AwaitVerdict`, so the repeat is
-answered `accepted: false, status: "ignored"` and the machinery does not move
-twice. The `esp32_status` on the suppression log is the evidence for that.
+An unpaired `inspect-now` or scheduled request evaluates the image without a
+physical command. A paired manual request uses the original active item/window;
+it cannot restart that window. The controller checks identity and expiry on
+receipt even when its timer task has not yet processed expiry.
+
+Duplicate audit suppression uses the physical item pair for paired requests;
+different physical items sharing a frame remain distinct. Observational image
+checks retain Frame Context deduplication. Paired retries still reach the
+controller, which independently prevents repeated actuation. Suppression is
+logged with item identity and control outcome.
+
+The webhook includes `item` and `control` beside its evaluation `status/result`.
+`controlOutcome` is `accepted`, `ignored`, `delivery_unknown`, or `not_requested`.
+Acceptance requires a successful HTTP response with a boolean `accepted` and
+matching echoed session/item. An old reply containing only `accepted: true`
+cannot confirm control. A successful evaluated pass may have ignored or unknown
+control delivery; do not present it as confirmed physical passing.
 
 ## Two fixes outside this folder
 
@@ -113,9 +123,11 @@ Reconcile them before the first production run เน€เธยเนย
 - `inspection_results` เน€เธยเนยเธเนโฌย `inspection_at`, `inspection_target`,
   `model_instruction`, `camera_session`, `frame_sequence`, `frame_width`,
   `frame_height`, `box_count`, `defect_coverage`, `coverage_threshold`,
-  `verdict`, `prompt_verified`, `frame_url`
+  `verdict`, `prompt_verified`, `frame_url`, `controller_session`, `item_id`
 - `control_actions` เน€เธยเนยเธเนโฌย `inspection_id`, `action`, `esp32_accepted`,
-  `esp32_status`, `requested_at`
+  `esp32_status`, `esp32_http_status`, `esp32_error`, `requested_at`,
+  `controller_session`, `item_id`, `control_outcome`, `control_reason`,
+  `ack_controller_session`, `ack_item_id`
 - `prompt_history` เน€เธยเนยเธเนโฌย `changed_at`, `inspection_target`, `model_instruction`,
   `source`, `model_http_status`
 - `system_logs` เน€เธยเนยเธเนโฌย `logged_at`, `severity`, `component`, `message`, `details`
@@ -134,7 +146,8 @@ threshold picks the physical path; it never decides what the operator can see.
 ## The system fails closed
 
 If the model times out, is unreachable, returns an error status, returns
-unrenderable boxes, or the frame capture itself fails, the item is **rejected**.
+unrenderable boxes, or capture fails, the workflow requests **reject** for a
+paired physical item. The controller independently rejects on local expiry.
 So is a coverage figure or threshold that cannot be read, and so is a Verdict
 Window budget that cannot be honoured. A quality-control line that lets items
 through when its brain is unavailable is a safety hazard.
@@ -148,8 +161,9 @@ rather than being silently applied.
 **The model budget is still a deployment constraint.** The legacy model adapter
 reloads the q8 weights per request. The project now includes a resident adapter
 in `model-service/`, but its measured runtime must still satisfy the 1200 ms
-model timeout. A workflow-level forced reject does not fix the ESP32's existing
-3000 ms auto-pass fallback; automatic sorting remains dependent on issue #24.
+model timeout. The revised controller prevents timeout auto-pass and stale-item commands.
+Automatic sorting still requires measured production timing and a demonstrated
+physical reject/hold arrangement; the default firmware disables admission.
 
 ## The HUD overlay is not done yet
 
@@ -325,3 +339,30 @@ It also starts a disposable server with a fresh SQLite database to verify the
 real public inspection and prompt webhooks. Only temporary workflow copies are
 published in that server; it is stopped and removed after the test. No workflows
 are imported into the user's running n8n instance.
+
+## Ticket 07 integrated picture tests
+
+Build the host adapter from the repository root, then run the disposable n8n suite:
+
+```powershell
+./360ControlUnit/test/host/build-adapter.ps1
+node n8n/scripts/item-deadline-inspection.mjs --python <python-with-Pillow>
+```
+
+The suite executes the actual controller core via a thin HTTP fixture adapter.
+It covers timely pass/reject, exact expiry before a timer tick, old item/session,
+duplicates, same-frame/different-item records, observational and paired manual
+requests, invalid input, storage failure, model failure and missing/legacy replies.
+Its controller clock is virtual; its timing is not sensor/servo bench evidence.
+Default output is ignored under `n8n/.runtime/item-deadline/`.
+
+`--real-model-url http://127.0.0.1:8002` also runs production-profile requests
+against a separately owned ready service, propagating client disconnects to that
+service. Diagnostic late-response draining remains explicitly separate.
+The installed localhost:5678 workflows are not changed by these tests.
+
+Coordinate the new nullable identity/outcome columns with persistence issue #26.
+Fixture row checks do not establish an applied real database migration. Firmware
+and workflows must be updated together: action-only clients and unverified old
+acknowledgements fail closed. See [the controller guide](../360ControlUnit/README.md)
+for disabled-by-default admission and the physical bench gate.

@@ -31,6 +31,9 @@ export function testWorkflows(origin) {
     const old = inspection.nodes.find(n => n.name === name);
     Object.assign(old, callback(name, origin, "={{ JSON.stringify({ testCaseId: ($('trigger-item-detected').isExecuted ? $('trigger-item-detected') : $('trigger-inspect-now')).first().json.body.testCaseId, executionId: $execution.id, decision: $('decide-inspection').first().json.decision, frame: $('read-frame-context').first().json.frameContext, control: $('capture-esp32-response').first().json.esp32, response: $('build-inspection-response').first().json.inspectionResponse, duplicate: $('duplicate-guard').first().json.duplicate }) }}"));
   }
+  const invalidComplete = "complete-invalid-item";
+  inspection.nodes.push(callback(invalidComplete, origin, "={{ JSON.stringify({ testCaseId: ($('trigger-item-detected').isExecuted ? $('trigger-item-detected') : $('trigger-inspect-now')).first().json.body.testCaseId, executionId: $execution.id, invalidItem: true }) }}"));
+  inspection.connections["respond-invalid-item"] = { main: [[{ node: invalidComplete, type: "main", index: 0 }]] };
   const prompt = configured[WORKFLOW_FILES.promptCapture];
   prompt.id = "cn360PromptTest"; prompt.name = "CN360 TEST - Static prompt capture";
   for (const from of ["insert-prompt-history", "respond-rejected"]) {
@@ -60,6 +63,7 @@ export function testWorkflows(origin) {
       node.parameters.sendHeaders = true;
       node.parameters.headerParameters ??= { parameters: [] };
       node.parameters.headerParameters.parameters.push({ name: "X-CN360-Test-Case", value: expression });
+      node.parameters.headerParameters.parameters.push({ name: "X-CN360-Test-Execution", value: "={{ $execution.id }}" });
     }
   }
   return [inspection, prompt, watchdog];
@@ -89,6 +93,13 @@ export async function startTestN8n({ output, fixturePort, port = 5682, docker = 
         const response = await fetch(`http://127.0.0.1:${port}/healthz/readiness`, { signal: AbortSignal.timeout(500) });
         if (response.ok && log.includes("Activated workflow \"CN360 TEST - Static health watchdog\"")) return {
           origin: `http://127.0.0.1:${port}`, stop,
+          async executionDetails(ids) {
+            if (!ids.length || ids.some(id => !/^\d+$/.test(String(id)))) return [];
+            const script = `const db = new (require('node:sqlite').DatabaseSync)('/tmp/cn360-static.sqlite', {readOnly:true});
+const rows = db.prepare('SELECT e.id,e.status,d.data FROM execution_entity e LEFT JOIN execution_data d ON d.executionId=e.id WHERE e.id IN (${ids.map(Number).join(",")})').all();
+console.log(JSON.stringify(rows.map(({data,...row})=>{try { const parsed=JSON.parse(data); const root=Array.isArray(parsed)?parsed[0]:parsed; const get=v=>Array.isArray(parsed)&&typeof v==='string'&&/^\\d+$/.test(v)?parsed[Number(v)]:v; const result=get(root.resultData); const error=get(result?.error); return {...row,lastNode:get(result?.lastNodeExecuted),error: error?{message:get(error.message),description:get(error.description),name:get(error.name)}:null}; } catch{return row;} })));`;
+            return JSON.parse(await command(docker, ["exec", name, "node", "--disable-warning=ExperimentalWarning", "-e", script]));
+          },
           async waitExecutions(ids) {
             if (!ids.length || ids.some(id => !/^\d+$/.test(String(id)))) throw new Error("Invalid test execution IDs");
             const script = `const db = new (require('node:sqlite').DatabaseSync)('/tmp/cn360-static.sqlite', {readOnly:true}); console.log(JSON.stringify(db.prepare('SELECT id,status FROM execution_entity WHERE id IN (${ids.map(Number).join(",")})').all()));`;

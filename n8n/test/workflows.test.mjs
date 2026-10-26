@@ -149,6 +149,19 @@ const DECISION_PASS = {
   promptMismatch: false
 };
 
+const PHYSICAL_ITEM = { controller_session: "boot", item_id: "7", verdict_window_ms: 3000 };
+
+test("manual and scheduled trigger envelopes cannot dispatch unpaired commands", () => {
+  for (const source of ["trigger-inspect-now", "trigger-schedule"]) {
+    const begun = runCode(inspection, "begin-inspection", { items: [{ json: { body: {} } }], nodes: { [source]: {} } });
+    assert.equal(begun[0].json.itemContext, null);
+    const action = runCode(inspection, "to-control-action", { items: [{ json: { ...begun[0].json, decision: DECISION_PASS } }] });
+    assert.equal(action[0].json.action, null);
+  }
+  const invalid = runCode(inspection, "begin-inspection", { items: [{ json: { body: { item_id: 42 } } }], nodes: { "trigger-item-detected": {} } });
+  assert.equal(invalid[0].json.itemContextError, "invalid_item_context");
+});
+
 // n8n wraps a Code node's jsCode in one function body, so glue that redeclares
 // an inlined name — `const rejected = ...` beside `function rejected()` — is a
 // SyntaxError that only shows up when the node runs. Compiling each node here is
@@ -275,7 +288,7 @@ test("the model server is asked for the prompt before every inspection", () => {
   );
 });
 
-test("the verdict reaches the ESP32 before anything is persisted or broadcast", () => {
+test("the control attempt or observational decision completes before persistence", () => {
   for (const downstream of [
     "insert-inspection",
     "insert-control-action",
@@ -283,8 +296,8 @@ test("the verdict reaches the ESP32 before anything is persisted or broadcast", 
     "log-outcome"
   ]) {
     assert.ok(
-      dominates(inspection, "post-verdict", downstream),
-      `every path to ${downstream} must pass through the ESP32 verdict`
+      dominates(inspection, "capture-esp32-response", downstream),
+      `every path to ${downstream} must record the control outcome`
     );
   }
 });
@@ -391,11 +404,9 @@ test("the timeouts on the verdict path are budgeted, not left at defaults", () =
 });
 
 test("the capture is serialised, not fanned out behind a merge", () => {
-  // A parallel snapshot upload would need a merge to re-join the branches.
-  // Serialising costs budget but cannot block on an input that never arrives.
   assert.ok(
-    dominates(inspection, "upload-snapshot", "detect-defects"),
-    "every path to the model call must have stored the snapshot first"
+    dominates(inspection, "capture-esp32-response", "upload-snapshot"),
+    "storage must follow the control attempt"
   );
   assert.equal(
     inspection.nodes.filter((node) => node.type === "n8n-nodes-base.merge").length,
@@ -441,16 +452,15 @@ test("a duplicate frame is still told to the ESP32, but only recorded once", () 
     "a repeat of the same frame is recognised"
   );
 
-  // The critical part: the duplicate still has to reach the firmware. Dropping
-  // it here would let the ESP32's 3000 ms auto-pass fallback pass a real item.
+  // Paired duplicates still reach the controller, which owns actuation idempotency.
   assert.equal(second.length, 1, "the duplicate is never dropped, only flagged");
   assert.ok(
     dominates(inspection, "duplicate-guard", "post-verdict"),
     "the ESP32 verdict must be sent for duplicates too"
   );
   assert.ok(
-    dominates(inspection, "post-verdict", "duplicate-or-new"),
-    "the board must be told before the record is suppressed"
+    dominates(inspection, "capture-esp32-response", "duplicate-or-new"),
+    "the control outcome must be recorded before record suppression"
   );
   // Nothing downstream of the duplicate branch may write or broadcast. This is
   // a reachability question from that branch, not a dominance one: the branch
@@ -498,8 +508,8 @@ test("the firmware answer is read once, upstream of the record", () => {
   const captured = runCode(inspection, "capture-esp32-response", {
     items: [{ json: { accepted: false, status: "ignored" } }],
     nodes: {
-      "duplicate-guard": { action: "pass", frameContext: FRAME_CONTEXT, decision: DECISION_PASS },
-      "post-verdict": { accepted: false, status: "ignored" }
+      "duplicate-guard": { action: "pass", frameContext: FRAME_CONTEXT, decision: DECISION_PASS, itemContext: PHYSICAL_ITEM },
+      "post-verdict": { body: { ...PHYSICAL_ITEM, accepted: false, status: "ignored", reason: "expired" }, statusCode: 200 }
     }
   });
 
@@ -509,15 +519,24 @@ test("the firmware answer is read once, upstream of the record", () => {
   assert.deepEqual(captured[0].json.esp32, {
     esp32Accepted: false,
     esp32Status: "ignored",
-    esp32HttpStatus: null,
-    esp32Error: null
+    esp32HttpStatus: 200,
+    esp32Error: null,
+    controllerSession: "boot",
+    itemId: "7",
+    controlOutcome: "ignored",
+    controlReason: "expired",
+    acknowledgedControllerSession: "boot",
+    acknowledgedItemId: "7"
   });
 });
 
 test("the wire result the firmware sent is recorded, envelope and all", () => {
   const captured = runCode(inspection, "capture-esp32-response", {
     items: [{ json: { action: "reject", frameContext: FRAME_CONTEXT } }],
-    nodes: { "post-verdict": { body: { accepted: true, status: "applied" }, statusCode: 200 } }
+    nodes: {
+      "duplicate-guard": { itemContext: PHYSICAL_ITEM },
+      "post-verdict": { body: { ...PHYSICAL_ITEM, accepted: true, status: "applied" }, statusCode: 200 }
+    }
   });
 
   assert.equal(captured[0].json.esp32.esp32Accepted, true);
@@ -536,7 +555,7 @@ test("only an explicit pass becomes a pass", () => {
     ["anything else", "reject"]
   ]) {
     const items = runCode(inspection, "to-control-action", {
-      items: [{ json: { decision: { verdict, reason: "x" } } }]
+      items: [{ json: { decision: { verdict, reason: "x" }, itemContext: PHYSICAL_ITEM } }]
     });
     assert.equal(items[0].json.action, action, `verdict ${verdict} must not become ${action}`);
   }
@@ -590,6 +609,14 @@ test("a prompt mismatch on a passing item is still a warning", () => {
   assert.equal(items[0].json.logRow.severity, "warn");
 });
 
+test("snapshot restoration carries the captured object name across result nodes", () => {
+  const restored = runCode(inspection, "restore-snapshot", {
+    items: [{ json: { action: "pass" } }],
+    nodes: { "read-frame-context": { snapshotObjectName: "s1-7.jpg" } }
+  });
+  assert.equal(restored[0].json.snapshotObjectName, "s1-7.jpg");
+});
+
 test("a failed snapshot upload yields no frame URL", () => {
   const nodes = {
     "capture-esp32-response": {
@@ -607,6 +634,12 @@ test("a failed snapshot upload yields no frame URL", () => {
     uploaded[0].json.frameUrl,
     `https://${PLACEHOLDERS.supabaseHost}/storage/v1/object/public/${PLACEHOLDERS.snapshotBucket}/s1-7.jpg`
   );
+
+  const missingUpload = { ...nodes };
+  delete missingUpload["upload-snapshot"];
+  const skipped = runCode(inspection, "build-snapshot-url", { nodes: missingUpload });
+  assert.equal(skipped[0].json.snapshotStored, false);
+  assert.equal(skipped[0].json.frameUrl, null);
 
   const failed = runCode(inspection, "build-snapshot-url", {
     nodes: { ...nodes, "upload-snapshot": { error: { message: "storage is down" } } }
@@ -799,12 +832,12 @@ test("every Supabase insert sends one named row, not the execution envelope", ()
   }
 });
 
-test("the verdict body carries only the action", () => {
+test("the verdict body carries the action and physical item identity", () => {
   const verdict = nodeNamed(inspection, "post-verdict");
   assert.equal(verdict.parameters.url, `=http://${PLACEHOLDERS.esp32Host}/verdict`);
   assert.equal(
     verdict.parameters.jsonBody,
-    "={{ JSON.stringify({ action: $json.action }) }}"
+    "={{ JSON.stringify({ action: $json.action, controller_session: $json.itemContext.controller_session, item_id: $json.itemContext.item_id }) }}"
   );
 });
 
@@ -816,7 +849,7 @@ test("the duplicate branch and the full branch both terminate", () => {
   assert.equal(condition.operator.operation, "true");
 
   const targets = inspection.connections["duplicate-or-new"].main.map((branch) => branch[0].node);
-  assert.deepEqual(targets, ["build-duplicate-log", "build-snapshot-url"]);
+  assert.deepEqual(targets, ["build-duplicate-log", "restore-snapshot"]);
 
   assert.ok(
     walk(inspection, "build-duplicate-log").includes("done-duplicate"),

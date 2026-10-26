@@ -193,6 +193,89 @@ After changing anything in `lib/` or in the graph definitions, run
 
 ## Local resident model and compact results
 
+### Still-picture acceptance tests
+
+The camera can be substituted without changing the normal pull-ingestion
+workflow. See [the test plan](../docs/testing/static-image-inspection-test-plan.md).
+The test runner starts a separate, disposable n8n container and HTTP capture,
+storage, database, relay and verdict recorders. It never sends real actuator
+commands or modifies the existing n8n instance at port 5678. Docker must be
+running, and the configured test image must already be installed locally.
+
+From the repository root, with a Python interpreter containing Pillow:
+
+```powershell
+node n8n/scripts/static-inspection.mjs --python <python-executable>
+```
+
+This runs controlled webhook tests, including exact coverage boundaries,
+multipart upload, prompt updates, failure cases, duplicates, concurrent triggers
+and health transitions. It uses the current repository workflows. Optional
+`--workflow-export <json-file>` records a read-only inventory/hash of the
+existing CN360 workflows and highlights older response/prompt contracts; it
+does not import or activate that export. Keep original exports local since
+they may contain credentials.
+
+Defaults are fixture port 8102 and isolated n8n port 5682. Use `--fixture-port`
+and `--n8n-port` for independent simultaneous runs. Use `--output` for a fresh
+evidence directory; the default is ignored under `n8n/.runtime/`. Existing
+dated evidence files are never overwritten by default. `--docker` and `--image`
+select the executable and installed n8n image. Runtime callback completion is
+followed by checking actual execution completion in the owned SQLite database.
+
+For the already-installed resident model, run the managed evaluation with its
+Python environment and explicit local library/weight paths:
+
+```powershell
+<model-python> n8n/scripts/model-inspection-run.py --library <native-library> --weights <gguf-file> --cuda-root <cuda-directory> --output <fresh-evidence-directory>
+```
+
+It measures first predictions after three separate starts with the 1100 ms
+service deadline. When those fail, it labels production warm testing as blocked
+and uses a separate 120-second diagnostic service to assess detection. n8n's
+1200 ms HTTP timeout is unchanged. The diagnostic profile cannot approve the
+production model deadline. Direct-model PNG/JPEG comparisons precede 150
+sequential n8n attempts (15 picture/target cases, 10 repetitions each). Errors
+and timeout observations remain in the report; successful-only percentiles are
+explicitly labelled. Port 8002 must be free; only model processes started by
+the command are stopped. A startup limit can be set with `--startup-timeout`;
+this does not alter inference deadlines.
+
+The diagnostic proxy drains a late upstream response after n8n expires, so its
+warm repetitions do not measure the production service's disconnect/restart
+behavior. Real-model bursts of two and five requests additionally check the
+observable `model_busy` response. Concurrent-burst timings are kept separate
+from sequential percentiles.
+
+Original picture dimensions are preserved by default. `--max-side 448` selects
+an explicit resized comparison profile and records served/original geometry
+and image hashes. That profile evaluates served JPEGs directly before n8n;
+it does not claim to measure the original-resolution pictures. For a model
+service managed elsewhere, use the Node runner's `--mode real --model-url`
+options (or `--mode diagnostic` for an intentionally relaxed service).
+
+The actual controller state machine has a separate virtual-time acceptance probe:
+
+```powershell
+powershell -NoProfile -File n8n/scripts/run-controller-probe.ps1
+```
+
+Exit 1 means a desired timeout/stale-verdict requirement failed; compiler failure
+is reported separately. It does not change or flash firmware. The probe reports
+2900/3000/3100 ms boundaries and stale pass/reject verdicts for A during B.
+
+Package a visual result report after a run:
+
+```powershell
+<python-executable> n8n/scripts/summarize-inspection.py --fixtures <controlled-report.json> --model <managed-output-directory> --controller <controller-result.json> --output <report-directory>
+```
+
+The HTML contains model-box/ground-truth review overlays and descriptive
+bounding-rectangle IoU. A box around a whole product is not proof of correct
+defect localization. Contract assertions passing while an inspection returns
+`error` means fail-safe handling worked, not that AI evaluation succeeded.
+Real Supabase, relay/Pico, sensor and physical-action acceptance remain separate.
+
 The project-owned [resident model service](../model-service/README.md) preserves
 the Detection/prompt HTTP contract without generating annotated images.
 Model URLs now use HTTP to match that service. The inspected local n8n instance

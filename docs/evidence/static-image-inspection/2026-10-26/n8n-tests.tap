@@ -1,0 +1,1204 @@
+TAP version 13
+# Subtest: compact responses report pass/reject by coverage and keep small boxes
+ok 1 - compact responses report pass/reject by coverage and keep small boxes
+  ---
+  duration_ms: 5.0988
+  type: 'test'
+  ...
+# Subtest: evaluation failures display error even though the actuator must reject
+ok 2 - evaluation failures display error even though the actuator must reject
+  ---
+  duration_ms: 1.272
+  type: 'test'
+  ...
+# Subtest: the shipped model request matches the local HTTP adapter
+ok 3 - the shipped model request matches the local HTTP adapter
+  ---
+  duration_ms: 20.8476
+  type: 'test'
+  ...
+# Subtest: real webhook body prompts are accepted and prompt failures cannot respond updated
+ok 4 - real webhook body prompts are accepted and prompt failures cannot respond updated
+  ---
+  duration_ms: 17.1674
+  type: 'test'
+  ...
+# Subtest: runtime configuration resolves all URLs without a duplicate scheme
+ok 5 - runtime configuration resolves all URLs without a duplicate scheme
+  ---
+  duration_ms: 29.0297
+  type: 'test'
+  ...
+# Subtest: runtime configuration refuses invalid targets, missing credentials and unsafe budgets
+ok 6 - runtime configuration refuses invalid targets, missing credentials and unsafe budgets
+  ---
+  duration_ms: 1.8687
+  type: 'test'
+  ...
+# Subtest: the broadcast payload is accepted by the HUD parser
+ok 7 - the broadcast payload is accepted by the HUD parser
+  ---
+  duration_ms: 3.0623
+  type: 'test'
+  ...
+# Subtest: a box survives the round trip to the HUD at the same pixel coordinates
+ok 8 - a box survives the round trip to the HUD at the same pixel coordinates
+  ---
+  duration_ms: 3.7384
+  type: 'test'
+  ...
+# Subtest: the HUD reads the boxes as pixels against the capture dimensions
+ok 9 - the HUD reads the boxes as pixels against the capture dimensions
+  ---
+  duration_ms: 0.4194
+  type: 'test'
+  ...
+# Subtest: boxes larger than 1.0 are not mistaken for normalized coordinates
+ok 10 - boxes larger than 1.0 are not mistaken for normalized coordinates
+  ---
+  duration_ms: 0.2956
+  type: 'test'
+  ...
+# Subtest: the HUD receives the frame identity it uses for ordering
+ok 11 - the HUD receives the frame identity it uses for ordering
+  ---
+  duration_ms: 0.2863
+  type: 'test'
+  ...
+# Subtest: multiple detections all survive the round trip
+ok 12 - multiple detections all survive the round trip
+  ---
+  duration_ms: 0.3828
+  type: 'test'
+  ...
+# Subtest: the HUD tints a passed item green and a rejected item red
+ok 13 - the HUD tints a passed item green and a rejected item red
+  ---
+  duration_ms: 0.3799
+  type: 'test'
+  ...
+# Subtest: a sub-threshold detection is still drawn on a passed item
+ok 14 - a sub-threshold detection is still drawn on a passed item
+  ---
+  duration_ms: 0.6631
+  type: 'test'
+  ...
+# Subtest: a failed inspection still produces a parseable HUD message
+ok 15 - a failed inspection still produces a parseable HUD message
+  ---
+  duration_ms: 0.4286
+  type: 'test'
+  ...
+# Subtest: the HUD parser never sees a confidence it could misread
+ok 16 - the HUD parser never sees a confidence it could misread
+  ---
+  duration_ms: 0.4166
+  type: 'test'
+  ...
+# Subtest: boxArea measures pixel extent
+ok 17 - boxArea measures pixel extent
+  ---
+  duration_ms: 2.3572
+  type: 'test'
+  ...
+# Subtest: boxArea treats degenerate and inverted boxes as zero area
+ok 18 - boxArea treats degenerate and inverted boxes as zero area
+  ---
+  duration_ms: 0.3101
+  type: 'test'
+  ...
+# Subtest: boxArea rejects non-array and non-finite input
+ok 19 - boxArea rejects non-array and non-finite input
+  ---
+  duration_ms: 0.2338
+  type: 'test'
+  ...
+# Subtest: defectCoverage is the summed box area over the frame area
+ok 20 - defectCoverage is the summed box area over the frame area
+  ---
+  duration_ms: 0.4427
+  type: 'test'
+  ...
+# Subtest: defectCoverage is zero for an empty detection list
+ok 21 - defectCoverage is zero for an empty detection list
+  ---
+  duration_ms: 0.2282
+  type: 'test'
+  ...
+# Subtest: defectCoverage clamps a full-frame box to exactly 1
+ok 22 - defectCoverage clamps a full-frame box to exactly 1
+  ---
+  duration_ms: 0.1814
+  type: 'test'
+  ...
+# Subtest: defectCoverage clamps overlapping boxes that sum past the frame
+ok 23 - defectCoverage clamps overlapping boxes that sum past the frame
+  ---
+  duration_ms: 0.3
+  type: 'test'
+  ...
+# Subtest: defectCoverage ignores degenerate boxes rather than inflating coverage
+ok 24 - defectCoverage ignores degenerate boxes rather than inflating coverage
+  ---
+  duration_ms: 0.4918
+  type: 'test'
+  ...
+# Subtest: defectCoverage returns null when frame geometry is unusable
+ok 25 - defectCoverage returns null when frame geometry is unusable
+  ---
+  duration_ms: 0.2805
+  type: 'test'
+  ...
+# Subtest: defectCoverage never divides by zero into NaN or Infinity
+ok 26 - defectCoverage never divides by zero into NaN or Infinity
+  ---
+  duration_ms: 0.5683
+  type: 'test'
+  ...
+# Subtest: defectCoverage tolerates a non-array detection list
+ok 27 - defectCoverage tolerates a non-array detection list
+  ---
+  duration_ms: 0.2151
+  type: 'test'
+  ...
+# Subtest: decideVerdict rejects at exactly the coverage threshold
+ok 28 - decideVerdict rejects at exactly the coverage threshold
+  ---
+  duration_ms: 0.2488
+  type: 'test'
+  ...
+# Subtest: decideVerdict passes just below the coverage threshold
+ok 29 - decideVerdict passes just below the coverage threshold
+  ---
+  duration_ms: 0.1104
+  type: 'test'
+  ...
+# Subtest: decideVerdict passes an item with no detections
+ok 30 - decideVerdict passes an item with no detections
+  ---
+  duration_ms: 0.09
+  type: 'test'
+  ...
+# Subtest: decideVerdict rejects an unusable threshold rather than failing open
+ok 31 - decideVerdict rejects an unusable threshold rather than failing open
+  ---
+  duration_ms: 0.1543
+  type: 'test'
+  ...
+# Subtest: decideVerdict rejects when coverage could not be computed
+ok 32 - decideVerdict rejects when coverage could not be computed
+  ---
+  duration_ms: 0.0895
+  type: 'test'
+  ...
+# Subtest: parseFrameContext reads the Pi capture headers case-insensitively
+ok 33 - parseFrameContext reads the Pi capture headers case-insensitively
+  ---
+  duration_ms: 1.1444
+  type: 'test'
+  ...
+# Subtest: parseFrameContext preserves the original header casing
+ok 34 - parseFrameContext preserves the original header casing
+  ---
+  duration_ms: 0.1733
+  type: 'test'
+  ...
+# Subtest: parseFrameContext nulls out values it cannot read
+ok 35 - parseFrameContext nulls out values it cannot read
+  ---
+  duration_ms: 0.1108
+  type: 'test'
+  ...
+# Subtest: parseFrameContext tolerates missing headers entirely
+ok 36 - parseFrameContext tolerates missing headers entirely
+  ---
+  duration_ms: 0.0987
+  type: 'test'
+  ...
+# Subtest: hasUsableFrameGeometry only requires positive frame dimensions
+ok 37 - hasUsableFrameGeometry only requires positive frame dimensions
+  ---
+  duration_ms: 0.145
+  type: 'test'
+  ...
+# Subtest: a clean inspection with no detections passes
+ok 38 - a clean inspection with no detections passes
+  ---
+  duration_ms: 0.6012
+  type: 'test'
+  ...
+# Subtest: a detection above the coverage threshold rejects the item
+ok 39 - a detection above the coverage threshold rejects the item
+  ---
+  duration_ms: 0.2839
+  type: 'test'
+  ...
+# Subtest: every returned box is kept for display regardless of the verdict
+ok 40 - every returned box is kept for display regardless of the verdict
+  ---
+  duration_ms: 0.1723
+  type: 'test'
+  ...
+# Subtest: the coverage threshold is recorded on the decision
+ok 41 - the coverage threshold is recorded on the decision
+  ---
+  duration_ms: 0.1764
+  type: 'test'
+  ...
+# Subtest: the decision defaults to the documented coverage threshold
+ok 42 - the decision defaults to the documented coverage threshold
+  ---
+  duration_ms: 0.1398
+  type: 'test'
+  ...
+# Subtest: a mismatched model prompt is recorded rather than trusted
+ok 43 - a mismatched model prompt is recorded rather than trusted
+  ---
+  duration_ms: 0.1411
+  type: 'test'
+  ...
+# Subtest: every transport and content failure rejects the item
+ok 44 - every transport and content failure rejects the item
+  ---
+  duration_ms: 0.2848
+  type: 'test'
+  ...
+# Subtest: an unknown failure reason still rejects
+ok 45 - an unknown failure reason still rejects
+  ---
+  duration_ms: 0.1229
+  type: 'test'
+  ...
+# Subtest: a missing outcome rejects rather than passing
+ok 46 - a missing outcome rejects rather than passing
+  ---
+  duration_ms: 0.1908
+  type: 'test'
+  ...
+# Subtest: a model error status rejects
+ok 47 - a model error status rejects
+  ---
+  duration_ms: 0.1307
+  type: 'test'
+  ...
+# Subtest: a non-object model response rejects
+ok 48 - a non-object model response rejects
+  ---
+  duration_ms: 0.3465
+  type: 'test'
+  ...
+# Subtest: a non-array detections field rejects
+ok 49 - a non-array detections field rejects
+  ---
+  duration_ms: 0.1496
+  type: 'test'
+  ...
+# Subtest: invalid box geometry rejects and forwards no boxes
+ok 50 - invalid box geometry rejects and forwards no boxes
+  ---
+  duration_ms: 0.3147
+  type: 'test'
+  ...
+# Subtest: a bad box anywhere in the list rejects the whole inspection
+ok 51 - a bad box anywhere in the list rejects the whole inspection
+  ---
+  duration_ms: 0.1775
+  type: 'test'
+  ...
+# Subtest: a detection with no label still renders
+ok 52 - a detection with no label still renders
+  ---
+  duration_ms: 0.1807
+  type: 'test'
+  ...
+# Subtest: unusable frame geometry rejects before any coverage math
+ok 53 - unusable frame geometry rejects before any coverage math
+  ---
+  duration_ms: 0.1452
+  type: 'test'
+  ...
+# Subtest: an unusable coverage threshold rejects rather than passing
+ok 54 - an unusable coverage threshold rejects rather than passing
+  ---
+  duration_ms: 0.1279
+  type: 'test'
+  ...
+# Subtest: a failed inspection reports no coverage figure
+ok 55 - a failed inspection reports no coverage figure
+  ---
+  duration_ms: 0.1088
+  type: 'test'
+  ...
+# Subtest: the model timeout sits inside the ESP32 verdict window
+ok 56 - the model timeout sits inside the ESP32 verdict window
+  ---
+  duration_ms: 0.0871
+  type: 'test'
+  ...
+# Subtest: a probe reports healthy when its reader and predicate agree
+ok 57 - a probe reports healthy when its reader and predicate agree
+  ---
+  duration_ms: 0.2583
+  type: 'test'
+  ...
+# Subtest: a probe reports unhealthy without throwing
+ok 58 - a probe reports unhealthy without throwing
+  ---
+  duration_ms: 0.1354
+  type: 'test'
+  ...
+# Subtest: a probe whose reader throws is unhealthy and keeps the message
+ok 59 - a probe whose reader throws is unhealthy and keeps the message
+  ---
+  duration_ms: 0.1675
+  type: 'test'
+  ...
+# Subtest: a non-boolean verdict from the predicate is never treated as healthy
+ok 60 - a non-boolean verdict from the predicate is never treated as healthy
+  ---
+  duration_ms: 0.1641
+  type: 'test'
+  ...
+# Subtest: the whole pre-verdict budget fits inside the ESP32 verdict window
+ok 61 - the whole pre-verdict budget fits inside the ESP32 verdict window
+  ---
+  duration_ms: 1.913
+  type: 'test'
+  ...
+# Subtest: each stage is budgeted individually
+ok 62 - each stage is budgeted individually
+  ---
+  duration_ms: 0.3266
+  type: 'test'
+  ...
+# Subtest: a clean model response is classified as an ok outcome
+ok 63 - a clean model response is classified as an ok outcome
+  ---
+  duration_ms: 0.328
+  type: 'test'
+  ...
+# Subtest: a n8n timeout error is classified as a model timeout
+ok 64 - a n8n timeout error is classified as a model timeout
+  ---
+  duration_ms: 0.3282
+  type: 'test'
+  ...
+# Subtest: a connection error is classified as an unreachable model
+ok 65 - a connection error is classified as an unreachable model
+  ---
+  duration_ms: 0.4475
+  type: 'test'
+  ...
+# Subtest: any other error is classified as an HTTP error
+ok 66 - any other error is classified as an HTTP error
+  ---
+  duration_ms: 0.2362
+  type: 'test'
+  ...
+# Subtest: an error without a message still classifies as a failure
+ok 67 - an error without a message still classifies as a failure
+  ---
+  duration_ms: 2.6955
+  type: 'test'
+  ...
+# Subtest: a thrown-error string is classified as a failure
+ok 68 - a thrown-error string is classified as a failure
+  ---
+  duration_ms: 0.3682
+  type: 'test'
+  ...
+# Subtest: a timeout is not mistaken for a connection failure
+ok 69 - a timeout is not mistaken for a connection failure
+  ---
+  duration_ms: 0.1909
+  type: 'test'
+  ...
+# Subtest: a first verdict for a frame is never suppressed
+ok 70 - a first verdict for a frame is never suppressed
+  ---
+  duration_ms: 0.5023
+  type: 'test'
+  ...
+# Subtest: a second verdict for the same frame inside the window is suppressed
+ok 71 - a second verdict for the same frame inside the window is suppressed
+  ---
+  duration_ms: 0.2442
+  type: 'test'
+  ...
+# Subtest: a later verdict for the same frame outside the window is allowed
+ok 72 - a later verdict for the same frame outside the window is allowed
+  ---
+  duration_ms: 0.1494
+  type: 'test'
+  ...
+# Subtest: a different frame is never suppressed
+ok 73 - a different frame is never suppressed
+  ---
+  duration_ms: 0.1608
+  type: 'test'
+  ...
+# Subtest: suppression is recorded in the store it is given
+ok 74 - suppression is recorded in the store it is given
+  ---
+  duration_ms: 0.1331
+  type: 'test'
+  ...
+# Subtest: a frame with no identity cannot be deduplicated
+ok 75 - a frame with no identity cannot be deduplicated
+  ---
+  duration_ms: 0.0945
+  type: 'test'
+  ...
+# Subtest: suppression survives a store that was never initialised
+ok 76 - suppression survives a store that was never initialised
+  ---
+  duration_ms: 0.2689
+  type: 'test'
+  ...
+# Subtest: a snapshot object name is derived from the frame identity
+ok 77 - a snapshot object name is derived from the frame identity
+  ---
+  duration_ms: 0.2334
+  type: 'test'
+  ...
+# Subtest: a frame with no identity still produces a usable object name
+ok 78 - a frame with no identity still produces a usable object name
+  ---
+  duration_ms: 0.2824
+  type: 'test'
+  ...
+# Subtest: the shipped budget defaults fit the verdict window
+ok 79 - the shipped budget defaults fit the verdict window
+  ---
+  duration_ms: 0.1498
+  type: 'test'
+  ...
+# Subtest: the unconfigured placeholder falls back to the shipped default
+ok 80 - the unconfigured placeholder falls back to the shipped default
+  ---
+  duration_ms: 0.0897
+  type: 'test'
+  ...
+# Subtest: a configured model timeout is accepted when it still fits
+ok 81 - a configured model timeout is accepted when it still fits
+  ---
+  duration_ms: 0.1016
+  type: 'test'
+  ...
+# Subtest: a model timeout that cannot leave headroom is refused
+ok 82 - a model timeout that cannot leave headroom is refused
+  ---
+  duration_ms: 0.0787
+  type: 'test'
+  ...
+# Subtest: a nonsense configured timeout falls back rather than breaking the guard
+ok 83 - a nonsense configured timeout falls back rather than breaking the guard
+  ---
+  duration_ms: 0.1488
+  type: 'test'
+  ...
+# Subtest: the budget total is the sum of every stage including the verdict post
+ok 84 - the budget total is the sum of every stage including the verdict post
+  ---
+  duration_ms: 0.1665
+  type: 'test'
+  ...
+# Subtest: the verdict budget is an inspector-visible reason
+ok 85 - the verdict budget is an inspector-visible reason
+  ---
+  duration_ms: 0.0998
+  type: 'test'
+  ...
+# Subtest: a budget that cannot fit forces a reject
+ok 86 - a budget that cannot fit forces a reject
+  ---
+  duration_ms: 0.7631
+  type: 'test'
+  ...
+# Subtest: a refused budget still shows the boxes and the measured coverage
+ok 87 - a refused budget still shows the boxes and the measured coverage
+  ---
+  duration_ms: 0.2352
+  type: 'test'
+  ...
+# Subtest: a fitting budget leaves the ordinary verdict alone
+ok 88 - a fitting budget leaves the ordinary verdict alone
+  ---
+  duration_ms: 0.163
+  type: 'test'
+  ...
+# Subtest: no budget at all behaves exactly as before
+ok 89 - no budget at all behaves exactly as before
+  ---
+  duration_ms: 0.1465
+  type: 'test'
+  ...
+# Subtest: an instruction that cannot be read is a named fail-safe reason
+ok 90 - an instruction that cannot be read is a named fail-safe reason
+  ---
+  duration_ms: 0.1933
+  type: 'test'
+  ...
+# Subtest: a missing instruction still shows the boxes it found
+ok 91 - a missing instruction still shows the boxes it found
+  ---
+  duration_ms: 1.0188
+  type: 'test'
+  ...
+# Subtest: a model outcome is not classified as a failure when there is no instruction
+ok 92 - a model outcome is not classified as a failure when there is no instruction
+  ---
+  duration_ms: 0.1556
+  type: 'test'
+  ...
+# Subtest: an unreadable configured timeout is substituted and reported, never silent
+ok 93 - an unreadable configured timeout is substituted and reported, never silent
+  ---
+  duration_ms: 0.21
+  type: 'test'
+  ...
+# Subtest: a budget that cannot fit the window is refused rather than trusted
+ok 94 - a budget that cannot fit the window is refused rather than trusted
+  ---
+  duration_ms: 0.0941
+  type: 'test'
+  ...
+# Subtest: coverage threshold resolution separates unconfigured from unreadable
+ok 95 - coverage threshold resolution separates unconfigured from unreadable
+  ---
+  duration_ms: 0.3039
+  type: 'test'
+  ...
+# Subtest: a failed frame capture is named as a capture failure, not a model failure
+ok 96 - a failed frame capture is named as a capture failure, not a model failure
+  ---
+  duration_ms: 0.1287
+  type: 'test'
+  ...
+# Subtest: a budget refusal still shows the boxes and the measured coverage
+ok 97 - a budget refusal still shows the boxes and the measured coverage
+  ---
+  duration_ms: 0.2111
+  type: 'test'
+  ...
+# Subtest: an over-budget model timeout is clamped at the wire and refused in the verdict
+ok 98 - an over-budget model timeout is clamped at the wire and refused in the verdict
+  ---
+  duration_ms: 0.0826
+  type: 'test'
+  ...
+# Subtest: a fitting configured model timeout passes through unclamped
+ok 99 - a fitting configured model timeout passes through unclamped
+  ---
+  duration_ms: 0.0816
+  type: 'test'
+  ...
+# Subtest: an unreadable configured model timeout applies the documented default
+ok 100 - an unreadable configured model timeout applies the documented default
+  ---
+  duration_ms: 0.0874
+  type: 'test'
+  ...
+# Subtest: a bare target becomes the canonical model instruction
+ok 101 - a bare target becomes the canonical model instruction
+  ---
+  duration_ms: 1.9461
+  type: 'test'
+  ...
+# Subtest: punctuation and whitespace variants of a target produce one instruction
+ok 102 - punctuation and whitespace variants of a target produce one instruction
+  ---
+  duration_ms: 0.5143
+  type: 'test'
+  ...
+# Subtest: interior punctuation is preserved without doubling the terminator
+ok 103 - interior punctuation is preserved without doubling the terminator
+  ---
+  duration_ms: 0.2052
+  type: 'test'
+  ...
+# Subtest: an empty target produces no instruction
+ok 104 - an empty target produces no instruction
+  ---
+  duration_ms: 0.1554
+  type: 'test'
+  ...
+# Subtest: the instruction is used verbatim for prompt verification
+ok 105 - the instruction is used verbatim for prompt verification
+  ---
+  duration_ms: 0.4701
+  type: 'test'
+  ...
+# Subtest: an inspection row carries the target, the instruction and the decision
+ok 106 - an inspection row carries the target, the instruction and the decision
+  ---
+  duration_ms: 1.3179
+  type: 'test'
+  ...
+# Subtest: an inspection row records the coverage figure and box count
+ok 107 - an inspection row records the coverage figure and box count
+  ---
+  duration_ms: 0.3584
+  type: 'test'
+  ...
+# Subtest: a failed inspection row records a null coverage figure
+ok 108 - a failed inspection row records a null coverage figure
+  ---
+  duration_ms: 0.218
+  type: 'test'
+  ...
+# Subtest: an inspection row survives a missing frame context
+ok 109 - an inspection row survives a missing frame context
+  ---
+  duration_ms: 1.7399
+  type: 'test'
+  ...
+# Subtest: a control action row records the ESP32 outcome
+ok 110 - a control action row records the ESP32 outcome
+  ---
+  duration_ms: 0.5508
+  type: 'test'
+  ...
+# Subtest: a control action row records a rejected or unanswered ESP32
+ok 111 - a control action row records a rejected or unanswered ESP32
+  ---
+  duration_ms: 0.2433
+  type: 'test'
+  ...
+# Subtest: a prompt history row records the target change and its source
+ok 112 - a prompt history row records the target change and its source
+  ---
+  duration_ms: 0.2354
+  type: 'test'
+  ...
+# Subtest: a prompt history row records a model server that refused the change
+ok 113 - a prompt history row records a model server that refused the change
+  ---
+  duration_ms: 0.2025
+  type: 'test'
+  ...
+# Subtest: a system log row records severity, component and details
+ok 114 - a system log row records severity, component and details
+  ---
+  duration_ms: 0.2125
+  type: 'test'
+  ...
+# Subtest: a system log row tolerates missing details
+ok 115 - a system log row tolerates missing details
+  ---
+  duration_ms: 0.1737
+  type: 'test'
+  ...
+# Subtest: the HUD payload declares pixel space and carries the frame dimensions
+ok 116 - the HUD payload declares pixel space and carries the frame dimensions
+  ---
+  duration_ms: 0.317
+  type: 'test'
+  ...
+# Subtest: the HUD payload never reuses a reserved message type
+ok 117 - the HUD payload never reuses a reserved message type
+  ---
+  duration_ms: 0.154
+  type: 'test'
+  ...
+# Subtest: the HUD payload carries no confidence field
+ok 118 - the HUD payload carries no confidence field
+  ---
+  duration_ms: 0.2063
+  type: 'test'
+  ...
+# Subtest: the HUD payload marks detections with the verdict
+ok 119 - the HUD payload marks detections with the verdict
+  ---
+  duration_ms: 0.2033
+  type: 'test'
+  ...
+# Subtest: the HUD payload includes a snapshot URL when one is available
+ok 120 - the HUD payload includes a snapshot URL when one is available
+  ---
+  duration_ms: 0.1814
+  type: 'test'
+  ...
+# Subtest: the HUD payload explains a failed inspection with an empty box list
+ok 121 - the HUD payload explains a failed inspection with an empty box list
+  ---
+  duration_ms: 0.1992
+  type: 'test'
+  ...
+# Subtest: every row builder tolerates absent optional input
+ok 122 - every row builder tolerates absent optional input
+  ---
+  duration_ms: 0.4691
+  type: 'test'
+  ...
+# Subtest: the inspection target round-trips through the canonical template
+ok 123 - the inspection target round-trips through the canonical template
+  ---
+  duration_ms: 0.2364
+  type: 'test'
+  ...
+# Subtest: a trailing full stop in the target does not change the recorded target
+ok 124 - a trailing full stop in the target does not change the recorded target
+  ---
+  duration_ms: 0.0998
+  type: 'test'
+  ...
+# Subtest: an instruction that is not the canonical template yields no target
+ok 125 - an instruction that is not the canonical template yields no target
+  ---
+  duration_ms: 0.1233
+  type: 'test'
+  ...
+# Subtest: an accepted verdict is read from the firmware response
+ok 126 - an accepted verdict is read from the firmware response
+  ---
+  duration_ms: 0.2089
+  type: 'test'
+  ...
+# Subtest: a rejected verdict is recorded as refused by the firmware
+ok 127 - a rejected verdict is recorded as refused by the firmware
+  ---
+  duration_ms: 0.1246
+  type: 'test'
+  ...
+# Subtest: an unreachable ESP32 is recorded as an error rather than as acceptance
+ok 128 - an unreachable ESP32 is recorded as an error rather than as acceptance
+  ---
+  duration_ms: 0.1064
+  type: 'test'
+  ...
+# Subtest: a string error from n8n is still recorded
+ok 129 - a string error from n8n is still recorded
+  ---
+  duration_ms: 0.1152
+  type: 'test'
+  ...
+# Subtest: an unreadable response records no acceptance at all
+ok 130 - an unreadable response records no acceptance at all
+  ---
+  duration_ms: 0.1537
+  type: 'test'
+  ...
+# Subtest: the ESP32 outcome unwraps the full-response envelope and keeps the HTTP status
+ok 131 - the ESP32 outcome unwraps the full-response envelope and keeps the HTTP status
+  ---
+  duration_ms: 0.1496
+  type: 'test'
+  ...
+# Subtest: an aborted verdict post records the failure, never a made-up acceptance
+ok 132 - an aborted verdict post records the failure, never a made-up acceptance
+  ---
+  duration_ms: 0.153
+  type: 'test'
+  ...
+# Subtest: the control action row carries acceptance and the wire status
+ok 133 - the control action row carries acceptance and the wire status
+  ---
+  duration_ms: 0.1687
+  type: 'test'
+  ...
+# Subtest: owned runtime workflow identities support n8n static-data persistence
+ok 134 - owned runtime workflow identities support n8n static-data persistence
+  ---
+  duration_ms: 21.509
+  type: 'test'
+  ...
+# Subtest: capture preserves actual geometry and advances identity without changing the picture
+ok 135 - capture preserves actual geometry and advances identity without changing the picture
+  ---
+  duration_ms: 107.8864
+  type: 'test'
+  ...
+# Subtest: predict checks the actual multipart image and explicit prompt
+ok 136 - predict checks the actual multipart image and explicit prompt
+  ---
+  duration_ms: 71.1297
+  type: 'test'
+  ...
+# Subtest: delayed response retains its case when the next case is selected
+ok 137 - delayed response retains its case when the next case is selected
+  ---
+  duration_ms: 67.4427
+  type: 'test'
+  ...
+# Subtest: a late execution callback belongs to its original case
+ok 138 - a late execution callback belongs to its original case
+  ---
+  duration_ms: 9.5025
+  type: 'test'
+  ...
+# Subtest: timing summaries retain failures and do not count them as successful measurements
+ok 139 - timing summaries retain failures and do not count them as successful measurements
+  ---
+  duration_ms: 0.4186
+  type: 'test'
+  ...
+# Subtest: case timing summaries keep failures within the correct image/target group
+ok 140 - case timing summaries keep failures within the correct image/target group
+  ---
+  duration_ms: 0.1909
+  type: 'test'
+  ...
+# Subtest: independent policy assessment distinguishes small defects and ignored actuator commands
+ok 141 - independent policy assessment distinguishes small defects and ignored actuator commands
+  ---
+  duration_ms: 0.184
+  type: 'test'
+  ...
+# Subtest: every Code node compiles as a single function body
+ok 142 - every Code node compiles as a single function body
+  ---
+  duration_ms: 12.9846
+  type: 'test'
+  ...
+# Subtest: the committed workflow files match a fresh build
+ok 143 - the committed workflow files match a fresh build
+  ---
+  duration_ms: 11.9676
+  type: 'test'
+  ...
+# Subtest: every workflow file exists on disk
+ok 144 - every workflow file exists on disk
+  ---
+  duration_ms: 4.4651
+  type: 'test'
+  ...
+# Subtest: every workflow is valid JSON with a name and nodes
+ok 145 - every workflow is valid JSON with a name and nodes
+  ---
+  duration_ms: 0.3691
+  type: 'test'
+  ...
+# Subtest: the three workflows are split by concern
+ok 146 - the three workflows are split by concern
+  ---
+  duration_ms: 0.8348
+  type: 'test'
+  ...
+# Subtest: the inspection loop exposes all three triggers
+ok 147 - the inspection loop exposes all three triggers
+  ---
+  duration_ms: 0.2066
+  type: 'test'
+  ...
+# Subtest: the item webhook keeps the ESP32 path
+ok 148 - the item webhook keeps the ESP32 path
+  ---
+  duration_ms: 0.2439
+  type: 'test'
+  ...
+# Subtest: the manual trigger is inspect-now
+ok 149 - the manual trigger is inspect-now
+  ---
+  duration_ms: 0.1835
+  type: 'test'
+  ...
+# Subtest: the prompt webhook keeps the HUD path
+ok 150 - the prompt webhook keeps the HUD path
+  ---
+  duration_ms: 0.1507
+  type: 'test'
+  ...
+# Subtest: the frame is pulled from the capture service, not pushed to it
+ok 151 - the frame is pulled from the capture service, not pushed to it
+  ---
+  duration_ms: 0.2758
+  type: 'test'
+  ...
+# Subtest: the model is asked over multipart with the image and the instruction
+ok 152 - the model is asked over multipart with the image and the instruction
+  ---
+  duration_ms: 0.2127
+  type: 'test'
+  ...
+# Subtest: the model timeout is the budget-clamped value, not the raw placeholder
+ok 153 - the model timeout is the budget-clamped value, not the raw placeholder
+  ---
+  duration_ms: 1.0767
+  type: 'test'
+  ...
+# Subtest: the model server is asked for the prompt before every inspection
+ok 154 - the model server is asked for the prompt before every inspection
+  ---
+  duration_ms: 0.2444
+  type: 'test'
+  ...
+# Subtest: the verdict reaches the ESP32 before anything is persisted or broadcast
+ok 155 - the verdict reaches the ESP32 before anything is persisted or broadcast
+  ---
+  duration_ms: 0.1955
+  type: 'test'
+  ...
+# Subtest: the HUD is sent a payload a Code node built
+ok 156 - the HUD is sent a payload a Code node built
+  ---
+  duration_ms: 1.0269
+  type: 'test'
+  ...
+# Subtest: boxes are drawn on the HUD whatever the verdict
+ok 157 - boxes are drawn on the HUD whatever the verdict
+  ---
+  duration_ms: 0.7582
+  type: 'test'
+  ...
+# Subtest: the verdict path is budgeted against the ESP32 verdict window
+ok 158 - the verdict path is budgeted against the ESP32 verdict window
+  ---
+  duration_ms: 0.5082
+  type: 'test'
+  ...
+# Subtest: a budget that cannot fit is rejected, and known before the model call
+ok 159 - a budget that cannot fit is rejected, and known before the model call
+  ---
+  duration_ms: 0.3933
+  type: 'test'
+  ...
+# Subtest: the timeouts on the verdict path are budgeted, not left at defaults
+ok 160 - the timeouts on the verdict path are budgeted, not left at defaults
+  ---
+  duration_ms: 0.0696
+  type: 'test'
+  ...
+# Subtest: the capture is serialised, not fanned out behind a merge
+ok 161 - the capture is serialised, not fanned out behind a merge
+  ---
+  duration_ms: 0.1259
+  type: 'test'
+  ...
+# Subtest: a failed capture is decided at the wire, as a capture failure
+ok 162 - a failed capture is decided at the wire, as a capture failure
+  ---
+  duration_ms: 2.0005
+  type: 'test'
+  ...
+# Subtest: a duplicate frame is still told to the ESP32, but only recorded once
+ok 163 - a duplicate frame is still told to the ESP32, but only recorded once
+  ---
+  duration_ms: 1.6591
+  type: 'test'
+  ...
+# Subtest: a duplicate is logged rather than vanishing
+ok 164 - a duplicate is logged rather than vanishing
+  ---
+  duration_ms: 0.8092
+  type: 'test'
+  ...
+# Subtest: the firmware answer is read once, upstream of the record
+ok 165 - the firmware answer is read once, upstream of the record
+  ---
+  duration_ms: 0.9081
+  type: 'test'
+  ...
+# Subtest: the wire result the firmware sent is recorded, envelope and all
+ok 166 - the wire result the firmware sent is recorded, envelope and all
+  ---
+  duration_ms: 0.6163
+  type: 'test'
+  ...
+# Subtest: only an explicit pass becomes a pass
+ok 167 - only an explicit pass becomes a pass
+  ---
+  duration_ms: 1.1364
+  type: 'test'
+  ...
+# Subtest: the capture headers become the frame context, and the bytes ride along
+ok 168 - the capture headers become the frame context, and the bytes ride along
+  ---
+  duration_ms: 0.8272
+  type: 'test'
+  ...
+# Subtest: a prompt mismatch on a passing item is still a warning
+ok 169 - a prompt mismatch on a passing item is still a warning
+  ---
+  duration_ms: 0.6575
+  type: 'test'
+  ...
+# Subtest: a failed snapshot upload yields no frame URL
+ok 170 - a failed snapshot upload yields no frame URL
+  ---
+  duration_ms: 2.1853
+  type: 'test'
+  ...
+# Subtest: an unreadable model prompt fails the item closed, by name
+ok 171 - an unreadable model prompt fails the item closed, by name
+  ---
+  duration_ms: 2.506
+  type: 'test'
+  ...
+# Subtest: a target on the webhook becomes a canonical instruction, built not recovered
+ok 172 - a target on the webhook becomes a canonical instruction, built not recovered
+  ---
+  duration_ms: 3.6639
+  type: 'test'
+  ...
+# Subtest: the model server's own prompt wins over the target on the webhook
+ok 173 - the model server's own prompt wins over the target on the webhook
+  ---
+  duration_ms: 0.4381
+  type: 'test'
+  ...
+# Subtest: the prompt comparison and the board result reach the audit trail
+ok 174 - the prompt comparison and the board result reach the audit trail
+  ---
+  duration_ms: 0.9876
+  type: 'test'
+  ...
+# Subtest: a passing inspection logs at info
+ok 175 - a passing inspection logs at info
+  ---
+  duration_ms: 0.2734
+  type: 'test'
+  ...
+# Subtest: the control action is anchored to the id PostgREST returns
+ok 176 - the control action is anchored to the id PostgREST returns
+  ---
+  duration_ms: 1.5564
+  type: 'test'
+  ...
+# Subtest: every Supabase insert sends one named row, not the execution envelope
+ok 177 - every Supabase insert sends one named row, not the execution envelope
+  ---
+  duration_ms: 0.2732
+  type: 'test'
+  ...
+# Subtest: the verdict body carries only the action
+ok 178 - the verdict body carries only the action
+  ---
+  duration_ms: 0.1419
+  type: 'test'
+  ...
+# Subtest: the duplicate branch and the full branch both terminate
+ok 179 - the duplicate branch and the full branch both terminate
+  ---
+  duration_ms: 0.1444
+  type: 'test'
+  ...
+# Subtest: a model failure cannot stop the loop before the verdict
+ok 180 - a model failure cannot stop the loop before the verdict
+  ---
+  duration_ms: 0.197
+  type: 'test'
+  ...
+# Subtest: the broadcast targets the relay ingest rather than the HUD websocket
+ok 181 - the broadcast targets the relay ingest rather than the HUD websocket
+  ---
+  duration_ms: 3.3616
+  type: 'test'
+  ...
+# Subtest: Supabase is written over PostgREST so the column names stay visible
+ok 182 - Supabase is written over PostgREST so the column names stay visible
+  ---
+  duration_ms: 0.4872
+  type: 'test'
+  ...
+# Subtest: the prompt history row is built by the tested module
+ok 183 - the prompt history row is built by the tested module
+  ---
+  duration_ms: 1.0705
+  type: 'test'
+  ...
+# Subtest: a rejected prompt change is recorded with its status and error
+ok 184 - a rejected prompt change is recorded with its status and error
+  ---
+  duration_ms: 0.8818
+  type: 'test'
+  ...
+# Subtest: the health watchdog records transitions rather than every poll
+ok 185 - the health watchdog records transitions rather than every poll
+  ---
+  duration_ms: 2.2835
+  type: 'test'
+  ...
+# Subtest: the health watchdog probes the model server and the capture service
+ok 186 - the health watchdog probes the model server and the capture service
+  ---
+  duration_ms: 0.2074
+  type: 'test'
+  ...
+# Subtest: the canonical instruction grammar is inlined verbatim into the workflows
+ok 187 - the canonical instruction grammar is inlined verbatim into the workflows
+  ---
+  duration_ms: 0.1422
+  type: 'test'
+  ...
+# Subtest: every Code node carries the tested decision logic
+ok 188 - every Code node carries the tested decision logic
+  ---
+  duration_ms: 1.6122
+  type: 'test'
+  ...
+# Subtest: the inlined logic drops module syntax the Code node cannot resolve
+ok 189 - the inlined logic drops module syntax the Code node cannot resolve
+  ---
+  duration_ms: 0.9552
+  type: 'test'
+  ...
+# Subtest: no credential is committed to the workflow files
+ok 190 - no credential is committed to the workflow files
+  ---
+  duration_ms: 5.3876
+  type: 'test'
+  ...
+# Subtest: every placeholder the setup promises appears in the workflows
+ok 191 - every placeholder the setup promises appears in the workflows
+  ---
+  duration_ms: 6.5657
+  type: 'test'
+  ...
+# Subtest: every placeholder is documented in the setup guide
+ok 192 - every placeholder is documented in the setup guide
+  ---
+  duration_ms: 0.8782
+  type: 'test'
+  ...
+# Subtest: the setup guide warns about the bind-address trap and the fail-safe default
+ok 193 - the setup guide warns about the bind-address trap and the fail-safe default
+  ---
+  duration_ms: 0.5319
+  type: 'test'
+  ...
+# Subtest: the setup guide is explicit that the Supabase schema is assumed
+ok 194 - the setup guide is explicit that the Supabase schema is assumed
+  ---
+  duration_ms: 0.4659
+  type: 'test'
+  ...
+# Subtest: no workflow points at an unresolvable n8n host
+ok 195 - no workflow points at an unresolvable n8n host
+  ---
+  duration_ms: 4.1608
+  type: 'test'
+  ...
+# Subtest: the model host is never configured as a bind address
+ok 196 - the model host is never configured as a bind address
+  ---
+  duration_ms: 3.8794
+  type: 'test'
+  ...
+# Subtest: every node is reachable from a trigger
+ok 197 - every node is reachable from a trigger
+  ---
+  duration_ms: 0.7116
+  type: 'test'
+  ...
+# Subtest: every connection points at a node that exists
+ok 198 - every connection points at a node that exists
+  ---
+  duration_ms: 0.3333
+  type: 'test'
+  ...
+# Subtest: node names are unique within a workflow
+ok 199 - node names are unique within a workflow
+  ---
+  duration_ms: 0.1551
+  type: 'test'
+  ...
+1..199
+# tests 199
+# suites 0
+# pass 199
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 577.6303

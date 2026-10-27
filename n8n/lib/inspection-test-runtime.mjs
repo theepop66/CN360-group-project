@@ -21,8 +21,9 @@ function callback(name, origin, expression) {
     position: [4800, 0], parameters: { method: "POST", url: origin + "/completed", sendBody: true, specifyBody: "json", jsonBody: expression, options: { timeout: 3000 } } };
 }
 
-export function testWorkflows(origin) {
-  const configured = configureWorkflows({ modelBaseUrl: origin, piBaseUrl: origin, esp32BaseUrl: origin, relayBaseUrl: origin, supabaseBaseUrl: origin, snapshotBucket: "static-test", coverageThreshold: 0.005, modelTimeoutMs: 1200 }, "isolated-fixture-key");
+export function testWorkflows(origin, { supabaseCredentialId } = {}) {
+  const configured = configureWorkflows({ modelBaseUrl: origin, piBaseUrl: origin, esp32BaseUrl: origin, relayBaseUrl: origin, supabaseBaseUrl: origin, snapshotBucket: "static-test", coverageThreshold: 0.005, modelTimeoutMs: 1200,
+    ...(supabaseCredentialId ? { supabaseCredentialId } : {}) }, "isolated-fixture-key");
   const inspection = configured[WORKFLOW_FILES.inspectionLoop];
   inspection.id = "cn360StaticTest";
   inspection.name = "CN360 TEST - Static picture inspection";
@@ -69,14 +70,18 @@ export function testWorkflows(origin) {
   return [inspection, prompt, watchdog];
 }
 
-export async function startTestN8n({ output, fixturePort, port = 5682, docker = "docker", image = "n8n-backup:latest" }) {
+export async function startTestN8n({ output, fixturePort, port = 5682, docker = "docker", image = "n8n-backup:latest", supabaseCredentialId }) {
   mkdirSync(output, { recursive: true });
-  const flows = testWorkflows(`http://host.docker.internal:${fixturePort}`);
+  const origin = `http://host.docker.internal:${fixturePort}`;
+  const flows = testWorkflows(origin, { supabaseCredentialId });
+  if (supabaseCredentialId) writeFileSync(join(output, "credentials.json"), JSON.stringify([
+    { id: supabaseCredentialId, name: "CN360 Supabase", type: "supabaseApi", data: { host: origin, serviceRole: "isolated-fixture-key" } }
+  ]) + "\n");
   writeFileSync(join(output, "workflows.json"), JSON.stringify(flows, null, 2) + "\n");
   const name = `cn360-static-test-${process.pid}`;
   let log = "";
   // The shell program is constant; user-supplied paths are separate Docker arguments.
-  const program = "n8n import:workflow --input=/fixtures/workflows.json && n8n publish:workflow --id=cn360StaticTest && n8n publish:workflow --id=cn360PromptTest && n8n publish:workflow --id=cn360HealthTest && n8n start";
+  const program = (supabaseCredentialId ? "n8n import:credentials --input=/fixtures/credentials.json && " : "") + "n8n import:workflow --input=/fixtures/workflows.json && n8n publish:workflow --id=cn360StaticTest && n8n publish:workflow --id=cn360PromptTest && n8n publish:workflow --id=cn360HealthTest && n8n start";
   const child = spawn(docker, ["run", "--rm", "--name", name, "--publish", `127.0.0.1:${port}:5678`, "--env", "N8N_USER_FOLDER=/tmp/cn360-static", "--env", "DB_TYPE=sqlite", "--env", "DB_SQLITE_DATABASE=/tmp/cn360-static.sqlite", "--env", "N8N_DIAGNOSTICS_ENABLED=false", "--env", "N8N_LICENSE_AUTO_RENEW_ENABLED=false", "--env", "N8N_RUNNERS_ENABLED=false", "--env", "N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=false", "--volume", `${resolve(output)}:/fixtures:ro`, "--entrypoint", "sh", image, "-c", program], { windowsHide: true });
   let spawnError;
   child.on("error", error => { spawnError = error; });

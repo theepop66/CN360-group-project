@@ -12,9 +12,12 @@ defined in [local ticket 07](../.scratch/locate-anything-n8n/issues/07-item-verd
 
 ## Import
 
-1. n8n: **Workflows เน€เธยเธขยเนโฌย Import from File**, import all three JSON files.
-2. Leave them **inactive** until the placeholders below are filled.
-3. Fill in the placeholders (Ctrl+H in the n8n editor finds them quickly).
+1. Create/select an n8n **Supabase API** credential and copy `runtime.example.json`
+   to `runtime.local.json`. Fill service origins, bucket and credential ID.
+2. Run `node configure.mjs` from this folder. Import the three generated files
+   from `workflows-local/` into n8n using **Import from File**.
+3. Keep them **inactive** until service connectivity and schema mappings are
+   verified. The committed `workflows/` files are templates, not configured imports.
 
 ## Placeholders
 
@@ -28,20 +31,33 @@ goes missing, so this list cannot drift away from the workflows.
 | `REPLACE_ESP32_HOST` | The ESP32 | Its static IP on the line. |
 | `REPLACE_RELAY_HOST:8081` | The detection relay | See "The HUD overlay is not done yet". |
 | `REPLACE_SUPABASE_HOST` | `<project-ref>.supabase.co` | Hostname only; the workflow already includes `https://`. |
-| `REPLACE_SUPABASE_SERVICE_ROLE_KEY` | The service-role key | Prefer an n8n HTTP Header Auth credential instead of pasting it here. |
+| `REPLACE_SUPABASE_SERVICE_ROLE_KEY` | Removed by stored-credential configuration | Use the native Supabase API credential below; do not paste a key into the template. |
 | `REPLACE_SNAPSHOT_BUCKET` | A **public** bucket name | Create the bucket first; the stored `frame_url` points at `/storage/v1/object/public/...`. |
 | `REPLACE_COVERAGE_THRESHOLD` | e.g. `0.005` | Or set an n8n variable named `COVERAGE_THRESHOLD`. |
 | `REPLACE_MODEL_TIMEOUT_MS` | `1200` | Must fit the Verdict Window budget. The workflow refuses a value it cannot fit rather than trusting it. |
 
 ### Secrets and n8n credentials
 
-Supabase is reached with the service-role key as a header placeholder
-(`REPLACE_SUPABASE_SERVICE_ROLE_KEY`), not an n8n credential-store reference.
-That is a deliberate, documented deviation from the spec: the HTTP Request node
-needs *two* headers (`apikey` and `Authorization: Bearer`) and a credential
-supplies one, so a naive header-auth credential would half-configure the node.
-Replace the placeholder in place, or rework the Supabase nodes onto credentials
-together. Do not paste a key into this file.
+Use n8n's built-in **Supabase API** credential. It supplies both `apikey`
+and `Authorization: Bearer` on HTTP Request nodes, including Storage uploads.
+Create or select a credential in n8n with the project origin and service-role
+key, then set `supabaseCredentialId` and optionally `supabaseCredentialName`
+in `runtime.local.json`. The credential's project origin must match
+`supabaseBaseUrl`. The ID can be read from the credential editor URL; importing
+into a different n8n instance requires selecting that instance's credential.
+
+`node configure.mjs` attaches the credential reference to all seven persistence
+and snapshot nodes, removes inline authentication headers, and generates
+inactive workflows without the key. It leaves `Content-Type`, `Prefer` and
+Storage's `x-upsert` headers intact. Credentials stay in n8n's encrypted store.
+An invalid credential ID stops configuration; it never falls back to an inline
+key. A supplied legacy environment key is ignored when an ID is configured.
+
+For existing automation only, omitting `supabaseCredentialId` retains the legacy
+`CN360_SUPABASE_SERVICE_ROLE_KEY` environment option. Those generated exports
+contain the key and must stay local. The example configuration uses the stored
+credential path. Committed templates still contain inert header placeholders;
+configure them before import rather than putting a real key into the templates.
 
 ## The Verdict Window budget
 
@@ -179,20 +195,18 @@ coordinates, so the overlay will land in the right place once the relay exists.
 
 ## Duplicate suppression, and its limit
 
-The item-detected webhook body carries no item identity, so a redelivery cannot
-be deduplicated by content. The loop instead recognises a second verdict for the
-same `camera session + frame sequence` within one Verdict Window, using n8n
-static data. The duplicate is still sent to the ESP32 โ€” see **Repeat frames**
-above โ€” and only its database record and HUD broadcast are suppressed. That
-covers webhook redelivery and a schedule/item race on the same frame.
+Paired inspections suppress duplicate records by controller session and item ID;
+observational inspections use camera session and frame sequence. A repeated
+paired event still reaches the controller, whose identity/deadline checks prevent
+repeated actuation. A duplicate audit row retains the original item context.
 
-It is **per n8n instance and does not survive a restart**. The ESP32 state
-machine remains the real backstop against double actuation.
+Workflow suppression is per n8n instance and does not survive a restart. The
+controller remains the backstop against double actuation.
 
 ## Development
 
 ```sh
-npm test     # 178 tests, no network, no n8n instance required
+npm test     # unit/contract tests; no running n8n instance required
 npm run build  # regenerates workflows/*.json from lib/
 ```
 
@@ -320,11 +334,12 @@ For reproducible local configuration:
    ESP32, relay, Supabase origin and snapshot bucket. The model origin example
    already matches Docker Desktop. Every URL value is a complete origin; do
    not add a second `https://`.
-2. Set `CN360_SUPABASE_SERVICE_ROLE_KEY` only in the local environment.
+2. Create/select the n8n Supabase API credential and fill its ID in the local
+   configuration (see above). Keep the service key inside n8n credentials.
 3. Run `node configure.mjs`. It validates origins and the Verdict Window budget,
    refuses unresolved configuration, and writes inactive exports to the ignored
-   `workflows-local/` directory. These exports contain local credentials; use
-   the clean `workflows/` files for shared commits.
+   `workflows-local/` directory. Stored-credential exports contain a reference,
+   not the key; keep environment-specific exports local.
 4. Import the configured exports into n8n after the other service requirements
    are satisfied. Test-mode URLs use `/webhook-test/` and require a listening
    test execution; production `/webhook/` URLs require published active workflows.
@@ -366,3 +381,24 @@ Fixture row checks do not establish an applied real database migration. Firmware
 and workflows must be updated together: action-only clients and unverified old
 acknowledgements fail closed. See [the controller guide](../360ControlUnit/README.md)
 for disabled-by-default admission and the physical bench gate.
+
+## Software integration evidence for #17
+
+Run all three workflows through real n8n with a stored, fake Supabase credential:
+
+```powershell
+node n8n/scripts/static-inspection.mjs --mode fixtures --credential-store --python <python-with-Pillow>
+```
+
+Run from the repository root with Docker Desktop running. This uses a disposable
+n8n database on port 5682 and a recording HTTP fixture on port 8102, publishes
+only temporary test workflows, and removes its container afterward. It verifies
+both authentication headers on every database/storage write, prompt audits,
+health transitions, inspection records, snapshots and HUD payloads. The report
+records the authentication profile, checked request count and resource paths.
+No live service credentials or original n8n workflows are used.
+
+See [27 October software integration evidence](../docs/evidence/n8n-software-2026-10-27/README.md)
+for the result and the live deployment checks still pending. The relay (#7) and
+schema migration (#26) remain external dependencies. These fixture checks cannot
+establish actual Supabase schema compatibility or delivery to a Pico headset.

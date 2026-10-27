@@ -18,6 +18,7 @@ const { values: options } = parseArgs({ options: {
   "workflow-export": { type: "string" }, "fixture-port": { type: "string", default: "8102" },
   "n8n-port": { type: "string", default: "5682" }, docker: { type: "string", default: process.env.CN360_DOCKER ?? "docker" },
   image: { type: "string", default: "n8n-backup:latest" },
+  "credential-store": { type: "boolean", default: false },
   "max-side": { type: "string", default: "0" }, "direct-variants": { type: "string", default: "original,jpeg" },
 } });
 if (!["fixtures", "real", "all", "diagnostic"].includes(options.mode)) throw new Error("mode must be fixtures, real, all or diagnostic");
@@ -32,7 +33,7 @@ const frameFor = c => ({ bytes: readFileSync(c.file), width: c.width, height: c.
 const report = {
   runId, startedAt: new Date().toISOString(), mode: options.mode, gitRevision: (await command("git", ["rev-parse", "HEAD"], { cwd: root })).trim(),
   scope: "Real isolated n8n webhooks; still-image capture substitute; recording actuator/database/storage/relay. Physical acceptance and actual DB/Pico delivery remain unverified.",
-  settings: { threshold: 0.005, n8nModelTimeoutMs: 1200, controllerWindowMs: 3000, jpegQuality: 95, jpegSubsampling: 0, repetitions, maxSide: Number(options["max-side"]) },
+  settings: { threshold: 0.005, n8nModelTimeoutMs: 1200, controllerWindowMs: 3000, jpegQuality: 95, jpegSubsampling: 0, repetitions, maxSide: Number(options["max-side"]), authentication: options["credential-store"] ? "n8n-stored-supabase-credential" : "inline-fixture-key" },
   cases: [], blocked: ["Camera deployment deferred", "Physical sensor/servo and Pico acceptance not executed", "Real database/storage/relay acceptance needs configured test services"],
 };
 if (options.mode === "diagnostic") report.scope += " Measurement-only model service; this run cannot establish the production service's 1100 ms deadline.";
@@ -49,10 +50,15 @@ const persist = () => {
   const measured = report.cases.filter(c => c.runType && c.runType !== "concurrent");
   report.summary = summarizeTiming(measured);
   report.summaryByCase = summarizeTimingByCase(measured);
+  if (options["credential-store"]) {
+    const checks = report.cases.flatMap(c => c.events ?? []).filter(e => e.stage === "credential-check");
+    report.authentication = { checkedRequests: checks.length, invalidRequests: checks.filter(e => !e.valid).length,
+      resources: [...new Set(checks.map(e => e.resource))].sort() };
+  }
   writeFileSync(join(output, "report.json"), JSON.stringify(report, null, 2) + "\n");
 };
 persist();
-const fixture = await startInspectionFixture({ port: Number(options["fixture-port"]), upstream: options["model-url"] });
+const fixture = await startInspectionFixture({ port: Number(options["fixture-port"]), upstream: options["model-url"], requireSupabaseAuth: options["credential-store"] });
 let runtime;
 const baseCase = cases.find(c => c.id.startsWith("bottle__good"));
 const check = (row, condition, message) => { if (!condition) row.failures.push(message); };
@@ -97,6 +103,7 @@ async function inspect(id, scenario = {}, c = baseCase, count = 1) {
     }
     if (scenario.expected) check(row, responses.every(r => r.body.result === scenario.expected), `Expected ${scenario.expected}, received ${row.result}`);
     for (const e of context.events.filter(e => e.stage === "model-start")) check(row, e.validFile && e.validPrompt, "Multipart/prompt contract failed");
+    for (const e of context.events.filter(e => e.stage === "credential-check")) check(row, e.valid, "Stored credential did not supply both required Supabase headers");
     for (const e of context.events.filter(e => e.stage === "snapshot-upload")) {
       check(row, e.matchesCapture, "Uploaded snapshot differs from source bytes");
       check(row, e.matchesObjectName, "Uploaded snapshot object path differs from captured frame identity");
@@ -132,7 +139,8 @@ async function inspect(id, scenario = {}, c = baseCase, count = 1) {
   return row;
 }
 try {
-  runtime = await startTestN8n({ output, fixturePort: Number(options["fixture-port"]), port: Number(options["n8n-port"]), docker: options.docker, image: options.image });
+  runtime = await startTestN8n({ output, fixturePort: Number(options["fixture-port"]), port: Number(options["n8n-port"]), docker: options.docker, image: options.image,
+    ...(options["credential-store"] ? { supabaseCredentialId: "cn360TestSb" } : {}) });
   report.workflowExportSha256 = createHash("sha256").update(readFileSync(join(output, "workflows.json"))).digest("hex");
   report.runtimeImage = options.image;
   if (["fixtures", "all"].includes(options.mode)) {
@@ -161,7 +169,11 @@ try {
       const response = await post("detection-prompt", { prompt: target });
       await fixture.waitFor(context, "completed");
       await runtime.waitExecutions(context.completions.map(c => c.executionId));
-      report.cases.push({ id, status: response.httpStatus === http ? "passed" : "failed", response, events: context.events, failures: response.httpStatus === http ? [] : ["Incorrect prompt update result"] }); persist();
+      const failures = [];
+      if (response.httpStatus !== http) failures.push("Incorrect prompt update result");
+      const history = context.events.filter(e => e.stage === "database-write" && e.table === "prompt_history");
+      if (history.length !== (http === 400 ? 0 : 1)) failures.push("Prompt audit write missing or duplicated");
+      report.cases.push({ id, status: failures.length ? "failed" : "passed", response, events: context.events, failures }); persist();
     }
     let previous;
     for (const [id, offline] of [["health-up", false], ["health-down", true], ["health-still-down", true], ["health-recovered", false]]) {
@@ -208,4 +220,4 @@ finally {
 report.failedCases = report.cases.filter(c => c.status === "failed").map(c => c.id);
 persist();
 console.log(`Evidence: ${join(output, "report.json")}`);
-if (report.fatalError || report.failedCases.length) process.exitCode = 1;
+if (report.fatalError || report.failedCases.length || (options["credential-store"] && (!report.authentication.checkedRequests || report.authentication.invalidRequests))) process.exitCode = 1;

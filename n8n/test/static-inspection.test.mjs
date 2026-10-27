@@ -8,6 +8,24 @@ import { testWorkflows } from "../lib/inspection-test-runtime.mjs";
 const image = readFileSync(new URL("../../test-assets/product-defects/bottle__good__000.png", import.meta.url));
 const frame = { bytes: image, width: 900, height: 900, mimeType: "image/png", file: "bottle.png" };
 
+test("credential fixture requires both Supabase headers before any persistence side effect", async t => {
+  const fixture = await startInspectionFixture({ requireSupabaseAuth: true });
+  t.after(() => fixture.close());
+  const context = fixture.select({ id: "credential-headers", frame });
+  for (const path of ["/rest/v1/inspection_results", "/storage/v1/object/static-test/frame.png"]) {
+    for (const headers of [{}, { apikey: "isolated-fixture-key" }, { authorization: "Bearer isolated-fixture-key" }]) {
+      const response = await fetch(fixture.origin + path, { method: "POST", headers, body: "{}" });
+      assert.equal(response.status, 401);
+    }
+  }
+  assert.equal(context.events.filter(e => ["database-write", "snapshot-upload"].includes(e.stage)).length, 0);
+  const response = await fetch(fixture.origin + "/rest/v1/inspection_results", { method: "POST", headers: {
+    apikey: "isolated-fixture-key", authorization: "Bearer isolated-fixture-key"
+  }, body: "{}" });
+  assert.equal(response.status, 200);
+  assert.equal(context.events.filter(e => e.stage === "database-write").length, 1);
+});
+
 test("owned runtime workflow identities support n8n static-data persistence", () => {
   // n8n 2.6's isWorkflowIdValid skips persistence for IDs longer than 16 characters.
   const flows = testWorkflows("http://host.docker.internal:8102");

@@ -29,7 +29,7 @@ function multipart(body, contentType) {
   return fields;
 }
 
-export async function startInspectionFixture({ port = 0, upstream = null, verdictHandler = null } = {}) {
+export async function startInspectionFixture({ port = 0, upstream = null, verdictHandler = null, requireSupabaseAuth = false } = {}) {
   let session = randomUUID();
   let sequence = 0;
   let active = null;
@@ -50,6 +50,11 @@ export async function startInspectionFixture({ port = 0, upstream = null, verdic
       for await (const part of req) parts.push(part);
       const body = Buffer.concat(parts);
       const url = new URL(req.url, "http://fixture");
+      if (requireSupabaseAuth && req.method !== "GET" && (url.pathname.startsWith("/storage/") || url.pathname.startsWith("/rest/v1/"))) {
+        const valid = req.headers.apikey === "isolated-fixture-key" && req.headers.authorization === "Bearer isolated-fixture-key";
+        event("credential-check", { valid, resource: url.pathname });
+        if (!valid) { reply(401, { error: "fixture_auth_failed" }); return; }
+      }
       if (url.pathname === "/completed") {
         const completion = JSON.parse(body.toString());
         if (completion.testCaseId) {

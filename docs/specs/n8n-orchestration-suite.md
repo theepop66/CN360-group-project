@@ -1,5 +1,7 @@
 # Spec: n8n Inspection Orchestration Suite
 
+> Credential update (2026-10-27): Native n8n Supabase API credentials now supply both required authentication headers through `configure.mjs`; this supersedes the historical credential-placeholder deviation below. See [setup and evidence](../../n8n/README.md#secrets-and-n8n-credentials).
+
 > Current contract update (2026-10-26): [Item-bound Verdicts and deadline-safe inspection](item-verdict-deadline-safety.md) supersedes the historical auto-pass, action-only Verdict, unpaired manual dispatch, pre-verdict snapshot upload and load-only readiness assumptions below. Use the current n8n/controller/model guides for implementation.
 
 ## Problem Statement

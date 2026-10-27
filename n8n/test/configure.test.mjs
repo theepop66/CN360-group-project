@@ -22,3 +22,27 @@ test("runtime configuration refuses invalid targets, missing credentials and uns
   }
   assert.throws(() => configureWorkflows(config, ""));
 });
+
+test("stored Supabase credentials configure every persistence request without exporting a key", () => {
+  const flows = configureWorkflows({ ...config, supabaseCredentialId: "stored-supabase-id", supabaseCredentialName: "CN360 Supabase" });
+  const persistence = Object.values(flows).flatMap(flow => flow.nodes).filter(node => node.parameters?.url?.includes(config.supabaseBaseUrl));
+  assert.deepEqual(persistence.map(node => node.name).sort(), ["upload-snapshot", "log-duplicate", "insert-inspection", "insert-control-action", "log-outcome", "insert-prompt-history", "insert-health-log"].sort());
+  for (const node of persistence) {
+    assert.equal(node.parameters.authentication, "predefinedCredentialType");
+    assert.equal(node.parameters.nodeCredentialType, "supabaseApi");
+    assert.deepEqual(node.credentials.supabaseApi, { id: "stored-supabase-id", name: "CN360 Supabase" });
+    assert.ok(!node.parameters.headerParameters.parameters.some(header => ["apikey", "authorization"].includes(header.name.toLowerCase())));
+  }
+  assert.equal(/REPLACE_[A-Z]|SERVICE_ROLE_KEY|__CN360_CREDENTIAL__/.test(JSON.stringify(flows)), false);
+});
+
+test("stored credential references take precedence over a supplied legacy key", () => {
+  const flows = configureWorkflows({ ...config, supabaseCredentialId: "stored-supabase-id" }, "must-never-enter-this-export");
+  assert.ok(!JSON.stringify(flows).includes("must-never-enter-this-export"));
+});
+
+test("invalid stored credential references are rejected instead of reverting to embedded secrets", () => {
+  for (const id of ["", " ", "REPLACE_CREDENTIAL_ID", 123]) {
+    assert.throws(() => configureWorkflows({ ...config, supabaseCredentialId: id }, "fixture-key"), /credential/i);
+  }
+});

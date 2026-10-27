@@ -32,21 +32,22 @@
   "productionModelAcceptance": false,
   "issue17Closable": false,
   "artifacts": {
-    "actual-schema.json": "54f9e8ae3481b3a00e765f36d2cd9e61a5f03afadb88ffa06efdb4d55a8e07e6",
-    "applied-access-grants.sql": "2614fff877e8aadc6e2a5b1597b17ae947fb12f1e25850af05cbff97b516cdcd",
-    "applied-schema-alignment.sql": "b63aeda5644c631846ba7b2088aad8136ad34141a5b1d36a551be8d5c5ffb94d",
+    "actual-schema.json": "41b3347dbd39e402285ff470a9940fd6eb8998a9a35a12c7628bba8013c84a93",
+    "applied-access-grants.sql": "fdc828d54a51296bb2d892ff10a2298a282759682c1eef63e4866f4a9859fcc1",
+    "applied-schema-alignment.sql": "e5856dbb2049ebd326d20d875f76af687cf6073e40f667c984e5920a0bec5934",
     "controlled-initial-failure.json": "00a20bccc355f69cd1e9a2b096d8938dad19528f820f772c49d5766bdc6f4716",
-    "controlled-initial.log": "3017f3124d9b84eac13b6fd02f4d77de71ff29ba3a0105a64767f1bc1428fe9a",
+    "controlled-initial.log": "028f591bb5a072f4757f1fadee668d24177c595c3e0a6fa231356f27e5e60a1a",
     "controlled-repeat-failure.json": "70f859febe55a622ea727ffb217ff53a141135cbd1f86b01e729c68004af7909",
-    "controlled-repeat.log": "8136cce600c5e0dbecdd2266a4a7b824e7b107c0b876a28a8c3141afb80b8b4a",
-    "installed-verification.json": "0097ae5b91400de79b7d796ab5e4f4eecd46eff2bc534cf64d9f289825cbd0b6",
+    "controlled-repeat.log": "62eafe8deafca32b8ce0a37fd49e1819b83b8e4fba96ae1ab80c9cffa794aeff",
+    "installed-verification.json": "56111298aa8a9354cb09724dcad45297cef8049663203f1a4563121cae1fe242",
     "live-initial-failures.json": "92344b70f9e90594071544b99a5cd883a00fb4f28697de1d3c71f0a0d0ff6a32",
-    "live-n8n.log": "86f0d65624791de278173ad9a9563a04be6ddb6d3e499c3208317f4dbde60bab",
-    "live-runner-source.txt": "7911dcb0cc54fe20222bdcb2e247bc282377e680b827258ccbbd851b4e4c3ac8",
+    "live-n8n.log": "ff91f25fff72d391bf9e7de67fc0ab46a1023fa300d89b7d5187ae634a94e94b",
+    "live-runner-source.txt": "a6175d93a8d689d8722a0cfb48b3e8869f165aa4474cf6801bc18df5424a9af8",
     "live-supabase-passed.json": "aa9dbd3168eb36af0b2544f15b5313baf0af397219b1a0125ab010a6c7fad347",
-    "README.md": "6e829b3c00c553bd0c048a4e01459e2ca252e35c833afd8d54e8354708e8b924",
-    "review.md": "9919cb446a62dd3ef6085ceb14fce16152a9df36dad65e557d0b63782ebe606e",
-    "unit-tests.log": "cfe4bd27750865d8a47c634c468c08d83cc170a00154d37cb4f617c5224495b8",
-    "upload-diagnostic.json": "a1db16da50dbbefb31980075f92e536addd84bb61d5e73aa030e3639ffdb947e"
-  }
+    "README.md": "b672442026a7f07bda7947c4b833d6829ab72af9df35235cd74e16606e2f6503",
+    "review.md": "cc44cd5d7ca189f9e31583635dd76614497672aa47d84a8237643945186631af",
+    "unit-tests.log": "4f92c00db74a9dfa45efd9ca4e8d952e58bfcf14a3efa662ca61e767da399df1",
+    "upload-diagnostic.json": "d75fcda32a07eeb8ef753b4a5d2a27072a88f5735e0e453c767a7896eda4f4b0"
+  },
+  "artifactHashEncoding": "SHA-256 of Git blob bytes; Git normalizes text line endings to LF."
 }

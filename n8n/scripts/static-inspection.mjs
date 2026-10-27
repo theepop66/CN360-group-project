@@ -113,6 +113,10 @@ async function inspect(id, scenario = {}, c = baseCase, count = 1) {
     }
     const control = context.events.find(e => e.stage === "database-write" && e.table === "control_actions");
     const inspection = context.events.find(e => e.stage === "database-write" && e.table === "inspection_results");
+    if (scenario.snapshotRequired) {
+      check(row, Boolean(inspection?.row.frame_url), "Delayed snapshot upload did not produce a persisted URL");
+      check(row, context.events.some(e => e.stage === "hud-delivery" && e.payload.snapshotUrl === inspection?.row.frame_url), "HUD snapshot URL differs from persisted URL");
+    }
     if (control && inspection) check(row, control.row.inspection_id === (scenario.databaseError ? null : `${id}-inspection_results`), "Control Action FK differs from returned inspection ID");
     if (scenario.echoMismatch) check(row, context.completions[0].decision.promptVerified === false, "Prompt mismatch not recorded");
     if (scenario.verdictIgnored) check(row, context.completions[0].control?.esp32Accepted === false, "Ignored verdict recorded as accepted");
@@ -155,6 +159,7 @@ try {
       ["prompt-echo-mismatch", { echoMismatch: true, coverage: 0.01, expected: "reject" }],
       ["ignored-verdict", { verdictIgnored: true, expected: "pass" }], ["verdict-offline", { verdictOffline: true, expected: "pass" }],
       ["snapshot-offline", { snapshotError: true, expected: "pass" }], ["database-offline", { databaseError: true, expected: "pass" }],
+      ["snapshot-cloud-latency", { snapshotDelayMs: 550, snapshotRequired: true, expected: "pass" }],
       ["relay-offline", { relayError: true, expected: "pass" }], ["item-event", { path: "item-detected", expected: "pass" }],
       ["fresh-for-duplicate", { expected: "pass" }], ["repeat-frame", { repeatFrame: true, verdictIgnored: true, expected: "pass" }],
       ["fresh-sequence", { expected: "pass" }],

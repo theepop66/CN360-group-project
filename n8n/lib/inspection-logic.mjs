@@ -5,7 +5,8 @@ export const DEFAULT_COVERAGE_THRESHOLD = 0.005;
 export const VERDICT_WINDOW_MS = 3000;
 export const MODEL_PROMPT_TIMEOUT_MS = 250;
 export const CAPTURE_TIMEOUT_MS = 800;
-export const SNAPSHOT_UPLOAD_TIMEOUT_MS = 300;
+// Cloud persistence runs after the verdict and needs its own network allowance.
+export const SNAPSHOT_UPLOAD_TIMEOUT_MS = 3000;
 export const MODEL_TIMEOUT_MS = 1200;
 export const VERDICT_POST_TIMEOUT_MS = 250;
 export const PRE_VERDICT_BUDGET_MS =

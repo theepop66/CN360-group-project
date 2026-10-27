@@ -92,7 +92,7 @@ threshold is never guessed at, because it decides pass or reject.
 The snapshot upload runs **after the Verdict attempt and webhook response**.
 `restore-snapshot` explicitly retrieves the binary from `read-frame-context`;
 HTTP result nodes cannot substitute the saved capture. Upload has its own
-300 ms timeout and storage failure cannot delay inference or physical dispatch.
+3000 ms timeout and storage failure cannot delay inference or physical dispatch.
 Configured sums do not prove elapsed-time or physical acceptance.
 
 ## Item identity and repeat frames
@@ -129,12 +129,18 @@ HUD cannot reach n8n at all:
 - The ESP32 firmware secrets advertise `n8n.local:5678`, which does not resolve.
 - The HUD config points at the same unusable host.
 
-## Assumed Supabase schema
+## Required Supabase schema
 
-**The real column names are not known yet.** These mappings are an assumption.
-Reconcile them before the first production run เน€เธยเนยเธเนโฌย the names live in one place
-(the `inspection_results` / `control_actions` / `prompt_history` /
-`system_logs` HTTP nodes) so the fix is mechanical.
+These mappings were initially assumptions. On 27 October 2026 the selected
+project's four existing tables were inspected, missing nullable fields were
+added, and actual n8n writes were verified. The migration preserves legacy
+columns and existing primary/foreign keys. Other deployments must reconcile
+the mappings against their own schema before activation; the SQL does not
+create a complete database from scratch.
+
+The applied access/schema SQL and live verification are in the
+[Supabase runtime report](../docs/evidence/supabase-runtime-2026-10-27/README.md).
+The required workflow fields are:
 
 - `inspection_results` เน€เธยเนยเธเนโฌย `inspection_at`, `inspection_target`,
   `model_instruction`, `camera_session`, `frame_sequence`, `frame_width`,
@@ -402,3 +408,25 @@ See [27 October software integration evidence](../docs/evidence/n8n-software-202
 for the result and the live deployment checks still pending. The relay (#7) and
 schema migration (#26) remain external dependencies. These fixture checks cannot
 establish actual Supabase schema compatibility or delivery to a Pico headset.
+
+## Live Supabase verification — 27 October 2026
+
+The selected project's backend credential is stored in n8n. All three installed
+CN360 workflows now use the current repository graphs and the configured test
+snapshot bucket, retaining their original workflow IDs and remaining inactive.
+Unrelated workflows and credentials were preserved. Device/relay origins still
+need configuration; this does not activate a line.
+
+A separate disposable n8n instance verified real inspection/control foreign keys,
+prompt history, health transitions, and public snapshot URLs with byte-for-byte
+image checks. Capture, inference, controller and relay endpoints were fixtures;
+no production-model latency, physical sorting or Pico delivery is implied. The
+public `cn360-test-snapshots` bucket is for the dataset test pictures.
+
+Cloud snapshots now have a separate 3000 ms upload timeout after the control
+attempt and webhook response. The 300 ms timeout failed real uploads; a direct
+243 KB diagnostic upload took about 532 ms. Model/controller deadlines are
+unchanged. The controlled suite includes a 550 ms upload regression case.
+See the [live evidence](../docs/evidence/supabase-runtime-2026-10-27/README.md)
+for both initial failures and subsequent results. Real relay/Pico integration
+and device configuration remain pending for #17/#25.

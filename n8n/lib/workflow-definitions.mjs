@@ -128,10 +128,14 @@ const source = $('trigger-item-detected').isExecuted
     ? 'manual'
     : 'schedule';
 const incoming = $input.first().json.body ?? $input.first().json ?? {};
+// The ESP32 numbers each detected item. Echoing it with the verdict lets the
+// board refuse a late verdict that belongs to an earlier item (issue #24).
+const itemId = Number.isInteger(incoming.item_id) && incoming.item_id > 0 ? incoming.item_id : null;
 return [{ json: {
   source,
   requestedAt: new Date().toISOString(),
-  inspectionTarget: typeof incoming.inspectionTarget === 'string' ? incoming.inspectionTarget : null
+  inspectionTarget: typeof incoming.inspectionTarget === 'string' ? incoming.inspectionTarget : null,
+  itemId
 } }];
 `;
 
@@ -194,9 +198,9 @@ return [{ json: {
 
   // A repeated frame inside the Verdict Window must not move the machinery
   // twice, so the duplicate is flagged and its *record* suppressed. It is NOT
-  // dropped here: the ESP32 is waiting out its 3000 ms auto-pass for whatever
-  // physically arrived, and staying silent here would let that fallback pass a
-  // real item. Re-posting is safe because the firmware's acceptVerdict ignores
+  // dropped here: the ESP32 is waiting out its 3000 ms timeout fallback for
+  // whatever physically arrived, and staying silent here would hand a real
+  // item to that fallback instead of a decided verdict. Re-posting is safe because the firmware's acceptVerdict ignores
   // any verdict once it has left AwaitVerdict, answering `accepted: false`.
   const duplicateGuard = `
 const store = $getWorkflowStaticData('global');
@@ -438,7 +442,7 @@ return [{ json: { logRow: buildSystemLogRow({
         options: {
           // The budget is computed upstream and already clamped inside the
           // Verdict Window, so a misconfigured value can never outrun the
-          // ESP32's auto-pass fallback.
+          // ESP32's timeout fallback.
           timeout: "={{ $('verify-verdict-budget').first().json.budget.appliedModelTimeoutMs }}"
         }
       }),
@@ -453,7 +457,10 @@ return [{ json: { logRow: buildSystemLogRow({
         headerParameters: { parameters: [{ name: "Content-Type", value: "application/json" }] },
         sendBody: true,
         specifyBody: "json",
-        jsonBody: "={{ JSON.stringify({ action: $json.action }) }}",
+        // item_id is omitted for manual/scheduled inspections, which then
+        // decide whatever item is waiting, as before.
+        jsonBody:
+          "={{ JSON.stringify(Object.assign({ action: $json.action }, $('begin-inspection').first().json.itemId ? { item_id: $('begin-inspection').first().json.itemId } : {})) }}",
         options: {
           timeout: VERDICT_POST_TIMEOUT_MS,
           // The Control Action records whether the board accepted and the HTTP
@@ -572,7 +579,7 @@ return [{ json: { logRow: buildSystemLogRow({
       link("decide-inspection", "to-control-action"),
       link("to-control-action", "duplicate-guard"),
       // The ESP32 is told on every event, duplicate or not: silence here is
-      // what lets its auto-pass fallback fire on a real item.
+      // what lets its timeout fallback fire on a real item.
       link("duplicate-guard", "post-verdict"),
       link("post-verdict", "capture-esp32-response"),
       link("capture-esp32-response", "build-inspection-response"),

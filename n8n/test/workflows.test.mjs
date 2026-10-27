@@ -799,13 +799,44 @@ test("every Supabase insert sends one named row, not the execution envelope", ()
   }
 });
 
-test("the verdict body carries only the action", () => {
+// Evaluate an n8n "={{ ... }}" expression the way n8n would for one item.
+function evalExpression(expression, { json = {}, nodes = {} } = {}) {
+  const body = expression.replace(/^=\{\{\s*/, "").replace(/\s*\}\}$/, "");
+  const $ = (nodeName) => ({ first: () => ({ json: nodes[nodeName] ?? {} }) });
+  // eslint-disable-next-line no-new-func
+  return new Function("$json", "$", `return (${body});`)(json, $);
+}
+
+test("the verdict body carries the action and, from the ESP32, its item_id", () => {
   const verdict = nodeNamed(inspection, "post-verdict");
   assert.equal(verdict.parameters.url, `=http://${PLACEHOLDERS.esp32Host}/verdict`);
-  assert.equal(
-    verdict.parameters.jsonBody,
-    "={{ JSON.stringify({ action: $json.action }) }}"
+
+  const fromSensor = evalExpression(verdict.parameters.jsonBody, {
+    json: { action: "reject" },
+    nodes: { "begin-inspection": { itemId: 42 } }
+  });
+  assert.deepEqual(
+    JSON.parse(fromSensor),
+    { action: "reject", item_id: 42 },
+    "the board refuses a verdict whose item_id is not the item it is waiting on"
   );
+
+  const manual = evalExpression(verdict.parameters.jsonBody, {
+    json: { action: "pass" },
+    nodes: { "begin-inspection": { itemId: null } }
+  });
+  assert.deepEqual(JSON.parse(manual), { action: "pass" }, "no item_id means the waiting item");
+});
+
+test("begin-inspection keeps only a positive integer item_id", () => {
+  const read = (body) =>
+    runCode(inspection, "begin-inspection", { items: [{ json: { body } }] })[0].json.itemId;
+  assert.equal(read({ event: "item_detected", item_id: 7 }), 7);
+  assert.equal(read({ event: "item_detected" }), null);
+  assert.equal(read({ item_id: "7" }), null);
+  assert.equal(read({ item_id: 0 }), null);
+  assert.equal(read({ item_id: -3 }), null);
+  assert.equal(read({ item_id: 1.5 }), null);
 });
 
 test("the duplicate branch and the full branch both terminate", () => {

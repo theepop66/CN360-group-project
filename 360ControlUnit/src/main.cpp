@@ -153,9 +153,15 @@ static void applyAll(Action* out, uint8_t n) {
   for (uint8_t i = 0; i < n; ++i) {
     const Action& a = out[i];
     switch (a.kind) {
-      case Action::Kind::Notify:
-        notifySender.fire("{\"event\":\"item_detected\"}");
+      case Action::Kind::Notify: {
+        // item_id lets n8n echo the verdict back for this exact item, so a
+        // late verdict can never be applied to the next one (issue #24).
+        String payload = "{\"event\":\"item_detected\",\"item_id\":";
+        payload += machine.currentItemId();
+        payload += "}";
+        notifySender.fire(payload);
         break;
+      }
       case Action::Kind::ServoAngle:
 #ifdef ACTUATOR_RELAY
         digitalWrite(PIN_RELAY, a.angle >= machineConfig.rejectAngle ? HIGH : LOW);
@@ -213,21 +219,27 @@ static void handleVerdict() {
   JsonDocument req;
   deserializeJson(req, server.arg("plain"));
   const char* action = req["action"] | "";
+  // Optional. 0 / missing = "whatever item is waiting" (manual HUD use).
+  uint32_t itemId = req["item_id"] | 0u;
   bool rejected = false;
 
   uint8_t n = 0;
+  VerdictResult result = VerdictResult::NotWaiting;
   if (strcmp(action, "reject") == 0) {
     rejected = true;
-    n = machine.acceptVerdict(millis(), Verdict::Reject, out, 4);
+    n = machine.acceptVerdict(millis(), Verdict::Reject, itemId, out, 4, &result);
   } else if (strcmp(action, "pass") == 0) {
-    n = machine.acceptVerdict(millis(), Verdict::Pass, out, 4);
+    n = machine.acceptVerdict(millis(), Verdict::Pass, itemId, out, 4, &result);
   }
   applyAll(out, n);
 
   JsonDocument res;
   res["accepted"] = (n > 0);
+  res["item_id"] = machine.currentItemId();
   if (n > 0) {
     res["status"] = rejected ? "rejected" : "passed";
+  } else if (result == VerdictResult::Stale) {
+    res["status"] = "stale";
   } else {
     res["status"] = "ignored";
   }
@@ -287,6 +299,8 @@ static void handleStatus() {
   res["mode"] = modeName(machine.mode());
   res["pass_count"] = machine.passCount();
   res["reject_count"] = machine.rejectCount();
+  res["timeout_count"] = machine.timeoutCount();
+  res["item_id"] = machine.currentItemId();
   sendJson(200, res);
 }
 

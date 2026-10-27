@@ -1,7 +1,7 @@
 export const DEFAULT_COVERAGE_THRESHOLD = 0.005;
 
-// The ESP32 auto-passes after 3000 ms, so every stage before the verdict is
-// budgeted: fetch the prompt, capture the frame, store the snapshot, ask the
+// The ESP32 falls back to reject after 3000 ms (issue #24), so every stage
+// before the verdict is budgeted to keep that fallback from firing: fetch the prompt, capture the frame, store the snapshot, ask the
 // model. The snapshot upload is in here on purpose — see the note on the
 // capture fan-out in workflow-definitions.mjs.
 export const VERDICT_WINDOW_MS = 3000;
@@ -262,7 +262,7 @@ export function resolveVerdictBudget(configuredModelTimeoutMs) {
     substituted: !readable,
     modelTimeoutMs,
     // Refusing the load means nothing if the wire wait is untouched — the
-    // ESP32's auto-pass would fire first. The timeout the HTTP node applies is
+    // ESP32's timeout fallback would fire first. The timeout the HTTP node applies is
     // clamped inside the window so the forced reject is the thing that arrives.
     appliedModelTimeoutMs: fits ? modelTimeoutMs : MODEL_TIMEOUT_MS,
     totalMs,

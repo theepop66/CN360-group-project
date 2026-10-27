@@ -24,9 +24,18 @@ rejected. Defaults to `0.005` (0.5% of the frame). Tunable per deployment.
 **Verdict** — `pass` or `reject`. Decided from Defect Coverage, or forced to
 `reject` by any failure.
 
-**Verdict Window** — the 3000 ms the ESP32 waits for a verdict before its own
-auto-pass fallback fires. The model timeout (2000 ms) sits inside it so the
-verdict POST always has headroom.
+**Verdict Window** — the 3000 ms the ESP32 waits for a verdict. If none
+arrives, the firmware rejects the item itself (`timeoutVerdict`, default
+`reject`; it auto-passed before issue #24). The model timeout sits inside the
+window so a real verdict normally arrives first; a missed window now costs a
+false reject, not an uninspected pass. Host-tested only until verified on the
+hardware set.
+
+**Item ID** — the number the ESP32 gives each item it detects (1, 2, 3 …),
+sent as `item_id` on the `item_detected` notify. n8n echoes it on the verdict;
+the board answers `status: "stale"` to a verdict naming an earlier item, so a
+late verdict can never decide the next one. Verdicts without `item_id` (manual
+or scheduled inspections) apply to whichever item is waiting.
 
 **Inspection** — one pass through the loop: one frame, one model call, one
 verdict.

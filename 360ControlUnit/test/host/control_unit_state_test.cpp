@@ -130,9 +130,46 @@ void testExplicitPassSkipsActuation() {
   CHECK(angles.empty());
 }
 
-void testTimeoutResolvesToPassByDefault() {
+// Issue #24: no verdict inside the window must never let an item through.
+void testTimeoutRejectsByDefault() {
   ControlUnit u;
   u.init(0, fastConfig());
+  detectItem(u, 20, 41);
+
+  std::vector<int> angles;
+  bool alerted = false;
+  for (uint32_t t = 50; t <= 1500; ++t) {
+    Journal j = run(u, t, true);
+    int a = angleOf(j);
+    if (a != -999) angles.push_back(a);
+    if (has(j, Action::Kind::RedLedOn) && has(j, Action::Kind::BuzzerOn)) alerted = true;
+  }
+  CHECK(u.state() == State::Idle);
+  CHECK(u.passCount() == 0);
+  CHECK(u.rejectCount() == 1);
+  CHECK(u.timeoutCount() == 1);
+  CHECK(alerted);
+  CHECK(angles.size() == 2);                 // out to reject, back to rest
+  CHECK(angles[0] == fastConfig().rejectAngle);
+  CHECK(angles[1] == fastConfig().restAngle);
+}
+
+void testTimeoutIsExactlyAtWindow() {
+  ControlUnit u;
+  u.init(0, fastConfig());
+  detectItem(u, 20, 41);                     // window opens at 41
+  stepRange(u, 42, 41 + 999, true);
+  CHECK(u.state() == State::AwaitingVerdict); // still inside the window
+  Journal j = run(u, 41 + 1000, true);
+  CHECK(angleOf(j) == fastConfig().rejectAngle);
+  CHECK(u.state() == State::Rejecting);
+}
+
+void testTimeoutPassOnlyWhenConfigured() {
+  Config c = fastConfig();
+  c.timeoutVerdict = Verdict::Pass;          // old behaviour, explicit opt-in
+  ControlUnit u;
+  u.init(0, c);
   detectItem(u, 20, 41);
 
   std::vector<int> angles;
@@ -140,7 +177,80 @@ void testTimeoutResolvesToPassByDefault() {
   CHECK(u.state() == State::Idle);
   CHECK(u.passCount() == 1);
   CHECK(u.rejectCount() == 0);
+  CHECK(u.timeoutCount() == 1);
   CHECK(angles.empty());
+}
+
+void testManualModeTimeoutAlertsWithoutServo() {
+  ControlUnit u;
+  u.init(0, fastConfig());
+  u.setMode(1, Mode::Manual);
+  detectItem(u, 20, 41);
+
+  std::vector<int> angles;
+  stepRange(u, 50, 1500, true, &angles);
+  CHECK(u.state() == State::Idle);
+  CHECK(u.rejectCount() == 1);
+  CHECK(u.timeoutCount() == 1);
+  CHECK(angles.empty());                     // manual mode never moves the servo
+}
+
+void testItemIdsIncrementPerDetection() {
+  ControlUnit u;
+  u.init(0, fastConfig());
+  CHECK(u.currentItemId() == 0);
+  detectItem(u, 20, 41);
+  CHECK(u.currentItemId() == 1);
+  Action a[4];
+  CHECK(u.acceptVerdict(50, Verdict::Pass, a, 4) >= 1);
+  stepRange(u, 51, 200, false);
+  detectItem(u, 300, 320);
+  CHECK(u.currentItemId() == 2);
+}
+
+void testMatchingItemIdAccepted() {
+  ControlUnit u;
+  u.init(0, fastConfig());
+  detectItem(u, 20, 41);
+  Action a[4];
+  VerdictResult r = VerdictResult::NotWaiting;
+  CHECK(u.acceptVerdict(60, Verdict::Reject, u.currentItemId(), a, 4, &r) >= 1);
+  CHECK(r == VerdictResult::Accepted);
+  CHECK(u.rejectCount() == 1);
+}
+
+// Issue #24: a slow verdict for item 1 must not decide item 2.
+void testStaleVerdictForEarlierItemRefused() {
+  ControlUnit u;
+  u.init(0, fastConfig());
+  Action a[4];
+  VerdictResult r = VerdictResult::Accepted;
+
+  detectItem(u, 20, 41);                     // item 1
+  stepRange(u, 50, 1500, false);             // times out, rejected, back to idle
+  CHECK(u.rejectCount() == 1);
+  CHECK(u.state() == State::Idle);
+
+  detectItem(u, 1600, 1620);                 // item 2 now waiting
+  CHECK(u.currentItemId() == 2);
+  CHECK(u.acceptVerdict(1700, Verdict::Pass, 1, a, 4, &r) == 0);
+  CHECK(r == VerdictResult::Stale);
+  CHECK(u.state() == State::AwaitingVerdict); // item 2 still waits for its own
+  CHECK(u.passCount() == 0);
+
+  CHECK(u.acceptVerdict(1710, Verdict::Pass, 2, a, 4, &r) >= 1);
+  CHECK(r == VerdictResult::Accepted);
+  CHECK(u.passCount() == 1);
+}
+
+void testVerdictWhenNothingWaitingReportsNotWaiting() {
+  ControlUnit u;
+  u.init(0, fastConfig());
+  Action a[4];
+  VerdictResult r = VerdictResult::Accepted;
+  CHECK(u.acceptVerdict(10, Verdict::Reject, 0, a, 4, &r) == 0);
+  CHECK(r == VerdictResult::NotWaiting);
+  CHECK(u.rejectCount() == 0);
 }
 
 void testExplicitPassBeforeTimeoutWins() {
@@ -217,7 +327,6 @@ void testManualCommandsRefusedInAutoMode() {
 void testModeSwitchOnlyAtIdle() {
   ControlUnit u;
   u.init(0, fastConfig());
-  Action a[4];
   CHECK(u.setMode(1, Mode::Manual));
 
   u.setMode(3, Mode::Auto);
@@ -226,9 +335,9 @@ void testModeSwitchOnlyAtIdle() {
   CHECK(!u.setMode(100, Mode::Manual));
   CHECK(u.mode() == Mode::Auto);
 
-  stepRange(u, 101, 1200, true);
+  stepRange(u, 101, 1500, true);             // times out, rejects, returns
   CHECK(u.state() == State::Idle);
-  CHECK(u.setMode(1210, Mode::Manual));
+  CHECK(u.setMode(1510, Mode::Manual));
   CHECK(u.mode() == Mode::Manual);
 }
 
@@ -302,13 +411,15 @@ void testCountersTrackRepeatedCycles() {
   CHECK(u.rejectCount() == 1);
 
   detectItem(u, 1300, 1320);
-  stepRange(u, 1321, 2600, false);
-  CHECK(u.passCount() == 1);
+  stepRange(u, 1321, 2600, false);           // timeout now rejects
+  CHECK(u.rejectCount() == 2);
+  CHECK(u.timeoutCount() == 1);
+  CHECK(u.passCount() == 0);
 
   detectItem(u, 2700, 2720);
   CHECK(u.acceptVerdict(2800, Verdict::Pass, a, 4) >= 1);
   stepRange(u, 2801, 4000, false);
-  CHECK(u.passCount() == 2);
+  CHECK(u.passCount() == 1);
   CHECK(u.state() == State::Idle);
 }
 
@@ -316,7 +427,14 @@ int main() {
   testDetectionOpensCycleAndNotifies();
   testRejectSweepSequencedAndCounted();
   testExplicitPassSkipsActuation();
-  testTimeoutResolvesToPassByDefault();
+  testTimeoutRejectsByDefault();
+  testTimeoutIsExactlyAtWindow();
+  testTimeoutPassOnlyWhenConfigured();
+  testManualModeTimeoutAlertsWithoutServo();
+  testItemIdsIncrementPerDetection();
+  testMatchingItemIdAccepted();
+  testStaleVerdictForEarlierItemRefused();
+  testVerdictWhenNothingWaitingReportsNotWaiting();
   testExplicitPassBeforeTimeoutWins();
   testLateVerdictIgnored();
   testRetriggerDuringCycleIgnored();

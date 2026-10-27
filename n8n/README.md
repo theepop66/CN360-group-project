@@ -46,8 +46,10 @@ together. Do not paste a key into this file.
 
 ## The Verdict Window budget
 
-The ESP32 auto-passes 3000 ms after it asks for a verdict, so every stage before
-the verdict POST is budgeted and the stages are checked as a whole:
+The ESP32 rejects the item 3000 ms after it asks for a verdict if none has
+arrived (it auto-passed before issue #24). Every stage before the verdict POST
+is still budgeted and checked as a whole, because a missed window now means a
+false reject:
 
 | Stage | Timeout |
 | :--- | :--- |
@@ -88,9 +90,9 @@ Window still gets a verdict POSTed to the ESP32 เนโฌโ€ only it
 HUD broadcast are suppressed, and the suppression is logged to `system_logs` as
 `duplicate frame suppressed`.
 
-This is deliberate. The ESP32 auto-passes whatever physically arrived if nothing
-arrives within 3000 ms, so *silently dropping* a duplicate event would let that
-fallback pass a real item. Re-posting is safe: the firmware's `acceptVerdict`
+This is deliberate. The ESP32 falls back to its timeout verdict for whatever
+physically arrived if nothing arrives within 3000 ms, so *silently dropping* a
+duplicate event would hand a real item to that fallback. Re-posting is safe: the firmware's `acceptVerdict`
 returns 0 for any verdict once it has left `AwaitVerdict`, so the repeat is
 answered `accepted: false, status: "ignored"` and the machinery does not move
 twice. The `esp32_status` on the suppression log is the evidence for that.
@@ -148,8 +150,13 @@ rather than being silently applied.
 **The model budget is still a deployment constraint.** The legacy model adapter
 reloads the q8 weights per request. The project now includes a resident adapter
 in `model-service/`, but its measured runtime must still satisfy the 1200 ms
-model timeout. A workflow-level forced reject does not fix the ESP32's existing
-3000 ms auto-pass fallback; automatic sorting remains dependent on issue #24.
+model timeout. The firmware now rejects on a missed window and refuses stale
+verdicts by `item_id` (issue #24), but that is host-tested only: automatic
+sorting still needs the end-to-end timing and hardware checks in #24/#25.
+
+The inspection loop reads `item_id` from the ESP32's `item_detected` body and
+sends it back as `{"action": ..., "item_id": N}`. Manual and scheduled
+inspections send only `action`.
 
 ## The HUD overlay is not done yet
 

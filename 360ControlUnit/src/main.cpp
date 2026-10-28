@@ -25,9 +25,9 @@ using namespace controlunit;
 #define PIN_LED_GREEN  23
 
 // ---- Static network configuration (adjust to your LAN) ----
-IPAddress staticIp(192, 168, 1, 50);
-IPAddress gateway(192, 168, 1, 1);
-IPAddress subnet(255, 255, 255, 0);
+IPAddress staticIp(172, 20, 10, 5);
+IPAddress gateway(172, 20, 10, 1);
+IPAddress subnet(255, 255, 255, 240);
 IPAddress dns(8, 8, 8, 8);
 
 const uint32_t WIFI_RETRY_INTERVAL_MS = 5000;

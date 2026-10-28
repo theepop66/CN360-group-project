@@ -12,16 +12,44 @@ The viewer toolbar has a **2D HUD / AR passthrough / VR cinema** switcher (top-r
 
 Both XR modes require the headset's browser to support the relevant WebXR session mode; unsupported devices get an inline error and stay on 2D HUD instead of failing silently. Verify camera-passthrough- and detection-related logic with the 2D HUD first — it is the only mode this project's `npm test` suite and a desktop browser can exercise directly. Test the XR modes with the [Immersive Web Emulator](https://chromewebstore.google.com/detail/immersive-web-emulator/cgffilbpcibhmcfbgggfhfolhkfbhmik) in desktop Chrome/Edge for quick iteration, then confirm on a physical Pico 4 before a demo — an emulator cannot verify stereo rendering, head tracking, controller input, or real passthrough latency.
 
+### Controller shortcuts (AR / VR only)
+
+The flat 2D browser never exposes controller buttons to page script — there the controller is only a pointer. Inside AR passthrough or VR cinema, `js/xr-controller.js` polls the XR gamepads:
+
+| Input | Action |
+| --- | --- |
+| Thumbstick up / right | Jog the servo +`stepDeg` (repeats while held) |
+| Thumbstick down / left | Jog the servo −`stepDeg` |
+| Right **A** (primary) | Reject now (`/verdict`) |
+| Right **B** (secondary) | Pass now (`/verdict`) |
+| **Grip** (either hand) | Sweep |
+| Left **X** (primary) | Mode → Manual |
+| Left **Y** (secondary) | Mode → Auto |
+
+The action mapping, step size, repeat cadence, and deadzone live in `controllerShortcuts` in `config.js`. The current PICO button indices are defined in `js/xr-controller.js`; open the HUD with `?xrdebug=1` to print which index each press reports if a firmware/browser update changes it. The firmware still enforces its own rules — angle jogs need Manual mode and an idle unit, reject/pass only apply while an item is in the beam — and the HUD mirrors that feedback to the VR status line or the AR panel.
+
 ## Run locally
 
 The browser must load the files through HTTP (not by opening `index.html` directly):
 
 ```bash
 cd pico-webapp
-python -m http.server 8080
+npm run serve -- --control-unit http://172.20.10.5
 ```
 
 For desktop webcam development, open `http://localhost:8080`. From the PICO browser, open `http://<DEVELOPMENT-PC-IP>:8080` and select the remote source mode. Do not use `localhost` on the headset; it points to the headset itself.
+
+The bundled server serves the HUD and forwards `/esp/*` to the control unit. Its default target is `http://172.20.10.5`, matching the current bench firmware. Use `--control-unit http://<ESP32-IP>` for another network.
+
+### HTTPS for AR / VR controller input
+
+WebXR on the headset needs HTTPS. Place a certificate trusted by the PICO browser at `tools/dev-cert.pem` and its private key at `tools/dev-key.pem`, with a certificate valid for the hostname or IP address used by the headset. These local files and server logs are gitignored.
+
+```bash
+npm run serve:vr -- --control-unit http://172.20.10.5
+```
+
+Open `https://<DEVELOPMENT-PC-IP>:8443/?xrdebug=1` on the headset, then enter AR passthrough or VR cinema. Servo requests use the same HTTPS origin (`/esp/mode`, `/esp/servo`, `/esp/verdict`); the server forwards them to the ESP32 over HTTP. `npm run serve` keeps the flat HUD available on port 8080, but does not enable headset WebXR by itself.
 
 The default development source is **Local webcam**. Allow camera permission when prompted. `getUserMedia()` always opens the camera attached to the device running the browser; it does not relay a computer webcam to a PICO headset. It also requires a secure browser context, normally HTTPS or localhost.
 

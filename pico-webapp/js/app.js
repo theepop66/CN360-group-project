@@ -4,9 +4,14 @@ import { sendPrompt } from "./prompt.js";
 import { parseCameraMessage } from "./camera-message.js";
 import { VIEW_MODES, isImmersiveArSupported, isImmersiveVrSupported } from "./xr-modes.js";
 import { startArPassthrough } from "./ar-passthrough.js";
-import { startVrCinema } from "./vr-cinema.js";
+import { startVrCinema } from "./vr-cinema.js?v=2";
 import { installXrEmulatorIfRequested } from "./dev-xr-emulator.js";
 import { setMode, setServoAngle, runSweep, sendVerdict } from "./servo.js";
+import {
+  attachXrControllerShortcuts,
+  clampAngle,
+  DEFAULT_CONTROLLER_SHORTCUTS
+} from "./xr-controller.js";
 
 const STORAGE_KEY = "cn360-hud-connections";
 const defaults = window.HUD_CONFIG ?? {};
@@ -83,6 +88,14 @@ let pendingN8nFrame = null;
 let currentViewMode = VIEW_MODES.FLAT;
 let activeXrController = null;
 let vrRenderLoopHandle = null;
+let activeControllerShortcuts = null;
+// The firmware never reports the servo position, so the HUD mirrors the last
+// angle it successfully asked for; this is also the thumbstick's starting point.
+let controllerAngle = 0;
+let pendingControllerAngle = null;
+let controllerAngleSending = false;
+const controllerTrigger = { disabled: false };
+const xrDebugEnabled = new URLSearchParams(window.location.search).has("xrdebug");
 
 function loadConfig() {
   let saved = {};
@@ -93,6 +106,9 @@ function loadConfig() {
   }
 
   const cameraSource = saved.cameraSource ?? defaults.cameraSource;
+  const controllerShortcuts = loadControllerShortcuts(
+    saved.controllerShortcuts ?? defaults.controllerShortcuts ?? {}
+  );
   return {
     cameraSource: cameraSource === "remote" ? "remote" : "local",
     streamUrl: saved.streamUrl ?? defaults.raspberryPiStreamUrl ?? "",
@@ -106,7 +122,18 @@ function loadConfig() {
     healthRequestTimeoutMs: Number(defaults.healthRequestTimeoutMs) || 1500,
     detectionTtlMs: Number(defaults.detectionTtlMs) || 3000,
     promptTimeoutMs: Number(defaults.promptTimeoutMs) || 8000,
-    servoRequestTimeoutMs: Number(defaults.servoRequestTimeoutMs) || 5000
+    servoRequestTimeoutMs: Number(defaults.servoRequestTimeoutMs) || 5000,
+    controllerShortcuts
+  };
+}
+
+// config.js owns the tunables; the button map is merged so a deployment can
+// override one mapping without restating the whole block.
+function loadControllerShortcuts(source = {}) {
+  return {
+    ...DEFAULT_CONTROLLER_SHORTCUTS,
+    ...source,
+    buttons: { ...DEFAULT_CONTROLLER_SHORTCUTS.buttons, ...(source.buttons ?? {}) }
   };
 }
 
@@ -807,6 +834,10 @@ function setModeButtonsState(mode) {
 async function exitCurrentXrMode() {
   stopVrRenderLoop();
   document.documentElement.classList.remove("xr-ar-active");
+  if (activeControllerShortcuts) {
+    activeControllerShortcuts.stop();
+    activeControllerShortcuts = null;
+  }
   const controller = activeXrController;
   activeXrController = null;
   if (controller) controller.stop();
@@ -832,6 +863,7 @@ async function enterViewMode(targetMode) {
         onEnd: () => { void enterViewMode(VIEW_MODES.FLAT); }
       });
       document.documentElement.classList.add("xr-ar-active");
+      activeControllerShortcuts = startControllerShortcuts(activeXrController.session);
       currentViewMode = VIEW_MODES.AR;
       setModeButtonsState(VIEW_MODES.AR);
     } catch (error) {
@@ -849,9 +881,11 @@ async function enterViewMode(targetMode) {
     try {
       activeXrController = await startVrCinema({
         compositeCanvasId: elements.vrCompositeCanvas.id,
+        onFrame: compositeVrFrame,
         onEnd: () => { void enterViewMode(VIEW_MODES.FLAT); }
       });
       startVrRenderLoop();
+      activeControllerShortcuts = startControllerShortcuts(activeXrController.session);
       currentViewMode = VIEW_MODES.VR;
       setModeButtonsState(VIEW_MODES.VR);
     } catch (error) {
@@ -941,6 +975,110 @@ async function setServoMode(mode) {
   }
 }
 
+// VR cinema has no DOM buttons to read feedback from, so every controller
+// action is mirrored onto the floating status line in the scene.
+function mirrorServoFeedbackToVr() {
+  activeXrController?.setServoStatusText?.(elements.servoFeedback.textContent);
+}
+
+function syncAngleUi(angle) {
+  elements.servoAngle.value = String(angle);
+  elements.servoAngleValue.textContent = String(angle);
+}
+
+// Thumbstick jogs can arrive faster than the ESP32 answers, so keep only the
+// newest requested angle and send the next one when the previous settles.
+async function pushControllerAngle(angle) {
+  pendingControllerAngle = angle;
+  if (controllerAngleSending) return;
+
+  controllerAngleSending = true;
+  try {
+    while (pendingControllerAngle !== null) {
+      const next = pendingControllerAngle;
+      pendingControllerAngle = null;
+      try {
+        const result = await setServoAngle({
+          url: config.servoUrl,
+          angle: next,
+          timeoutMs: config.servoRequestTimeoutMs
+        });
+        if (result?.accepted === false) {
+          elements.servoFeedback.className = "feedback";
+          elements.servoFeedback.textContent =
+            `Angle ${next}° ignored (switch to Manual, or wait for the cycle).`;
+        } else {
+          elements.servoFeedback.className = "feedback feedback--ok";
+          elements.servoFeedback.textContent = `Servo set to ${next}°.`;
+        }
+      } catch (error) {
+        elements.servoFeedback.className = "feedback feedback--error";
+        elements.servoFeedback.textContent = error.name === "AbortError"
+          ? "Control unit request timed out."
+          : `Control unit error: ${error.message}`;
+        pendingControllerAngle = null;
+        break;
+      }
+      mirrorServoFeedbackToVr();
+    }
+  } finally {
+    controllerAngleSending = false;
+  }
+}
+
+async function handleControllerAction(action) {
+  if (action === "reject" || action === "pass") {
+    await runServoAction(
+      controllerTrigger,
+      () => sendVerdict({
+        servoUrl: config.servoUrl,
+        action,
+        timeoutMs: config.servoRequestTimeoutMs
+      }),
+      (res) => (action === "reject" ? `Marked as ${res.status ?? "reject"}.` : "Marked as pass.")
+    );
+  } else if (action === "sweep") {
+    await runServoAction(
+      controllerTrigger,
+      () => runSweep({ url: config.servoUrl, timeoutMs: config.servoRequestTimeoutMs }),
+      () => "Sweep triggered."
+    );
+  } else if (action === "manual" || action === "auto") {
+    await setServoMode(action);
+  } else {
+    return;
+  }
+  mirrorServoFeedbackToVr();
+}
+
+function startControllerShortcuts(session) {
+  if (!session) {
+    console.warn("No WebXR session available, controller shortcuts are disabled.");
+    return null;
+  }
+
+  return attachXrControllerShortcuts({
+    session,
+    shortcuts: config.controllerShortcuts,
+    initialAngle: controllerAngle,
+    onAngle: (angle) => {
+      controllerAngle = angle;
+      syncAngleUi(angle);
+      void pushControllerAngle(angle);
+    },
+    onAction: (action) => {
+      void handleControllerAction(action);
+    },
+    onDebug: xrDebugEnabled
+      ? (text) => {
+          console.info(`[xr-controller] ${text}`);
+          elements.servoFeedback.textContent = `Controller: ${text}`;
+          activeXrController?.setServoStatusText?.(`Controller: ${text}`);
+        }
+      : null
+  });
+}
+
 elements.servoModeAuto.addEventListener("click", () => void setServoMode("auto"));
 elements.servoModeManual.addEventListener("click", () => void setServoMode("manual"));
 
@@ -950,6 +1088,8 @@ elements.servoAngle.addEventListener("input", () => {
 
 elements.servoAngle.addEventListener("change", () => {
   const angle = Number(elements.servoAngle.value);
+  controllerAngle = clampAngle(angle);
+  activeControllerShortcuts?.setAngle?.(controllerAngle);
   void runServoAction(
     elements.servoAngle,
     () => setServoAngle({ url: config.servoUrl, angle, timeoutMs: config.servoRequestTimeoutMs }),

@@ -26,24 +26,36 @@ function loadAframe() {
   return aframeLoadPromise;
 }
 
+let currentOnFrame = null;
+
 function registerScreenTextureComponent() {
   if (globalThis.AFRAME.components["screen-texture-updater"]) return;
 
   // A three.js CanvasTexture only re-uploads pixels when flagged, so the
   // live composite canvas needs an explicit needsUpdate tick each frame.
+  // In WebXR immersive mode, DOM window.requestAnimationFrame is paused by
+  // the browser, so the canvas must be redrawn here inside the XR loop.
   globalThis.AFRAME.registerComponent("screen-texture-updater", {
     tick() {
+      if (typeof currentOnFrame === "function") {
+        try {
+          currentOnFrame();
+        } catch (error) {
+          console.warn("Error compositing VR frame:", error);
+        }
+      }
       const map = this.el.getObject3D("mesh")?.material?.map;
       if (map) map.needsUpdate = true;
     }
   });
 }
 
-export async function startVrCinema({ compositeCanvasId, onEnd } = {}) {
+export async function startVrCinema({ compositeCanvasId, onEnd, onFrame } = {}) {
   if (!compositeCanvasId) {
     throw new Error("startVrCinema requires the id of the composite canvas element.");
   }
 
+  currentOnFrame = onFrame ?? null;
   await loadAframe();
   registerScreenTextureComponent();
 
@@ -72,6 +84,11 @@ export async function startVrCinema({ compositeCanvasId, onEnd } = {}) {
         text="value: No recent detections; align: center; color: #eafff5; width: 1.7; wrapCount: 36"
         position="0 -0.4 -1"
       ></a-entity>
+      <a-entity
+        id="vr-servo-status"
+        text="value: ; align: center; color: #68efb3; width: 1.1; wrapCount: 32"
+        position="0 -0.62 -1"
+      ></a-entity>
     </a-entity>
   `;
 
@@ -81,6 +98,7 @@ export async function startVrCinema({ compositeCanvasId, onEnd } = {}) {
   const cleanUp = () => {
     if (ended) return;
     ended = true;
+    currentOnFrame = null;
     scene.removeEventListener("exit-vr", cleanUp);
     scene.remove();
     onEnd?.();
@@ -100,10 +118,18 @@ export async function startVrCinema({ compositeCanvasId, onEnd } = {}) {
   }
 
   const hudSummary = scene.querySelector("#vr-hud-summary");
+  const servoStatus = scene.querySelector("#vr-servo-status");
+  // A-Frame owns the session, but three.js exposes it, which is what the
+  // controller shortcut poller in app.js needs.
+  const session = scene.renderer?.xr?.getSession?.() ?? null;
 
   return {
+    session,
     setSummaryText(text) {
       hudSummary?.setAttribute("text", "value", text);
+    },
+    setServoStatusText(text) {
+      servoStatus?.setAttribute("text", "value", text);
     },
     stop() {
       if (!ended) scene.exitVR();

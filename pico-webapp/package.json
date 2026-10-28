@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "serve": "node tools/hud-server.mjs --http-port 8080",
+    "serve:vr": "node tools/hud-server.mjs --http-port 8080 --https-port 8443 --cert tools/dev-cert.pem --key tools/dev-key.pem"
   }
 }

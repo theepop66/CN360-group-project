@@ -80,6 +80,13 @@ test("derives /verdict from a /servo URL on the same host", () => {
   assert.equal(deriveVerdictUrl("http://192.168.1.50:8080/api/servo"), "http://192.168.1.50:8080/api/verdict");
 });
 
+test("derives /verdict from a same-origin /esp path", () => {
+  assert.equal(
+    deriveVerdictUrl("/esp/servo", "https://172.20.10.3:8443/?xrdebug=1"),
+    "https://172.20.10.3:8443/esp/verdict"
+  );
+});
+
 test("sends a verdict bound to the current item to the derived endpoint", async () => {
   let request = null;
   const fetchImpl = async (url, options) => {
@@ -92,6 +99,23 @@ test("sends a verdict bound to the current item to the derived endpoint", async 
 
   assert.equal(request.url, "http://192.168.1.50/verdict");
   assert.equal(request.options.body, '{"action":"reject","controller_session":"boot","item_id":"9007199254740993"}');
+});
+
+test("same-origin proxy reads the active identity before sending a bound verdict", async t => {
+  const prior = globalThis.location;
+  globalThis.location = { href: "https://example.test:8443/?xrdebug=1" };
+  t.after(() => { if (prior === undefined) delete globalThis.location; else globalThis.location = prior; });
+  const calls = [];
+  const identity = { controller_session: "boot", item_id: "1" };
+  const result = await sendVerdict({ servoUrl: "/esp/servo", action: "reject", fetchImpl: async (url, options) => {
+    calls.push({ url, options });
+    return jsonResponse(options.method === "GET" ? { state: "awaiting_verdict", ...identity } : { accepted: true, ...identity });
+  } });
+  assert.equal(calls[0].url, "https://example.test:8443/esp/status");
+  assert.equal(calls[0].options.method, "GET"); assert.equal(calls[0].options.body, undefined);
+  assert.equal(calls[1].url, "https://example.test:8443/esp/verdict");
+  assert.deepEqual(JSON.parse(calls[1].options.body), { action: "reject", ...identity });
+  assert.equal(result.accepted, true);
 });
 
 test("unbound idle requests cannot send a physical verdict", async () => {

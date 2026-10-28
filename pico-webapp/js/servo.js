@@ -2,15 +2,17 @@
 // Verdicts require the active controller session/item and an identity-bound receipt.
 // Mirrors the request/timeout pattern in js/prompt.js.
 
-function deriveControlUrl(servoUrl, endpoint) {
-  const parsed = new URL(servoUrl);
+function deriveControlUrl(servoUrl, endpoint, base = globalThis.location?.href) {
+  // Same-origin paths such as "/esp/servo" need the page URL as a base;
+  // absolute deployments still work unchanged.
+  const parsed = new URL(servoUrl, base);
   parsed.pathname = parsed.pathname.replace(/\/[^/]*\/?$/, "/" + endpoint);
   parsed.search = "";
   parsed.hash = "";
   return parsed.href;
 }
 
-function deriveVerdictUrl(servoUrl) { return deriveControlUrl(servoUrl, "verdict"); }
+function deriveVerdictUrl(servoUrl, base) { return deriveControlUrl(servoUrl, "verdict", base); }
 
 async function postJson({ fetchImpl = fetch, url, body, method = "POST", timeoutMs = 8000 }) {
   const controller = new AbortController();

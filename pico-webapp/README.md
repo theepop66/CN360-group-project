@@ -30,6 +30,14 @@ The action mapping, step size, repeat cadence, and deadzone live in `controllerS
 
 ## Run locally
 
+Start the detection relay first with `npm start --prefix detection-relay` from
+the repository root. `npm run serve` in this folder proxies the default
+same-origin `/detections` WebSocket to the relay on `127.0.0.1:8081`.
+The HTTPS listener also tunnels this channel, so the default becomes `wss://`
+on a secure page. Use `--relay-origin` to point the HUD server at another relay.
+If using a different static server, set an explicit relay URL in Connection
+settings; that server does not automatically provide the tunnel.
+
 The browser must load the files through HTTP (not by opening `index.html` directly):
 
 ```bash
@@ -143,7 +151,7 @@ The configured WebSocket gateway should broadcast messages in this shape:
 - Include a capture `timestamp`, increasing `frame.sequence`, and producer `frame.sessionId`; the HUD ignores older results that arrive after a newer n8n execution and accepts a reset sequence after a new producer session. If `timestamp` is omitted, ordering falls back to `sequence` rather than inventing a receive-time timestamp. The n8n flow should copy these values from the Pi capture response headers.
 - The parser also accepts `boxes`, `imageWidth`, and `imageHeight` as compatibility aliases.
 
-> **WebSocket ownership:** a standard n8n Webhook node is HTTP-only and does not automatically create `ws://n8n...` routes. The n8n side must provide a real WebSocket-capable gateway/community node or change this transport by agreement. The default `n8n-gateway.local` URL is a placeholder, not a built-in n8n endpoint.
+> **WebSocket ownership:** a standard n8n Webhook node is HTTP-only. The [detection relay](../detection-relay/README.md) serves port 8081, and the HUD server tunnels its `/detections` channel on the page's own host and port. The default therefore follows HTTP/HTTPS as `ws://`/`wss://`; set `--relay-origin` on the HUD server when the relay is on another machine. Connection settings can override this for a different deployment.
 
 ### Prompt update to n8n
 

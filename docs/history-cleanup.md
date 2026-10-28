@@ -1,5 +1,9 @@
 # Control-unit history cleanup (#4)
 
+Completed for all published writable branches on 28 October 2026 after explicit
+owner approval. See the [verified results and ref mapping](evidence/software-issue-closures-2026-10-28/issue4/README.md).
+The procedure and GitHub retention limits below remain applicable.
+
 The current checkout no longer tracks the old build tree or private credential
 header. `360ControlUnit/.gitignore` also excludes host build outputs and Python
 caches. This prevents new accidental additions; it does not remove old commits.

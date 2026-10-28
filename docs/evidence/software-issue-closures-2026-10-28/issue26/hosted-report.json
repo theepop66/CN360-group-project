@@ -1,0 +1,257 @@
+{
+  "runId": "smoke-1793191415365",
+  "project": "zjxcxgpcbmpjinwgvejx.supabase.co",
+  "bucket": "inspection-snapshots",
+  "retainedTestData": true,
+  "recordIds": {
+    "inspection_results": [
+      39,
+      42
+    ],
+    "control_actions": [
+      61,
+      62,
+      63,
+      64,
+      65,
+      66
+    ],
+    "prompt_history": [
+      8
+    ],
+    "system_logs": [
+      78
+    ]
+  },
+  "cases": [
+    {
+      "id": "snapshot bucket matches migration",
+      "passed": true
+    },
+    {
+      "id": "snapshot upload to inspection-snapshots",
+      "passed": true,
+      "evidence": {
+        "status": 200
+      }
+    },
+    {
+      "id": "snapshot public URL loads with no key",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "contentType": "image/jpeg",
+        "bytes": 160
+      }
+    },
+    {
+      "id": "inspection RPC returns the generated id",
+      "passed": true,
+      "evidence": {
+        "status": 200,
+        "id": 39
+      }
+    },
+    {
+      "id": "inspection_results read-back matches",
+      "passed": true,
+      "evidence": {
+        "id": 39,
+        "created_at": "2026-10-28T12:43:38.303853+00:00",
+        "prompt": null,
+        "defect_type": null,
+        "confidence": null,
+        "result": null,
+        "bbox": null,
+        "image_url": null,
+        "inspection_at": "2026-10-28T12:43:35.365+00:00",
+        "inspection_target": "smoke",
+        "model_instruction": "Locate all the instances that matches the following description: smoke.",
+        "camera_session": "smoke-1793191415365",
+        "frame_sequence": 1,
+        "frame_width": 1280,
+        "frame_height": 720,
+        "box_count": 1,
+        "defect_coverage": 0.001,
+        "coverage_threshold": 0.005,
+        "verdict": "pass",
+        "prompt_verified": true,
+        "frame_url": "https://zjxcxgpcbmpjinwgvejx.supabase.co/storage/v1/object/public/inspection-snapshots/smoke-1793191415365-1.jpg",
+        "controller_session": "smoke-1793191415365",
+        "item_id": "18446744073709551615"
+      }
+    },
+    {
+      "id": "control_actions insert",
+      "passed": true,
+      "evidence": {
+        "status": 201,
+        "id": 61
+      }
+    },
+    {
+      "id": "control_actions read-back references the inspection",
+      "passed": true,
+      "evidence": {
+        "id": 61,
+        "created_at": "2026-10-28T12:43:39.248634+00:00",
+        "inspection_id": 39,
+        "action": "pass",
+        "device": null,
+        "status": null,
+        "response_messege": null,
+        "esp32_accepted": true,
+        "esp32_status": "accepted",
+        "esp32_http_status": 200,
+        "esp32_error": null,
+        "requested_at": "2026-10-28T12:43:35.365+00:00",
+        "controller_session": null,
+        "item_id": null,
+        "control_outcome": "delivery_unknown",
+        "control_reason": null,
+        "ack_controller_session": null,
+        "ack_item_id": null
+      }
+    },
+    {
+      "id": "concurrent RPC retries reuse one inspection",
+      "passed": true
+    },
+    {
+      "id": "five control receipts share one inspection",
+      "passed": true
+    },
+    {
+      "id": "hosted constraint rejects invalid pass",
+      "passed": true,
+      "evidence": {
+        "status": 400,
+        "code": "23514"
+      }
+    },
+    {
+      "id": "hosted constraint rejects invalid geometry",
+      "passed": true,
+      "evidence": {
+        "status": 400,
+        "code": "23514"
+      }
+    },
+    {
+      "id": "hosted observation retains null action without actuation",
+      "passed": true,
+      "evidence": {
+        "inspectionId": 42,
+        "controlId": 66
+      }
+    },
+    {
+      "id": "control_actions rejects an unknown inspection_id (FK)",
+      "passed": true,
+      "evidence": {
+        "status": 409,
+        "code": "23503"
+      }
+    },
+    {
+      "id": "prompt_history insert and read-back",
+      "passed": true,
+      "evidence": {
+        "status": 201,
+        "row": {
+          "id": 8,
+          "created_at": "2026-10-28T12:43:43.763687+00:00",
+          "prompt_text": null,
+          "target_defect": null,
+          "status": null,
+          "created_by": null,
+          "changed_at": "2026-10-28T12:43:35.365+00:00",
+          "inspection_target": "smoke",
+          "model_instruction": "Locate all the instances that matches the following description: smoke.",
+          "source": "smoke-test",
+          "model_http_status": 200,
+          "model_error": null
+        }
+      }
+    },
+    {
+      "id": "system_logs insert and read-back (jsonb)",
+      "passed": true,
+      "evidence": {
+        "status": 201,
+        "row": {
+          "id": 78,
+          "created_at": "2026-10-28T12:43:44.3373+00:00",
+          "source": null,
+          "event_type": null,
+          "message": "supabase smoke test",
+          "status": null,
+          "inspection_id": null,
+          "logged_at": "2026-10-28T12:43:35.365+00:00",
+          "severity": "info",
+          "component": "smoke-test",
+          "details": {
+            "runId": "smoke-1793191415365"
+          }
+        }
+      }
+    },
+    {
+      "id": "anon cannot read inspection_results",
+      "passed": true,
+      "evidence": {
+        "status": 401,
+        "code": "42501"
+      }
+    },
+    {
+      "id": "anon cannot read control_actions",
+      "passed": true,
+      "evidence": {
+        "status": 401,
+        "code": "42501"
+      }
+    },
+    {
+      "id": "anon cannot read prompt_history",
+      "passed": true,
+      "evidence": {
+        "status": 401,
+        "code": "42501"
+      }
+    },
+    {
+      "id": "anon cannot read system_logs",
+      "passed": true,
+      "evidence": {
+        "status": 401,
+        "code": "42501"
+      }
+    },
+    {
+      "id": "anon cannot insert into system_logs",
+      "passed": true,
+      "evidence": {
+        "status": 401,
+        "code": "42501"
+      }
+    },
+    {
+      "id": "anon cannot list the snapshot",
+      "passed": true,
+      "evidence": {
+        "status": 200
+      }
+    },
+    {
+      "id": "anon cannot upload snapshots",
+      "passed": true,
+      "evidence": {
+        "status": 400,
+        "error": "Unauthorized",
+        "code": "403"
+      }
+    }
+  ],
+  "finishedAt": "2026-10-28T12:43:46.955Z"
+}

@@ -135,6 +135,13 @@ HUD cannot reach n8n at all:
 
 ## Required Supabase schema
 
+The fresh-project schema and safe legacy upgrade are versioned in
+[`supabase/migrations`](../supabase/migrations). See the
+[database setup and acceptance guide](../supabase/README.md). The generated
+`supabase/apply-runtime.sql` includes the inspection RPC; no development seed
+or credentials are included. The historical alignment evidence below covers
+the original hosted project rather than a complete fresh-project installation.
+
 These mappings were initially assumptions. On 27 October 2026 the selected
 project's four existing tables were inspected, missing nullable fields were
 added, and actual n8n writes were verified. The migration preserves legacy

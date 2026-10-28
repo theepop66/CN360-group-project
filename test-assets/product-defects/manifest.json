@@ -1,0 +1,212 @@
+{
+  "dataset": "MVTec AD",
+  "authors": "Paul Bergmann, Michael Fauser, David Sattlegger, Carsten Steger (2019); extended work with Kilian Batzner (2021)",
+  "official_source": "https://www.mvtec.com/research-teaching/datasets/mvtec-ad",
+  "download_mirror": "https://huggingface.co/datasets/foersben/mvtec-ad",
+  "mirror_revision": "c75b39616f84db43677bcc8228caaafaf5096d7f",
+  "license": "CC BY-NC-SA 4.0",
+  "license_url": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+  "retrieved_on": "2026-10-26",
+  "scope": "Selected original unmodified test PNG images and ground-truth masks. No model inference has been run. Suggested targets are unvalidated starting points.",
+  "samples": [
+    {
+      "file": "bottle__good__000.png",
+      "category": "bottle",
+      "dataset_label": "good",
+      "has_defect": false,
+      "inspection_targets": [
+        "broken glass on the bottle rim"
+      ],
+      "width": 900,
+      "height": 900,
+      "bytes": 533399,
+      "sha256": "9e7bfe658efe9b6db2607a96405b4ac6880936eaf93b89c85bcd311122ceb57b",
+      "source_path": "bottle/test/good/000.png",
+      "source_url": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/bottle/test/good/000.png"
+    },
+    {
+      "file": "bottle__broken_large__000.png",
+      "category": "bottle",
+      "dataset_label": "broken_large",
+      "has_defect": true,
+      "inspection_targets": [
+        "broken glass on the bottle rim"
+      ],
+      "width": 900,
+      "height": 900,
+      "bytes": 526002,
+      "sha256": "11a691a06a33dd78c5fcab6a822caa48c0d72f27f660e19f5abd9b5aa392b0eb",
+      "source_path": "bottle/test/broken_large/000.png",
+      "source_url": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/bottle/test/broken_large/000.png",
+      "ground_truth_mask": "ground-truth/bottle__broken_large__000_mask.png",
+      "mask_source_url": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/bottle/ground_truth/broken_large/000_mask.png"
+    },
+    {
+      "file": "bottle__broken_small__000.png",
+      "category": "bottle",
+      "dataset_label": "broken_small",
+      "has_defect": true,
+      "inspection_targets": [
+        "broken glass on the bottle rim"
+      ],
+      "width": 900,
+      "height": 900,
+      "bytes": 542362,
+      "sha256": "05b96e1102fba8cc19bf60e17d33a0830247df2bbba56cae3df100336392941e",
+      "source_path": "bottle/test/broken_small/000.png",
+      "source_url": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/bottle/test/broken_small/000.png",
+      "ground_truth_mask": "ground-truth/bottle__broken_small__000_mask.png",
+      "mask_source_url": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/bottle/ground_truth/broken_small/000_mask.png"
+    },
+    {
+      "file": "metal_nut__good__000.png",
+      "category": "metal_nut",
+      "dataset_label": "good",
+      "has_defect": false,
+      "inspection_targets": [
+        "scratch on the metal nut",
+        "bent edge of the metal nut"
+      ],
+      "width": 700,
+      "height": 700,
+      "bytes": 508112,
+      "sha256": "d7ca543f04733fb91ac02e18d0fbf06dcff554a1b1ad754173c42d10bb026bb6",
+      "source_path": "metal_nut/test/good/000.png",
+      "source_url": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/metal_nut/test/good/000.png"
+    },
+    {
+      "file": "metal_nut__scratch__000.png",
+      "category": "metal_nut",
+      "dataset_label": "scratch",
+      "has_defect": true,
+      "inspection_targets": [
+        "scratch on the metal nut"
+      ],
+      "width": 700,
+      "height": 700,
+      "bytes": 500460,
+      "sha256": "1e5637c3409d05709eae62c7254f38900afa296902b1626e5902a5a2a4095f3d",
+      "source_path": "metal_nut/test/scratch/000.png",
+      "source_url": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/metal_nut/test/scratch/000.png",
+      "ground_truth_mask": "ground-truth/metal_nut__scratch__000_mask.png",
+      "mask_source_url": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/metal_nut/ground_truth/scratch/000_mask.png"
+    },
+    {
+      "file": "metal_nut__bent__000.png",
+      "category": "metal_nut",
+      "dataset_label": "bent",
+      "has_defect": true,
+      "inspection_targets": [
+        "bent edge of the metal nut"
+      ],
+      "width": 700,
+      "height": 700,
+      "bytes": 498566,
+      "sha256": "602cceb099d5aa10a416f31cd6370ef9d8c810118f4ada9dbc9c28e91a889e0b",
+      "source_path": "metal_nut/test/bent/000.png",
+      "source_url": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/metal_nut/test/bent/000.png",
+      "ground_truth_mask": "ground-truth/metal_nut__bent__000_mask.png",
+      "mask_source_url": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/metal_nut/ground_truth/bent/000_mask.png"
+    },
+    {
+      "file": "hazelnut__good__000.png",
+      "category": "hazelnut",
+      "dataset_label": "good",
+      "has_defect": false,
+      "inspection_targets": [
+        "crack in the hazelnut shell",
+        "hole in the hazelnut shell"
+      ],
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1256509,
+      "sha256": "32034b75a2dca53cff86c4833e00a25cd65939859820e96ce9b980359cb08955",
+      "source_path": "hazelnut/test/good/000.png",
+      "source_url": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/hazelnut/test/good/000.png"
+    },
+    {
+      "file": "hazelnut__crack__000.png",
+      "category": "hazelnut",
+      "dataset_label": "crack",
+      "has_defect": true,
+      "inspection_targets": [
+        "crack in the hazelnut shell"
+      ],
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1276104,
+      "sha256": "e26b54282b6b11286760905ca2880af594561b606dfa0643859d6ee6027cf8c2",
+      "source_path": "hazelnut/test/crack/000.png",
+      "source_url": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/hazelnut/test/crack/000.png",
+      "ground_truth_mask": "ground-truth/hazelnut__crack__000_mask.png",
+      "mask_source_url": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/hazelnut/ground_truth/crack/000_mask.png"
+    },
+    {
+      "file": "hazelnut__hole__000.png",
+      "category": "hazelnut",
+      "dataset_label": "hole",
+      "has_defect": true,
+      "inspection_targets": [
+        "hole in the hazelnut shell"
+      ],
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1270763,
+      "sha256": "b9a1a102db263079fec8bc9836f182253dced9ca178957b7e9bef05cba3312c2",
+      "source_path": "hazelnut/test/hole/000.png",
+      "source_url": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/hazelnut/test/hole/000.png",
+      "ground_truth_mask": "ground-truth/hazelnut__hole__000_mask.png",
+      "mask_source_url": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/hazelnut/ground_truth/hole/000_mask.png"
+    },
+    {
+      "file": "capsule__good__000.png",
+      "category": "capsule",
+      "dataset_label": "good",
+      "has_defect": false,
+      "inspection_targets": [
+        "crack in the capsule",
+        "dented area on the capsule"
+      ],
+      "width": 1000,
+      "height": 1000,
+      "bytes": 1159076,
+      "sha256": "86366d544a0182b04fdeacb62c9b23af8c72af24d35eaafeb8c210f603174728",
+      "source_path": "capsule/test/good/000.png",
+      "source_url": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/capsule/test/good/000.png"
+    },
+    {
+      "file": "capsule__crack__000.png",
+      "category": "capsule",
+      "dataset_label": "crack",
+      "has_defect": true,
+      "inspection_targets": [
+        "crack in the capsule"
+      ],
+      "width": 1000,
+      "height": 1000,
+      "bytes": 1156641,
+      "sha256": "6462a533da731a19e4df05fc1815719b94603aee341a2ac620add75ec2334ef4",
+      "source_path": "capsule/test/crack/000.png",
+      "source_url": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/capsule/test/crack/000.png",
+      "ground_truth_mask": "ground-truth/capsule__crack__000_mask.png",
+      "mask_source_url": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/capsule/ground_truth/crack/000_mask.png"
+    },
+    {
+      "file": "capsule__squeeze__000.png",
+      "category": "capsule",
+      "dataset_label": "squeeze",
+      "has_defect": true,
+      "inspection_targets": [
+        "dented area on the capsule"
+      ],
+      "width": 1000,
+      "height": 1000,
+      "bytes": 1159058,
+      "sha256": "28e839bfc1dcc9c8c811d0f3817fb7c1184147883f5fefbb7b6fef787e69dc9a",
+      "source_path": "capsule/test/squeeze/000.png",
+      "source_url": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/capsule/test/squeeze/000.png",
+      "ground_truth_mask": "ground-truth/capsule__squeeze__000_mask.png",
+      "mask_source_url": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/capsule/ground_truth/squeeze/000_mask.png"
+    }
+  ]
+}

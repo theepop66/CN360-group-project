@@ -36,7 +36,6 @@ test("each stage is budgeted individually", () => {
     PRE_VERDICT_BUDGET_MS,
     MODEL_PROMPT_TIMEOUT_MS +
       CAPTURE_TIMEOUT_MS +
-      SNAPSHOT_UPLOAD_TIMEOUT_MS +
       MODEL_TIMEOUT_MS
   );
   assert.ok(MODEL_PROMPT_TIMEOUT_MS < CAPTURE_TIMEOUT_MS, "reading a prompt is cheaper than a capture");
@@ -211,7 +210,6 @@ test("the budget total is the sum of every stage including the verdict post", ()
     budget.totalMs,
     MODEL_PROMPT_TIMEOUT_MS +
       CAPTURE_TIMEOUT_MS +
-      SNAPSHOT_UPLOAD_TIMEOUT_MS +
       MODEL_TIMEOUT_MS +
       VERDICT_POST_TIMEOUT_MS
   );

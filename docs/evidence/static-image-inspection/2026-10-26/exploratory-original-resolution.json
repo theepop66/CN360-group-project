@@ -1,0 +1,381 @@
+{
+  "runId": "2026-10-26T07-53-04-399Z",
+  "startedAt": "2026-10-26T07:53:05.363Z",
+  "mode": "diagnostic",
+  "gitRevision": "fd74fbf1d70233734997b93f703cc1640edcf471",
+  "scope": "Real isolated n8n webhooks; still-image capture substitute; recording actuator/database/storage/relay. Physical acceptance and actual DB/Pico delivery remain unverified. Measurement-only model service; this run cannot establish the production service's 1100 ms deadline. Existing localhost:5678 exports were inspected read-only; the test runtime uses current repository graphs. Installed workflow drift is listed separately.",
+  "settings": {
+    "threshold": 0.005,
+    "n8nModelTimeoutMs": 1200,
+    "controllerWindowMs": 3000,
+    "jpegQuality": 95,
+    "jpegSubsampling": 0,
+    "repetitions": 10
+  },
+  "cases": [],
+  "blocked": [
+    "Camera deployment deferred",
+    "Physical sensor/servo and Pico acceptance not executed",
+    "Real database/storage/relay acceptance needs configured test services",
+    "The operation was aborted due to timeout"
+  ],
+  "installedWorkflows": [
+    {
+      "id": "rBfAR3HgczhHFlui",
+      "name": "CN360 - Inspection Loop",
+      "active": false,
+      "sha256": "6e170db7020702c184a2b9036a14da23a5515ad1d7347eeb28b1ea3bfaf9590e",
+      "unresolvedPlaceholders": true,
+      "compactInspectionResponse": false,
+      "checkedPromptResponse": false
+    },
+    {
+      "id": "lUa1bJRHZuC1BWBe",
+      "name": "CN360 - Prompt Capture",
+      "active": false,
+      "sha256": "eafe171f9975e8598c048baf56a4708e9a8cd341310269f5061ded072b0a55f4",
+      "unresolvedPlaceholders": true,
+      "compactInspectionResponse": false,
+      "checkedPromptResponse": false
+    },
+    {
+      "id": "i01sMLn8WgW6EtZq",
+      "name": "CN360 - Health Watchdog",
+      "active": false,
+      "sha256": "a0d34ebb1341d570aea21cbe50259f03f8c5e30c447b6cf8362065ceec3fe460",
+      "unresolvedPlaceholders": true,
+      "compactInspectionResponse": false,
+      "checkedPromptResponse": false
+    }
+  ],
+  "summary": {
+    "count": 0,
+    "successes": 0,
+    "failures": 0,
+    "timeouts": 0,
+    "verdictWindowMisses": 0,
+    "allAttempts": {
+      "count": 0,
+      "p50Ms": null,
+      "p95Ms": null,
+      "maxMs": null
+    },
+    "successfulOnly": {
+      "count": 0,
+      "p50Ms": null,
+      "p95Ms": null,
+      "maxMs": null
+    },
+    "note": "All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance."
+  },
+  "modelHealth": {
+    "status": "ok",
+    "backend": "CUDA0",
+    "busy": false
+  },
+  "directModel": [
+    {
+      "caseId": "bottle__good__000-1",
+      "kind": "original",
+      "elapsedMs": 27182.1302,
+      "httpStatus": 200,
+      "body": {
+        "status": "success",
+        "prompt_used": "Locate all the instances that matches the following description: broken glass on the bottle rim.",
+        "detections": [
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              115.200005,
+              331.200012,
+              161.100006,
+              432.899994
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              116.999992,
+              423.899994,
+              161.100006,
+              628.200012
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              164.699997,
+              135.899994,
+              213.300003,
+              278.099976
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              166.5,
+              553.5,
+              215.099991,
+              642.599976
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              193.5,
+              135.899994,
+              396,
+              274.5
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              367.199982,
+              748.799988,
+              504.899994,
+              781.199951
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              392.399994,
+              133.199997,
+              648.900024,
+              223.199997
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              490.5,
+              676.799988,
+              669.600037,
+              766.799988
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              693,
+              272.700012,
+              761.400024,
+              414.899994
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              694.799988,
+              499.5,
+              761.400024,
+              648.900024
+            ]
+          }
+        ],
+        "frame_width": 900,
+        "frame_height": 900,
+        "backend": "CUDA0",
+        "peak_working_set_bytes": 7192829952,
+        "timings_ms": {
+          "inference": 27100.051299999905,
+          "image_handling": 42.88300000007439,
+          "request": 27156.542799999443
+        }
+      }
+    },
+    {
+      "caseId": "bottle__good__000-1",
+      "kind": "jpeg",
+      "elapsedMs": 26684.932999999997,
+      "httpStatus": 200,
+      "body": {
+        "status": "success",
+        "prompt_used": "Locate all the instances that matches the following description: broken glass on the bottle rim.",
+        "detections": [
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              115.200005,
+              331.200012,
+              158.399994,
+              432.899994
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              116.999992,
+              427.5,
+              161.100006,
+              628.200012
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              164.699997,
+              135.899994,
+              213.300003,
+              278.099976
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              188.100006,
+              555.299988,
+              215.099991,
+              642.599976
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              196.199997,
+              141.300003,
+              392.399994,
+              274.5
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              367.199982,
+              748.799988,
+              504.899994,
+              781.199951
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              390.599976,
+              133.199997,
+              647.099976,
+              222.299988
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              490.5,
+              682.200012,
+              669.600037,
+              774.900024
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              693,
+              272.700012,
+              761.400024,
+              414.899994
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              700.200012,
+              499.5,
+              756.900024,
+              648.900024
+            ]
+          }
+        ],
+        "frame_width": 900,
+        "frame_height": 900,
+        "backend": "CUDA0",
+        "peak_working_set_bytes": 7215104000,
+        "timings_ms": {
+          "inference": 26659.095899999556,
+          "image_handling": 0.9878999999273219,
+          "request": 26671.335199999703
+        }
+      }
+    },
+    {
+      "caseId": "bottle__broken_large__000-1",
+      "kind": "original",
+      "elapsedMs": 20109.580199999997,
+      "httpStatus": 200,
+      "body": {
+        "status": "success",
+        "prompt_used": "Locate all the instances that matches the following description: broken glass on the bottle rim.",
+        "detections": [
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              348.299988,
+              633.599976,
+              781.199951,
+              781.199951
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              642.599976,
+              287.100006,
+              781.199951,
+              490.5
+            ]
+          }
+        ],
+        "frame_width": 900,
+        "frame_height": 900,
+        "backend": "CUDA0",
+        "peak_working_set_bytes": 7215423488,
+        "timings_ms": {
+          "inference": 20077.642500000366,
+          "image_handling": 1.6642999999021413,
+          "request": 20096.70189999997
+        }
+      }
+    },
+    {
+      "caseId": "bottle__broken_large__000-1",
+      "kind": "jpeg",
+      "elapsedMs": 19886.089300000007,
+      "httpStatus": 200,
+      "body": {
+        "status": "success",
+        "prompt_used": "Locate all the instances that matches the following description: broken glass on the bottle rim.",
+        "detections": [
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              348.299988,
+              633.599976,
+              504.899994,
+              766.799988
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              642.599976,
+              288.899994,
+              744.300049,
+              452.700012
+            ]
+          }
+        ],
+        "frame_width": 900,
+        "frame_height": 900,
+        "backend": "CUDA0",
+        "peak_working_set_bytes": 7215423488,
+        "timings_ms": {
+          "inference": 19864.17470000015,
+          "image_handling": 0.32590000046184286,
+          "request": 19875.630400000773
+        }
+      }
+    }
+  ],
+  "fatalError": "The operation was aborted due to timeout",
+  "finishedAt": "2026-10-26T07:57:12.378Z",
+  "failedCases": []
+}

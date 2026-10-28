@@ -1,0 +1,853 @@
+{
+  "runId": "cn360-test-1793085580575",
+  "startedAt": "2026-10-27T07:19:40.576Z",
+  "scope": "Actual n8n and Supabase database/Storage; capture/model/controller/relay are fixtures. Original n8n engine stays stopped. No physical or production model acceptance.",
+  "bucket": "cn360-test-snapshots",
+  "cases": [
+    {
+      "id": "pass",
+      "failures": [
+        "Snapshot URL missing"
+      ],
+      "events": [
+        {
+          "stage": "prompt-get",
+          "atMs": 28110.219,
+          "caseId": "cn360-test-1793085580575-pass",
+          "executionId": "1",
+          "instruction": "Locate all the instances that matches the following description: broken glass on the bottle rim."
+        },
+        {
+          "stage": "capture-start",
+          "atMs": 28171.7227,
+          "caseId": "cn360-test-1793085580575-pass",
+          "executionId": "1"
+        },
+        {
+          "stage": "capture-end",
+          "atMs": 28173.4515,
+          "caseId": "cn360-test-1793085580575-pass",
+          "executionId": "1",
+          "session": "932dc9c7-5e2b-441e-9f3f-7904ab9e35d0",
+          "sequence": 1,
+          "snapshotObjectName": "932dc9c7-5e2b-441e-9f3f-7904ab9e35d0-1.jpg",
+          "sha256": "c1ea10ec9215056d5d88b7f2a85f24520a99cedbd8eb7a75029266441373f150",
+          "durationMs": 1.8981999999996333
+        },
+        {
+          "stage": "model-start",
+          "atMs": 28245.0638,
+          "caseId": "cn360-test-1793085580575-pass",
+          "executionId": "1",
+          "validFile": true,
+          "validPrompt": true,
+          "sha256": "c1ea10ec9215056d5d88b7f2a85f24520a99cedbd8eb7a75029266441373f150",
+          "instruction": "Locate all the instances that matches the following description: broken glass on the bottle rim."
+        },
+        {
+          "stage": "model-end",
+          "atMs": 28245.0973,
+          "caseId": "cn360-test-1793085580575-pass",
+          "executionId": "1",
+          "httpStatus": 200,
+          "body": {
+            "status": "success",
+            "prompt_used": "Locate all the instances that matches the following description: broken glass on the bottle rim.",
+            "detections": []
+          },
+          "durationMs": 6.523499999999331,
+          "clientExpired": false
+        },
+        {
+          "stage": "verdict-received",
+          "atMs": 28337.1942,
+          "caseId": "cn360-test-1793085580575-pass",
+          "executionId": "1",
+          "command": {
+            "action": "pass",
+            "controller_session": "cn360-test-1793085580575-pass",
+            "item_id": "1"
+          }
+        },
+        {
+          "stage": "hud-delivery",
+          "atMs": 29812.0241,
+          "caseId": "cn360-test-1793085580575-pass",
+          "executionId": "1",
+          "payload": {
+            "type": "detections",
+            "coordinateSpace": "pixel",
+            "status": "pass",
+            "reason": "no_defect_detected",
+            "timestamp": "2026-10-27T07:20:08.603Z",
+            "frame": {
+              "id": "932dc9c7-5e2b-441e-9f3f-7904ab9e35d0:1",
+              "sessionId": "932dc9c7-5e2b-441e-9f3f-7904ab9e35d0",
+              "sequence": 1,
+              "width": 900,
+              "height": 900
+            },
+            "snapshotUrl": null,
+            "detections": []
+          }
+        },
+        {
+          "stage": "completed",
+          "atMs": 30067.4845,
+          "caseId": "cn360-test-1793085580575-pass",
+          "executionId": "1"
+        }
+      ],
+      "response": {
+        "status": 200,
+        "body": {
+          "status": "success",
+          "result": "pass",
+          "item": {
+            "controller_session": "cn360-test-1793085580575-pass",
+            "item_id": "1",
+            "verdict_window_ms": 3000
+          },
+          "control": {
+            "esp32Accepted": true,
+            "esp32Status": "accepted",
+            "esp32HttpStatus": 200,
+            "esp32Error": null,
+            "controllerSession": "cn360-test-1793085580575-pass",
+            "itemId": "1",
+            "acknowledgedControllerSession": "cn360-test-1793085580575-pass",
+            "acknowledgedItemId": "1",
+            "controlOutcome": "accepted",
+            "controlReason": "accepted"
+          }
+        },
+        "elapsedMs": 662.7271000000001
+      },
+      "executions": [
+        {
+          "id": 1,
+          "status": "success"
+        }
+      ],
+      "inspection": {
+        "id": 1,
+        "created_at": "2026-10-27T07:20:09.995367+00:00",
+        "prompt": null,
+        "defect_type": null,
+        "confidence": null,
+        "result": null,
+        "bbox": null,
+        "image_url": null,
+        "inspection_at": "2026-10-27T07:20:08.707+00:00",
+        "inspection_target": "broken glass on the bottle rim",
+        "model_instruction": "Locate all the instances that matches the following description: broken glass on the bottle rim.",
+        "camera_session": "932dc9c7-5e2b-441e-9f3f-7904ab9e35d0",
+        "frame_sequence": 1,
+        "frame_width": 900,
+        "frame_height": 900,
+        "box_count": 0,
+        "defect_coverage": 0,
+        "coverage_threshold": 0.005,
+        "verdict": "pass",
+        "prompt_verified": true,
+        "frame_url": null,
+        "controller_session": "cn360-test-1793085580575-pass",
+        "item_id": "1"
+      },
+      "control": {
+        "id": 1,
+        "created_at": "2026-10-27T07:20:10.244439+00:00",
+        "inspection_id": 1,
+        "action": "pass",
+        "device": null,
+        "status": null,
+        "response_messege": null,
+        "esp32_accepted": true,
+        "esp32_status": "accepted",
+        "esp32_http_status": 200,
+        "esp32_error": null,
+        "requested_at": "2026-10-27T07:20:08.707+00:00",
+        "controller_session": "cn360-test-1793085580575-pass",
+        "item_id": "1",
+        "control_outcome": "accepted",
+        "control_reason": "accepted",
+        "ack_controller_session": "cn360-test-1793085580575-pass",
+        "ack_item_id": "1"
+      }
+    },
+    {
+      "id": "reject",
+      "failures": [
+        "Snapshot URL missing"
+      ],
+      "events": [
+        {
+          "stage": "prompt-get",
+          "atMs": 30887.2126,
+          "caseId": "cn360-test-1793085580575-reject",
+          "executionId": "2",
+          "instruction": "Locate all the instances that matches the following description: broken glass on the bottle rim."
+        },
+        {
+          "stage": "capture-start",
+          "atMs": 30916.3932,
+          "caseId": "cn360-test-1793085580575-reject",
+          "executionId": "2"
+        },
+        {
+          "stage": "capture-end",
+          "atMs": 30916.769,
+          "caseId": "cn360-test-1793085580575-reject",
+          "executionId": "2",
+          "session": "932dc9c7-5e2b-441e-9f3f-7904ab9e35d0",
+          "sequence": 2,
+          "snapshotObjectName": "932dc9c7-5e2b-441e-9f3f-7904ab9e35d0-2.jpg",
+          "sha256": "c1ea10ec9215056d5d88b7f2a85f24520a99cedbd8eb7a75029266441373f150",
+          "durationMs": 0.5488000000004831
+        },
+        {
+          "stage": "model-start",
+          "atMs": 30958.8382,
+          "caseId": "cn360-test-1793085580575-reject",
+          "executionId": "2",
+          "validFile": true,
+          "validPrompt": true,
+          "sha256": "c1ea10ec9215056d5d88b7f2a85f24520a99cedbd8eb7a75029266441373f150",
+          "instruction": "Locate all the instances that matches the following description: broken glass on the bottle rim."
+        },
+        {
+          "stage": "model-end",
+          "atMs": 30958.8722,
+          "caseId": "cn360-test-1793085580575-reject",
+          "executionId": "2",
+          "httpStatus": 200,
+          "body": {
+            "status": "success",
+            "prompt_used": "Locate all the instances that matches the following description: broken glass on the bottle rim.",
+            "detections": [
+              {
+                "label": "defect",
+                "box": [
+                  0,
+                  0,
+                  900,
+                  9
+                ]
+              }
+            ]
+          },
+          "durationMs": 3.720100000002276,
+          "clientExpired": false
+        },
+        {
+          "stage": "verdict-received",
+          "atMs": 31028.8643,
+          "caseId": "cn360-test-1793085580575-reject",
+          "executionId": "2",
+          "command": {
+            "action": "reject",
+            "controller_session": "cn360-test-1793085580575-reject",
+            "item_id": "1"
+          }
+        },
+        {
+          "stage": "hud-delivery",
+          "atMs": 31902.3375,
+          "caseId": "cn360-test-1793085580575-reject",
+          "executionId": "2",
+          "payload": {
+            "type": "detections",
+            "coordinateSpace": "pixel",
+            "status": "reject",
+            "reason": "defect_detected",
+            "timestamp": "2026-10-27T07:20:11.348Z",
+            "frame": {
+              "id": "932dc9c7-5e2b-441e-9f3f-7904ab9e35d0:2",
+              "sessionId": "932dc9c7-5e2b-441e-9f3f-7904ab9e35d0",
+              "sequence": 2,
+              "width": 900,
+              "height": 900
+            },
+            "snapshotUrl": null,
+            "detections": [
+              {
+                "label": "defect",
+                "box": [
+                  0,
+                  0,
+                  900,
+                  9
+                ],
+                "status": "reject"
+              }
+            ]
+          }
+        },
+        {
+          "stage": "completed",
+          "atMs": 32124.413,
+          "caseId": "cn360-test-1793085580575-reject",
+          "executionId": "2"
+        }
+      ],
+      "response": {
+        "status": 200,
+        "body": {
+          "status": "success",
+          "result": "reject",
+          "item": {
+            "controller_session": "cn360-test-1793085580575-reject",
+            "item_id": "1",
+            "verdict_window_ms": 3000
+          },
+          "control": {
+            "esp32Accepted": true,
+            "esp32Status": "accepted",
+            "esp32HttpStatus": 200,
+            "esp32Error": null,
+            "controllerSession": "cn360-test-1793085580575-reject",
+            "itemId": "1",
+            "acknowledgedControllerSession": "cn360-test-1793085580575-reject",
+            "acknowledgedItemId": "1",
+            "controlOutcome": "accepted",
+            "controlReason": "accepted"
+          }
+        },
+        "elapsedMs": 292.28589999999895
+      },
+      "executions": [
+        {
+          "id": 2,
+          "status": "success"
+        }
+      ],
+      "inspection": {
+        "id": 2,
+        "created_at": "2026-10-27T07:20:12.12003+00:00",
+        "prompt": null,
+        "defect_type": null,
+        "confidence": null,
+        "result": null,
+        "bbox": null,
+        "image_url": null,
+        "inspection_at": "2026-10-27T07:20:11.413+00:00",
+        "inspection_target": "broken glass on the bottle rim",
+        "model_instruction": "Locate all the instances that matches the following description: broken glass on the bottle rim.",
+        "camera_session": "932dc9c7-5e2b-441e-9f3f-7904ab9e35d0",
+        "frame_sequence": 2,
+        "frame_width": 900,
+        "frame_height": 900,
+        "box_count": 1,
+        "defect_coverage": 0.01,
+        "coverage_threshold": 0.005,
+        "verdict": "reject",
+        "prompt_verified": true,
+        "frame_url": null,
+        "controller_session": "cn360-test-1793085580575-reject",
+        "item_id": "1"
+      },
+      "control": {
+        "id": 2,
+        "created_at": "2026-10-27T07:20:12.352883+00:00",
+        "inspection_id": 2,
+        "action": "reject",
+        "device": null,
+        "status": null,
+        "response_messege": null,
+        "esp32_accepted": true,
+        "esp32_status": "accepted",
+        "esp32_http_status": 200,
+        "esp32_error": null,
+        "requested_at": "2026-10-27T07:20:11.413+00:00",
+        "controller_session": "cn360-test-1793085580575-reject",
+        "item_id": "1",
+        "control_outcome": "accepted",
+        "control_reason": "accepted",
+        "ack_controller_session": "cn360-test-1793085580575-reject",
+        "ack_item_id": "1"
+      }
+    },
+    {
+      "id": "model-error",
+      "failures": [
+        "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'delivery_unknown'\n- 'accepted'\n"
+      ],
+      "events": [
+        {
+          "stage": "prompt-get",
+          "atMs": 33071.1246,
+          "caseId": "cn360-test-1793085580575-model-error",
+          "executionId": "3",
+          "instruction": "Locate all the instances that matches the following description: broken glass on the bottle rim."
+        },
+        {
+          "stage": "capture-start",
+          "atMs": 33095.7928,
+          "caseId": "cn360-test-1793085580575-model-error",
+          "executionId": "3"
+        },
+        {
+          "stage": "capture-end",
+          "atMs": 33096.1913,
+          "caseId": "cn360-test-1793085580575-model-error",
+          "executionId": "3",
+          "session": "932dc9c7-5e2b-441e-9f3f-7904ab9e35d0",
+          "sequence": 3,
+          "snapshotObjectName": "932dc9c7-5e2b-441e-9f3f-7904ab9e35d0-3.jpg",
+          "sha256": "c1ea10ec9215056d5d88b7f2a85f24520a99cedbd8eb7a75029266441373f150",
+          "durationMs": 0.549300000006042
+        },
+        {
+          "stage": "model-start",
+          "atMs": 33134.0807,
+          "caseId": "cn360-test-1793085580575-model-error",
+          "executionId": "3",
+          "validFile": true,
+          "validPrompt": true,
+          "sha256": "c1ea10ec9215056d5d88b7f2a85f24520a99cedbd8eb7a75029266441373f150",
+          "instruction": "Locate all the instances that matches the following description: broken glass on the bottle rim."
+        },
+        {
+          "stage": "model-end",
+          "atMs": 33134.1104,
+          "caseId": "cn360-test-1793085580575-model-error",
+          "executionId": "3",
+          "httpStatus": 200,
+          "body": {
+            "status": "error",
+            "reason": "inference_failed"
+          },
+          "durationMs": 3.963999999999942,
+          "clientExpired": false
+        },
+        {
+          "stage": "hud-delivery",
+          "atMs": 34279.0442,
+          "caseId": "cn360-test-1793085580575-model-error",
+          "executionId": "3",
+          "payload": {
+            "type": "detections",
+            "coordinateSpace": "pixel",
+            "status": "reject",
+            "reason": "model_error_status",
+            "timestamp": "2026-10-27T07:20:13.527Z",
+            "frame": {
+              "id": "932dc9c7-5e2b-441e-9f3f-7904ab9e35d0:3",
+              "sessionId": "932dc9c7-5e2b-441e-9f3f-7904ab9e35d0",
+              "sequence": 3,
+              "width": 900,
+              "height": 900
+            },
+            "snapshotUrl": null,
+            "detections": []
+          }
+        },
+        {
+          "stage": "completed",
+          "atMs": 34541.843,
+          "caseId": "cn360-test-1793085580575-model-error",
+          "executionId": "3"
+        }
+      ],
+      "response": {
+        "status": 200,
+        "body": {
+          "status": "error",
+          "result": "error",
+          "reason": "model_error_status",
+          "item": {
+            "controller_session": "cn360-test-1793085580575-model-error",
+            "item_id": "1",
+            "verdict_window_ms": 3000
+          },
+          "control": {
+            "esp32Accepted": null,
+            "esp32Status": null,
+            "esp32HttpStatus": null,
+            "esp32Error": "timeout of 250ms exceeded",
+            "controllerSession": "cn360-test-1793085580575-model-error",
+            "itemId": "1",
+            "acknowledgedControllerSession": null,
+            "acknowledgedItemId": null,
+            "controlOutcome": "delivery_unknown",
+            "controlReason": "timeout of 250ms exceeded"
+          }
+        },
+        "elapsedMs": 508.63699999999517
+      },
+      "executions": [
+        {
+          "id": 3,
+          "status": "success"
+        }
+      ],
+      "inspection": {
+        "id": 3,
+        "created_at": "2026-10-27T07:20:14.530391+00:00",
+        "prompt": null,
+        "defect_type": null,
+        "confidence": null,
+        "result": null,
+        "bbox": null,
+        "image_url": null,
+        "inspection_at": "2026-10-27T07:20:13.588+00:00",
+        "inspection_target": "broken glass on the bottle rim",
+        "model_instruction": "Locate all the instances that matches the following description: broken glass on the bottle rim.",
+        "camera_session": "932dc9c7-5e2b-441e-9f3f-7904ab9e35d0",
+        "frame_sequence": 3,
+        "frame_width": 900,
+        "frame_height": 900,
+        "box_count": 0,
+        "defect_coverage": null,
+        "coverage_threshold": 0.005,
+        "verdict": "reject",
+        "prompt_verified": null,
+        "frame_url": null,
+        "controller_session": "cn360-test-1793085580575-model-error",
+        "item_id": "1"
+      },
+      "control": {
+        "id": 3,
+        "created_at": "2026-10-27T07:20:14.735525+00:00",
+        "inspection_id": 3,
+        "action": "reject",
+        "device": null,
+        "status": null,
+        "response_messege": null,
+        "esp32_accepted": null,
+        "esp32_status": null,
+        "esp32_http_status": null,
+        "esp32_error": "timeout of 250ms exceeded",
+        "requested_at": "2026-10-27T07:20:13.588+00:00",
+        "controller_session": "cn360-test-1793085580575-model-error",
+        "item_id": "1",
+        "control_outcome": "delivery_unknown",
+        "control_reason": "timeout of 250ms exceeded",
+        "ack_controller_session": null,
+        "ack_item_id": null
+      }
+    },
+    {
+      "id": "prompt",
+      "failures": [],
+      "events": [
+        {
+          "stage": "prompt-set",
+          "atMs": 35216.864,
+          "caseId": "cn360-test-1793085580575-prompt",
+          "executionId": "4",
+          "instruction": "Locate all the instances that matches the following description: cn360-test-1793085580575 scratch."
+        },
+        {
+          "stage": "completed",
+          "atMs": 35672.6352,
+          "caseId": "cn360-test-1793085580575-prompt",
+          "executionId": "4"
+        }
+      ],
+      "response": {
+        "status": 200,
+        "body": {
+          "status": "updated",
+          "inspectionTarget": "cn360-test-1793085580575 scratch"
+        },
+        "elapsedMs": 95.94739999999729
+      },
+      "executions": [
+        {
+          "id": 4,
+          "status": "success"
+        }
+      ],
+      "history": {
+        "id": 1,
+        "created_at": "2026-10-27T07:20:16.134237+00:00",
+        "prompt_text": null,
+        "target_defect": null,
+        "status": null,
+        "created_by": null,
+        "changed_at": "2026-10-27T07:20:15.627+00:00",
+        "inspection_target": "cn360-test-1793085580575 scratch",
+        "model_instruction": "Locate all the instances that matches the following description: cn360-test-1793085580575 scratch.",
+        "source": "hud",
+        "model_http_status": 200,
+        "model_error": null
+      }
+    },
+    {
+      "id": "health-up",
+      "failures": [],
+      "events": [
+        {
+          "stage": "completed",
+          "atMs": 36668.8558,
+          "caseId": "cn360-test-1793085580575-health-up",
+          "executionId": "5"
+        },
+        {
+          "stage": "capture-start",
+          "atMs": 36677.208,
+          "caseId": "cn360-test-1793085580575-health-up",
+          "executionId": "5"
+        },
+        {
+          "stage": "capture-end",
+          "atMs": 36677.6184,
+          "caseId": "cn360-test-1793085580575-health-up",
+          "executionId": "5",
+          "session": "932dc9c7-5e2b-441e-9f3f-7904ab9e35d0",
+          "sequence": 4,
+          "snapshotObjectName": "932dc9c7-5e2b-441e-9f3f-7904ab9e35d0-4.jpg",
+          "sha256": "c1ea10ec9215056d5d88b7f2a85f24520a99cedbd8eb7a75029266441373f150",
+          "durationMs": 0.5895000000018626
+        },
+        {
+          "stage": "completed",
+          "atMs": 36908.6964,
+          "caseId": "cn360-test-1793085580575-health-up",
+          "executionId": "5"
+        }
+      ],
+      "response": {
+        "status": 200,
+        "body": {
+          "message": "Workflow was started"
+        },
+        "elapsedMs": 18.116699999998673
+      },
+      "executions": [
+        {
+          "id": 5,
+          "status": "success"
+        }
+      ],
+      "logs": [
+        {
+          "id": 4,
+          "created_at": "2026-10-27T07:20:17.133442+00:00",
+          "source": null,
+          "event_type": null,
+          "message": "model-server recovered",
+          "status": null,
+          "inspection_id": null,
+          "logged_at": "2026-10-27T07:20:16.801+00:00",
+          "severity": "info",
+          "component": "model-server",
+          "details": {
+            "healthy": true
+          }
+        },
+        {
+          "id": 5,
+          "created_at": "2026-10-27T07:20:17.379042+00:00",
+          "source": null,
+          "event_type": null,
+          "message": "capture-service recovered",
+          "status": null,
+          "inspection_id": null,
+          "logged_at": "2026-10-27T07:20:17.14+00:00",
+          "severity": "info",
+          "component": "capture-service",
+          "details": {
+            "healthy": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "health-down",
+      "failures": [],
+      "events": [
+        {
+          "stage": "completed",
+          "atMs": 37659.4922,
+          "caseId": "cn360-test-1793085580575-health-down",
+          "executionId": "6"
+        },
+        {
+          "stage": "capture-start",
+          "atMs": 37668.294,
+          "caseId": "cn360-test-1793085580575-health-down",
+          "executionId": "6"
+        },
+        {
+          "stage": "completed",
+          "atMs": 37903.8616,
+          "caseId": "cn360-test-1793085580575-health-down",
+          "executionId": "6"
+        }
+      ],
+      "response": {
+        "status": 200,
+        "body": {
+          "message": "Workflow was started"
+        },
+        "elapsedMs": 17.56810000000405
+      },
+      "executions": [
+        {
+          "id": 6,
+          "status": "success"
+        }
+      ],
+      "logs": [
+        {
+          "id": 6,
+          "created_at": "2026-10-27T07:20:18.129715+00:00",
+          "source": null,
+          "event_type": null,
+          "message": "model-server is not responding",
+          "status": null,
+          "inspection_id": null,
+          "logged_at": "2026-10-27T07:20:17.884+00:00",
+          "severity": "error",
+          "component": "model-server",
+          "details": {
+            "healthy": false
+          }
+        },
+        {
+          "id": 7,
+          "created_at": "2026-10-27T07:20:18.37468+00:00",
+          "source": null,
+          "event_type": null,
+          "message": "capture-service is not responding",
+          "status": null,
+          "inspection_id": null,
+          "logged_at": "2026-10-27T07:20:18.122+00:00",
+          "severity": "error",
+          "component": "capture-service",
+          "details": {
+            "healthy": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "health-still-down",
+      "failures": [],
+      "events": [
+        {
+          "stage": "completed",
+          "atMs": 38485.7263,
+          "caseId": "cn360-test-1793085580575-health-still-down",
+          "executionId": "7"
+        },
+        {
+          "stage": "capture-start",
+          "atMs": 38493.5432,
+          "caseId": "cn360-test-1793085580575-health-still-down",
+          "executionId": "7"
+        },
+        {
+          "stage": "completed",
+          "atMs": 38526.6664,
+          "caseId": "cn360-test-1793085580575-health-still-down",
+          "executionId": "7"
+        }
+      ],
+      "response": {
+        "status": 200,
+        "body": {
+          "message": "Workflow was started"
+        },
+        "elapsedMs": 14.80619999999908
+      },
+      "executions": [
+        {
+          "id": 7,
+          "status": "success"
+        }
+      ],
+      "logs": []
+    },
+    {
+      "id": "health-recovered",
+      "failures": [],
+      "events": [
+        {
+          "stage": "completed",
+          "atMs": 39265.0841,
+          "caseId": "cn360-test-1793085580575-health-recovered",
+          "executionId": "8"
+        },
+        {
+          "stage": "capture-start",
+          "atMs": 39272.8296,
+          "caseId": "cn360-test-1793085580575-health-recovered",
+          "executionId": "8"
+        },
+        {
+          "stage": "capture-end",
+          "atMs": 39273.228,
+          "caseId": "cn360-test-1793085580575-health-recovered",
+          "executionId": "8",
+          "session": "932dc9c7-5e2b-441e-9f3f-7904ab9e35d0",
+          "sequence": 5,
+          "snapshotObjectName": "932dc9c7-5e2b-441e-9f3f-7904ab9e35d0-5.jpg",
+          "sha256": "c1ea10ec9215056d5d88b7f2a85f24520a99cedbd8eb7a75029266441373f150",
+          "durationMs": 0.5371000000013737
+        },
+        {
+          "stage": "completed",
+          "atMs": 39499.3378,
+          "caseId": "cn360-test-1793085580575-health-recovered",
+          "executionId": "8"
+        }
+      ],
+      "response": {
+        "status": 200,
+        "body": {
+          "message": "Workflow was started"
+        },
+        "elapsedMs": 15.89140000000043
+      },
+      "executions": [
+        {
+          "id": 8,
+          "status": "success"
+        }
+      ],
+      "logs": [
+        {
+          "id": 8,
+          "created_at": "2026-10-27T07:20:19.736227+00:00",
+          "source": null,
+          "event_type": null,
+          "message": "model-server recovered",
+          "status": null,
+          "inspection_id": null,
+          "logged_at": "2026-10-27T07:20:19.484+00:00",
+          "severity": "info",
+          "component": "model-server",
+          "details": {
+            "healthy": true
+          }
+        },
+        {
+          "id": 9,
+          "created_at": "2026-10-27T07:20:19.971918+00:00",
+          "source": null,
+          "event_type": null,
+          "message": "capture-service recovered",
+          "status": null,
+          "inspection_id": null,
+          "logged_at": "2026-10-27T07:20:19.736+00:00",
+          "severity": "info",
+          "component": "capture-service",
+          "details": {
+            "healthy": true
+          }
+        }
+      ]
+    }
+  ],
+  "failures": [],
+  "bucketCreated": true,
+  "finishedAt": "2026-10-27T07:20:20.389Z",
+  "failedCases": [
+    "pass",
+    "reject",
+    "model-error"
+  ]
+}

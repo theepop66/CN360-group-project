@@ -87,17 +87,52 @@ test("derives /verdict from a same-origin /esp path", () => {
   );
 });
 
-test("sends a verdict action to the derived endpoint", async () => {
+test("sends a verdict bound to the current item to the derived endpoint", async () => {
   let request = null;
   const fetchImpl = async (url, options) => {
     request = { url, options };
-    return jsonResponse({ accepted: true, status: "rejected" });
+    if (url.endsWith("/status")) return jsonResponse({ state: "awaiting_verdict", controller_session: "boot", item_id: "9007199254740993" });
+    return jsonResponse({ accepted: true, status: "rejected", controller_session: "boot", item_id: "9007199254740993" });
   };
 
   await sendVerdict({ fetchImpl, servoUrl: SERVO_URL, action: "reject", timeoutMs: 100 });
 
   assert.equal(request.url, "http://192.168.1.50/verdict");
-  assert.equal(request.options.body, '{"action":"reject"}');
+  assert.equal(request.options.body, '{"action":"reject","controller_session":"boot","item_id":"9007199254740993"}');
+});
+
+test("same-origin proxy reads the active identity before sending a bound verdict", async t => {
+  const prior = globalThis.location;
+  globalThis.location = { href: "https://example.test:8443/?xrdebug=1" };
+  t.after(() => { if (prior === undefined) delete globalThis.location; else globalThis.location = prior; });
+  const calls = [];
+  const identity = { controller_session: "boot", item_id: "1" };
+  const result = await sendVerdict({ servoUrl: "/esp/servo", action: "reject", fetchImpl: async (url, options) => {
+    calls.push({ url, options });
+    return jsonResponse(options.method === "GET" ? { state: "awaiting_verdict", ...identity } : { accepted: true, ...identity });
+  } });
+  assert.equal(calls[0].url, "https://example.test:8443/esp/status");
+  assert.equal(calls[0].options.method, "GET"); assert.equal(calls[0].options.body, undefined);
+  assert.equal(calls[1].url, "https://example.test:8443/esp/verdict");
+  assert.deepEqual(JSON.parse(calls[1].options.body), { action: "reject", ...identity });
+  assert.equal(result.accepted, true);
+});
+
+test("unbound idle requests cannot send a physical verdict", async () => {
+  let posts = 0;
+  await assert.rejects(sendVerdict({ servoUrl: SERVO_URL, action: "pass", fetchImpl: async (_url, options) => {
+    if (options.method === "POST") posts++;
+    return jsonResponse({ state: "idle" });
+  } }), /No active item/);
+  assert.equal(posts, 0);
+});
+
+test("legacy or mismatched replies cannot imply accepted physical control", async () => {
+  for (const response of [{ accepted: true }, { accepted: true, controller_session: "boot", item_id: "next" }]) {
+    const result = await sendVerdict({ servoUrl: SERVO_URL, action: "pass", item: { controller_session: "boot", item_id: "1" }, fetchImpl: async () => jsonResponse(response) });
+    assert.equal(result.accepted, null);
+    assert.equal(result.status, "delivery_unknown");
+  }
 });
 
 test("rejects an invalid verdict action before making a request", async () => {

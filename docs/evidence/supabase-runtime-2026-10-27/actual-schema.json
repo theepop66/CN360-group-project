@@ -1,0 +1,302 @@
+{
+  "inspection_results": {
+    "required": [
+      "id",
+      "created_at"
+    ],
+    "properties": {
+      "id": {
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "bigint",
+        "type": "integer"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "prompt": {
+        "format": "text",
+        "type": "string"
+      },
+      "defect_type": {
+        "format": "text",
+        "type": "string"
+      },
+      "confidence": {
+        "format": "double precision",
+        "type": "number"
+      },
+      "result": {
+        "format": "text",
+        "type": "string"
+      },
+      "bbox": {
+        "format": "jsonb"
+      },
+      "image_url": {
+        "format": "text",
+        "type": "string"
+      },
+      "inspection_at": {
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "inspection_target": {
+        "format": "text",
+        "type": "string"
+      },
+      "model_instruction": {
+        "format": "text",
+        "type": "string"
+      },
+      "camera_session": {
+        "format": "text",
+        "type": "string"
+      },
+      "frame_sequence": {
+        "format": "bigint",
+        "type": "integer"
+      },
+      "frame_width": {
+        "format": "integer",
+        "type": "integer"
+      },
+      "frame_height": {
+        "format": "integer",
+        "type": "integer"
+      },
+      "box_count": {
+        "format": "integer",
+        "type": "integer"
+      },
+      "defect_coverage": {
+        "format": "double precision",
+        "type": "number"
+      },
+      "coverage_threshold": {
+        "format": "double precision",
+        "type": "number"
+      },
+      "verdict": {
+        "format": "text",
+        "type": "string"
+      },
+      "prompt_verified": {
+        "format": "boolean",
+        "type": "boolean"
+      },
+      "frame_url": {
+        "format": "text",
+        "type": "string"
+      },
+      "controller_session": {
+        "format": "text",
+        "type": "string"
+      },
+      "item_id": {
+        "format": "text",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "control_actions": {
+    "required": [
+      "id",
+      "created_at"
+    ],
+    "properties": {
+      "id": {
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "bigint",
+        "type": "integer"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "inspection_id": {
+        "description": "Note:\nThis is a Foreign Key to `inspection_results.id`.<fk table='inspection_results' column='id'/>",
+        "format": "bigint",
+        "type": "integer"
+      },
+      "action": {
+        "format": "text",
+        "type": "string"
+      },
+      "device": {
+        "format": "text",
+        "type": "string"
+      },
+      "status": {
+        "format": "text",
+        "type": "string"
+      },
+      "response_messege": {
+        "format": "text",
+        "type": "string"
+      },
+      "esp32_accepted": {
+        "format": "boolean",
+        "type": "boolean"
+      },
+      "esp32_status": {
+        "format": "text",
+        "type": "string"
+      },
+      "esp32_http_status": {
+        "format": "integer",
+        "type": "integer"
+      },
+      "esp32_error": {
+        "format": "text",
+        "type": "string"
+      },
+      "requested_at": {
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "controller_session": {
+        "format": "text",
+        "type": "string"
+      },
+      "item_id": {
+        "format": "text",
+        "type": "string"
+      },
+      "control_outcome": {
+        "format": "text",
+        "type": "string"
+      },
+      "control_reason": {
+        "format": "text",
+        "type": "string"
+      },
+      "ack_controller_session": {
+        "format": "text",
+        "type": "string"
+      },
+      "ack_item_id": {
+        "format": "text",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "prompt_history": {
+    "required": [
+      "id",
+      "created_at"
+    ],
+    "properties": {
+      "id": {
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "bigint",
+        "type": "integer"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "prompt_text": {
+        "format": "text",
+        "type": "string"
+      },
+      "target_defect": {
+        "format": "text",
+        "type": "string"
+      },
+      "status": {
+        "format": "text",
+        "type": "string"
+      },
+      "created_by": {
+        "format": "text",
+        "type": "string"
+      },
+      "changed_at": {
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "inspection_target": {
+        "format": "text",
+        "type": "string"
+      },
+      "model_instruction": {
+        "format": "text",
+        "type": "string"
+      },
+      "source": {
+        "format": "text",
+        "type": "string"
+      },
+      "model_http_status": {
+        "format": "integer",
+        "type": "integer"
+      },
+      "model_error": {
+        "format": "text",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "system_logs": {
+    "required": [
+      "id",
+      "created_at"
+    ],
+    "properties": {
+      "id": {
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "bigint",
+        "type": "integer"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "source": {
+        "format": "text",
+        "type": "string"
+      },
+      "event_type": {
+        "format": "text",
+        "type": "string"
+      },
+      "message": {
+        "format": "text",
+        "type": "string"
+      },
+      "status": {
+        "format": "text",
+        "type": "string"
+      },
+      "inspection_id": {
+        "description": "Note:\nThis is a Foreign Key to `inspection_results.id`.<fk table='inspection_results' column='id'/>",
+        "format": "bigint",
+        "type": "integer"
+      },
+      "logged_at": {
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "severity": {
+        "format": "text",
+        "type": "string"
+      },
+      "component": {
+        "format": "text",
+        "type": "string"
+      },
+      "details": {
+        "format": "jsonb"
+      }
+    },
+    "type": "object"
+  }
+}

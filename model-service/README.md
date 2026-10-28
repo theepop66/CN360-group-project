@@ -85,6 +85,8 @@ Set these variables in the service's shell, then start one process:
 $env:CN360_MODEL_LIBRARY = "$PWD\native\build-cpu\cn360_model.dll"
 $env:CN360_MODEL_PATH = 'D:\CN360\locate-anything.cpp\models\locate-anything-q8_0.gguf'
 $env:CN360_MODEL_THREADS = '6'
+$env:CN360_MODEL_WARMUP_IMAGE = '<absolute-path-to-representative-test-picture.jpg>'
+$env:CN360_MODEL_WARMUP_TIMEOUT = '60'
 $env:LA_DEVICE = 'cpu'
 python -m cn360_model
 ```
@@ -111,8 +113,8 @@ comparing Detection/coverage/Verdict quality on representative images.
 
 Open `http://localhost:8000/docs` to upload an image manually.
 
-- `GET /health`: HTTP 200 only while the model process is available; includes
-  actual `backend` and `busy`. Initialization failure or a dead worker is HTTP 503.
+- `GET /health`: HTTP 200 only after the live worker completes warm-up; includes
+  actual `backend`, `busy`, `startup_ms`, `warmup_ms`, and warm-up image geometry/hash/instruction. Loading, warming, initialization failure or a dead worker is HTTP 503. A representative `CN360_MODEL_WARMUP_IMAGE` is required; missing configuration cannot become ready.
 - `POST /predict`: multipart `file` (JPEG/PNG/BMP, up to 16 MiB and 24 million
   pixels) plus optional `prompt`. Successful results have `status: success`,
   `prompt_used`, `detections`, `frame_width`, `frame_height`, backend and timing
@@ -131,8 +133,10 @@ geometry failures explicitly; the original CLI can collapse these into empty
 output. stderr retains native diagnostics, and Python logs the failed stage.
 
 A timeout or client disconnect kills the isolated worker and makes health
-unavailable. Restart the service to reload it. This deliberately prevents an
-expired computation or a poisoned context from being reused. Shutdown also
+unavailable. A background recovery task reloads and warms a new worker before
+readiness returns (retry interval 5 seconds). Startup and warm-up have separate
+bounds; per-item requests retain the 1.1-second deadline. This prevents expired
+compute or a poisoned context from being reused. Shutdown also
 releases the worker. No temporary image files are created by prediction.
 
 ## n8n connection
@@ -149,7 +153,8 @@ internal binary property is named `image`.
 The manual Inspection webhook returns `status` and `result`. Successful results
 are `pass` below the Coverage Threshold and `reject` at or above it (default
 0.005). An evaluation failure returns `status: error`, `result: error`, and
-`reason`, while the existing actuator command remains `reject`. The caller
+`reason`, while a paired physical request attempts an item-bound `reject`. An unpaired
+manual picture check remains observational. The caller
 displays the result label; boxes and diagnostic data stay in the pipeline.
 An Inspection result is not evidence that an ESP32 accepted the command or that
 physical sorting occurred; Control Action acceptance is recorded separately.
@@ -192,5 +197,18 @@ decoder; an unsupported BMP encoding is an explicit error, never a clean result.
 
 Real-service and fixture evidence is kept under the project's documentation.
 Pi/ESP32/database/relay acceptance remains separate. The current ESP32 can
-auto-pass after 3000 ms: automatic sorting still depends on #24 and measured
+auto-pass in that recorded version: automatic sorting still depends on #24 and measured
 end-to-end deadlines. Do not raise just the model timeout to bypass the budget.
+
+## Item deadline readiness measurements
+
+`python scripts/measure_item_readiness.py --help` describes the real-CUDA probe.
+It measures three fresh workers with representative warm-up and repeated requests
+over local HTTP under the unchanged 1.1-second production deadline. It retains
+failed attempts, recovery health, image geometry/hash, startup/warm-up separately
+and per-case sample counts/p50/p95/max. `--integrated` also runs actual n8n and
+controller-core tests. Warm-up does not guarantee later requests meet the budget.
+
+The old 20/26 October benchmark sections above describe their recorded source
+versions. The current controller rejects at expiry, but physical sorting remains
+unaccepted until real reject/retention and production timing pass.

@@ -1,0 +1,31 @@
+{
+  "unrelatedWorkflowsUnchanged": true,
+  "allCredentialsUnchanged": true,
+  "originalN8nStopped": true,
+  "installedWorkflows": [
+    {
+      "id": "rBfAR3HgczhHFlui",
+      "name": "CN360 - Inspection Loop",
+      "active": false,
+      "storedCredentialNodes": 5,
+      "configuredBucket": "cn360-test-snapshots",
+      "sourceGraphMatched": true
+    },
+    {
+      "id": "lUa1bJRHZuC1BWBe",
+      "name": "CN360 - Prompt Capture",
+      "active": false,
+      "storedCredentialNodes": 1,
+      "configuredBucket": "cn360-test-snapshots",
+      "sourceGraphMatched": true
+    },
+    {
+      "id": "i01sMLn8WgW6EtZq",
+      "name": "CN360 - Health Watchdog",
+      "active": false,
+      "storedCredentialNodes": 1,
+      "configuredBucket": "cn360-test-snapshots",
+      "sourceGraphMatched": true
+    }
+  ]
+}

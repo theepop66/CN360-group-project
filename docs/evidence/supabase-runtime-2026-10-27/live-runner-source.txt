@@ -1,0 +1,62 @@
+
+import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
+import {join} from 'node:path';
+import {setTimeout as delay} from 'node:timers/promises';
+import {createHash} from 'node:crypto';
+import assert from 'node:assert/strict';
+import {startInspectionFixture} from "file:///C:/Users/ASUS/OneDrive/Desktop/CN360-group-project/n8n/lib/static-inspection.mjs";
+import {testWorkflows,command} from "file:///C:/Users/ASUS/OneDrive/Desktop/CN360-group-project/n8n/lib/inspection-test-runtime.mjs";
+import {parseDetectionPayload} from "file:///C:/Users/ASUS/OneDrive/Desktop/CN360-group-project/pico-webapp/js/overlay.js";
+const root="C:\\Users\\ASUS\\OneDrive\\Desktop\\CN360-group-project";
+const privateRoot="C:\\Users\\ASUS\\AppData\\Local\\CN360";
+const text=readFileSync(String.raw`D:\working\CN360-group-project\supabase-backend-key.local.txt`,'utf8');
+const secret=[...new Set(text.match(/sb_secret_[A-Za-z0-9_-]+|eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g)||[])][0];
+assert(secret,'Backend key not found');
+const runId='cn360-test-'+Date.now();
+const output=join(privateRoot,runId);mkdirSync(output,{recursive:true});
+const base='https://zjxcxgpcbmpjinwgvejx.supabase.co';const bucket='cn360-test-snapshots';
+const startedAt=new Date().toISOString();
+const report={runId,startedAt,scope:'Actual n8n and Supabase database/Storage; capture/model/controller/relay are fixtures. Original n8n engine stays stopped. No physical or production model acceptance.',bucket,cases:[],failures:[]};
+const clean=s=>String(s).replaceAll(secret,'[redacted]');
+const persist=()=>writeFileSync(join(output,'report.json'),JSON.stringify(report,null,2)+'\n');
+async function api(path,{method='GET',body}={}){const response=await fetch(base+path,{method,headers:{apikey:secret,Authorization:'Bearer '+secret,...(body?{'content-type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{}),signal:AbortSignal.timeout(20000)});const raw=await response.text();let data;try{data=JSON.parse(raw)}catch{data=raw.slice(0,1000)};if(!response.ok)throw new Error(clean(JSON.stringify({path,status:response.status,data})));return data;}
+const query=(table,params)=>api('/rest/v1/'+table+'?'+new URLSearchParams({select:'*',...params}));
+const bucketList=await api('/storage/v1/bucket');
+if(!bucketList.some(b=>b.id===bucket)){await api('/storage/v1/bucket',{method:'POST',body:{id:bucket,name:bucket,public:true,file_size_limit:10485760,allowed_mime_types:['image/jpeg','image/png']}});report.bucketCreated=true;}else{assert(bucketList.find(b=>b.id===bucket).public,'Existing bucket is not public');report.bucketCreated=false;}
+const media=JSON.parse(readFileSync(join(root,'n8n/.runtime/software-17-2026-10-27/cases.json'),'utf8'));
+const image=media.find(c=>c.id==='bottle__good__000-1');const bytes=readFileSync(image.file);
+const frame={bytes,width:image.width,height:image.height,mimeType:'image/jpeg',file:image.file};
+const fixture=await startInspectionFixture({port:8103});
+const origin='http://host.docker.internal:8103';
+function replace(value){if(typeof value==='string')return value.replaceAll(origin+'/rest/v1',base+'/rest/v1').replaceAll(origin+'/storage/v1',base+'/storage/v1').replaceAll('/object/static-test/','/object/'+bucket+'/').replaceAll('/object/public/static-test/','/object/public/'+bucket+'/');if(Array.isArray(value))return value.map(replace);if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([k,v])=>[k,replace(v)]));return value;}
+const flows=replace(testWorkflows(origin,{supabaseCredentialId:'cn360LiveSb'}));
+for(const node of flows[0].nodes.filter(n=>['done','done-duplicate'].includes(n.name))) node.parameters.jsonBody=node.parameters.jsonBody.replace('duplicate: $(\'duplicate-guard\').first().json.duplicate', 'duplicate: $(\'duplicate-guard\').first().json.duplicate, snapshotUpload: $(\'upload-snapshot\').isExecuted ? $(\'upload-snapshot\').first().json : null');
+writeFileSync(join(output,'workflows.json'),JSON.stringify(flows,null,2)+'\n');
+const credentials=[{id:'cn360LiveSb',name:'CN360 Supabase',type:'supabaseApi',data:{host:base,serviceRole:secret}}];
+writeFileSync(join(output,'credentials.json'),JSON.stringify(credentials));
+const container='cn360-live-supabase-'+Date.now();let log='';
+const args=['run','--rm','--name',container,'--publish','127.0.0.1:5683:5678','--env','N8N_USER_FOLDER=/tmp/cn360-live','--env','DB_TYPE=sqlite','--env','DB_SQLITE_DATABASE=/tmp/cn360-live.sqlite','--env','N8N_DIAGNOSTICS_ENABLED=false','--env','N8N_LICENSE_AUTO_RENEW_ENABLED=false','--env','N8N_RUNNERS_ENABLED=false','--env','N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=false','--volume',output+':/fixtures:ro','--entrypoint','sh','n8n-backup:latest','-c','n8n import:credentials --input=/fixtures/credentials.json && n8n import:workflow --input=/fixtures/workflows.json && n8n publish:workflow --id=cn360StaticTest && n8n publish:workflow --id=cn360PromptTest && n8n publish:workflow --id=cn360HealthTest && n8n start'];
+const {spawn}=await import('node:child_process');const child=spawn('docker',args,{windowsHide:true});child.stdout.on('data',s=>log+=s);child.stderr.on('data',s=>log+=s);let spawnError;child.on('error',e=>spawnError=e);
+async function statuses(ids){const script="const db=new(require('node:sqlite').DatabaseSync)('/tmp/cn360-live.sqlite',{readOnly:true});console.log(JSON.stringify(db.prepare('SELECT id,status FROM execution_entity WHERE id IN ("+ids.map(Number).join(',')+")').all()));";for(let i=0;i<60;i++){const rows=JSON.parse(await command('docker',['exec',container,'node','--disable-warning=ExperimentalWarning','-e',script]));if(rows.length===new Set(ids).size&&rows.every(r=>['success','error','crashed','canceled'].includes(r.status)))return rows;await delay(150);}throw new Error('Execution did not finish');}
+async function post(path,body){const start=performance.now();const response=await fetch('http://127.0.0.1:5683/webhook/'+path,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({...body,testCaseId:fixture.current.id}),signal:AbortSignal.timeout(15000)});return{status:response.status,body:await response.json(),elapsedMs:performance.now()-start};}
+async function execute(id,scenario,path='item-detected',body={}){const context=fixture.select({id:runId+'-'+id,frame,target:image.target,...scenario});const row={id,failures:[],events:context.events,completions:context.completions};report.cases.push(row);try{row.response=await post(path,body);await fixture.waitFor(context,'completed',path==='static-health'?2:1,30000);row.executions=await statuses(context.completions.map(c=>c.executionId));assert(row.executions.every(e=>e.status==='success'),'n8n execution failed');for(const e of context.events.filter(e=>e.stage==='hud-delivery'))parseDetectionPayload(e.payload);return{context,row};}catch(e){row.failures.push(clean(e.message));throw e;}finally{persist();}}
+try{
+ for(let i=0;i<150;i++){if(spawnError)throw spawnError;if(child.exitCode!==null)throw new Error('Owned n8n container stopped');try{const r=await fetch('http://127.0.0.1:5683/healthz/readiness',{signal:AbortSignal.timeout(400)});if(r.ok&&log.includes('Activated workflow "CN360 TEST - Static health watchdog"'))break;}catch{}if(i===149)throw new Error('n8n readiness timeout');await delay(500);}
+ credentials[0].data.serviceRole='[redacted after import]';writeFileSync(join(output,'credentials.json'),JSON.stringify(credentials));
+ for(const [id,scenario,expected] of [['pass',{coverage:0},'pass'],['reject',{coverage:0.01},'reject'],['model-error',{modelError:true},'error']]){
+   const item={controller_session:runId+'-'+id,item_id:'1',verdict_window_ms:3000};
+   const {row}=await execute(id,scenario,'item-detected',{...item,inspectionTarget:image.target});
+   try{assert.equal(row.response.body.result,expected);const inspections=await query('inspection_results',{controller_session:'eq.'+item.controller_session});assert.equal(inspections.length,1,'Expected one persisted inspection');const inspection=inspections[0];row.inspection=inspection;assert.equal(inspection.verdict,expected==='error'?'reject':expected);assert.equal(inspection.frame_width,image.width);assert.equal(inspection.frame_height,image.height);
+     const controls=await query('control_actions',{inspection_id:'eq.'+inspection.id});assert.equal(controls.length,1,'Control action not anchored to inspection');row.control=controls[0];assert.equal(controls[0].controller_session,item.controller_session);assert.equal(controls[0].control_outcome,'accepted');assert.equal(controls[0].ack_item_id,'1');
+     assert(inspection.frame_url,'Snapshot URL missing');assert(inspection.frame_url.startsWith(base+'/storage/v1/object/public/'+bucket+'/'),'Snapshot URL wrong project or bucket');const snapshot=await fetch(inspection.frame_url,{signal:AbortSignal.timeout(10000)});assert(snapshot.ok,'Snapshot public URL not readable');const saved=Buffer.from(await snapshot.arrayBuffer());assert(saved.equals(bytes),'Saved snapshot bytes differ');row.snapshotSha256=createHash('sha256').update(saved).digest('hex');
+     const logs=await query('system_logs',{'details->>controllerSession':'eq.'+item.controller_session});assert.equal(logs.length,1,'Inspection outcome log missing');row.outcomeLogId=logs[0].id;
+   }catch(e){row.failures.push(clean(e.message));}persist();console.log(id+': '+(row.failures.length?'FAILED '+row.failures.join('; '):'passed'));
+ }
+ const promptTarget=runId+' scratch';const {row:promptRow}=await execute('prompt',{},'detection-prompt',{prompt:promptTarget});assert.equal(promptRow.response.body.status,'updated');const history=await query('prompt_history',{inspection_target:'eq.'+promptTarget});assert.equal(history.length,1,'Prompt history not persisted');promptRow.history=history[0];
+ const baselineLogs=new Set((await query('system_logs',{component:'in.(model-server,capture-service)'})).map(r=>r.id));
+ for(const [id,offline] of [['health-up',false],['health-down',true],['health-still-down',true],['health-recovered',false]]){
+   const {row}=await execute(id,{modelOffline:offline,captureOffline:offline},'static-health');const logs=(await query('system_logs',{component:'in.(model-server,capture-service)'})).filter(r=>!baselineLogs.has(r.id));const expected=id==='health-still-down'?0:2;assert.equal(logs.length,expected,'Health transition log count incorrect');for(const r of logs)baselineLogs.add(r.id);row.logs=logs;persist();console.log(id+': passed');
+ }
+}catch(e){report.failures.push(clean(e.message));}
+finally{report.finishedAt=new Date().toISOString();report.failedCases=report.cases.filter(r=>r.failures.length).map(r=>r.id);persist();writeFileSync(join(output,'n8n.log'),clean(log));await command('docker',['stop','--time','3',container]).catch(()=>{});await fixture.close();}
+console.log('Evidence: '+join(output,'report.json'));if(report.failures.length||report.failedCases.length)process.exitCode=1;

@@ -1,5 +1,9 @@
 # Controller item/deadline contract
 
+Build outputs and `src/secrets.h` are ignored. Copy `src/secrets.example.h` for
+local configuration and keep real values outside Git. Ignoring a file does not
+remove older commits; see the [history cleanup procedure](../docs/history-cleanup.md).
+
 The controller owns one active physical item and its local 3000 ms Verdict
 Window. Admission issues opaque string `controller_session` and `item_id` values.
 Frame Context belongs to the captured image and cannot replace that item pair.

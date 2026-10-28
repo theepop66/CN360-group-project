@@ -5,9 +5,9 @@ window.HUD_CONFIG = Object.freeze({
   cameraSource: "local",
   raspberryPiStreamUrl: "http://raspberrypi.local:8000/stream.mjpg",
   raspberryPiHealthUrl: "http://raspberrypi.local:8000/health",
-  // Stock n8n does not expose an arbitrary WebSocket broadcast route. Point
-  // this at the gateway/proxy owned by the n8n integration.
-  n8nDetectionWebSocketUrl: "ws://n8n-gateway.local:8081/detections",
+  // hud-server proxies this same-origin channel to the relay. HTTPS pages use
+  // wss:// so WebXR does not block the overlay as mixed content.
+  n8nDetectionWebSocketUrl: (window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.host + "/detections",
   n8nPromptWebhookUrl: "http://n8n.local:5678/webhook/detection-prompt",
   // 360ControlUnit (ESP32) endpoints are same-origin paths served by
   // tools/hud-server.mjs, which proxies /esp/* to the ESP32 (172.20.10.5).

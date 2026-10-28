@@ -1,0 +1,26 @@
+{
+  "baselineCommit": "069e774e362801691776c1c9c404d5b750e26e49",
+  "node": "v24.15.0",
+  "n8n": "2.6.4",
+  "dockerImage": "n8n-backup:latest",
+  "dockerImageId": "sha256:768f790a4e418377a7943cc385899009df4fdbeabd46a8adc32b098ba05ad566",
+  "unitTests": {
+    "command": "npm test (in n8n/)",
+    "passed": 208,
+    "failed": 0,
+    "skipped": 0
+  },
+  "integration": {
+    "command": "node n8n/scripts/static-inspection.mjs --mode fixtures --credential-store --python D:\\CN360\\locate-anything.cpp\\venv\\Scripts\\python.exe --output n8n/.runtime/software-17-2026-10-27",
+    "passed": 37,
+    "failed": 0,
+    "authenticationChecks": 144,
+    "invalidAuthentication": 0
+  },
+  "artifacts": {
+    "report.json": "77b5dc41fa7fc6bb52da79a91b79a86543839cd978c96d7f2a72bc87d094d516",
+    "workflows.json": "4e6dff4e29ecff9c66f807f5e82ee29a27a022f58cbade46daf78d59ef2a5869",
+    "n8n.log": "cf6da1365eb47b004a555c94b9d7265dc1594043b5d7686ca15564207b39d41e"
+  },
+  "logCopy": "Trailing whitespace normalized; original log remains in ignored local runtime output."
+}

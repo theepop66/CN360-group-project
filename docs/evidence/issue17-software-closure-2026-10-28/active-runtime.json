@@ -1,0 +1,22 @@
+{
+  "capturedAt": "2026-10-28T11:19:45.747Z",
+  "container": "cn360-software-n8n",
+  "activeWorkflows": [
+    {
+      "id": "i01sMLn8WgW6EtZq",
+      "name": "CN360 - Health Watchdog",
+      "active": 1
+    },
+    {
+      "id": "lUa1bJRHZuC1BWBe",
+      "name": "CN360 - Prompt Capture",
+      "active": 1
+    },
+    {
+      "id": "rBfAR3HgczhHFlui",
+      "name": "CN360 - Inspection Loop",
+      "active": 1
+    }
+  ],
+  "originalContainerActivated": false
+}

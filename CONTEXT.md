@@ -24,9 +24,9 @@ rejected. Defaults to `0.005` (0.5% of the frame). Tunable per deployment.
 **Verdict** — `pass` or `reject`. Decided from Defect Coverage, or forced to
 `reject` by any failure.
 
-**Verdict Window** — the 3000 ms the ESP32 waits for a verdict before its own
-auto-pass fallback fires. The model timeout (2000 ms) sits inside it so the
-verdict POST always has headroom.
+**Verdict Window** — the controller-local interval after item admission during
+which a matching Verdict can be accepted. Expiry resolves that item through
+reject/alert fallback.
 
 **Inspection** — one pass through the loop: one frame, one model call, one
 verdict.
@@ -40,6 +40,14 @@ ESP32 accepted it and the HTTP status it returned.
 **Prompt History** — the audit trail of Inspection Target changes. The model
 server's own global prompt is the *runtime* source of truth; Prompt History is a
 record, never a cache that is read to decide what to send.
+
+**Physical Item Identity** — the controller session and item identifier for one
+admitted physical item. It identifies the object being sorted, independently
+of the image captured for its Inspection.
+
+**Control Outcome** — whether an item-bound Control Action was accepted, ignored,
+or has an unknown delivery result. An Inspection Result alone does not confirm
+physical sorting.
 
 **Frame Context** — the identity and geometry of a captured frame, read from the
 Pi's capture response headers: `X-Camera-Session`, `X-Frame-Sequence`,

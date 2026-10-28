@@ -1,5 +1,9 @@
 # Spec: n8n Inspection Orchestration Suite
 
+> Credential update (2026-10-27): Native n8n Supabase API credentials now supply both required authentication headers through `configure.mjs`; this supersedes the historical credential-placeholder deviation below. See [setup and evidence](../../n8n/README.md#secrets-and-n8n-credentials).
+
+> Current contract update (2026-10-26): [Item-bound Verdicts and deadline-safe inspection](item-verdict-deadline-safety.md) supersedes the historical auto-pass, action-only Verdict, unpaired manual dispatch, pre-verdict snapshot upload and load-only readiness assumptions below. Use the current n8n/controller/model guides for implementation.
+
 ## Problem Statement
 
 The CN360 quality-control system is a set of islands. The Raspberry Pi captures frames, the ESP32 senses items, the Pico 4 HUD accepts operator prompts and draws overlays, and the local vision model can detect open-vocabulary targets — but **nothing connects them**. There is no n8n workflow in the repository at all. Without it, an operator typing `"scratch"` into the HUD sees nothing happen: no frame is ever captured on demand, the model is never asked a question, the ESP32 never receives a verdict, the operator never sees a bounding box, and no inspection is ever recorded.

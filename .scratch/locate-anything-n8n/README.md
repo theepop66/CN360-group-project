@@ -57,3 +57,16 @@ Ticket จาก [สเปก](../../docs/specs/local-model-n8n-defect-output.m
 ## ขอบเขตการทดสอบ
 
 จุดทดสอบหลักใช้ public n8n webhook → Model HTTP contract → compact response/Control Action และมี supporting checks ที่ public Model HTTP boundary สำหรับ engine lifecycle/error/concurrency แยกหลักฐานจากบริการจำลอง โมเดลจริง และอุปกรณ์จริงเสมอ
+
+## งานเพิ่มเติม 2026-10-26: แก้ deadline และ late Verdict (#24)
+
+เพิ่ม [สเปก Item-bound Verdicts and deadline-safe inspection](../../docs/specs/item-verdict-deadline-safety.md) และ ticket ใหม่หลังผู้ใช้ยืนยันจุดทดสอบหลัก: ส่ง item event พร้อมภาพทดสอบผ่าน n8n จริงไปยัง controller core จริงที่รันบน PC ผ่าน host HTTP adapter ส่วนการตรวจรับฮาร์ดแวร์เป็นอีกขั้นหนึ่ง
+
+| Ticket | สถานะ | สิ่งที่ส่งมอบ | Blocked by |
+| --- | --- | --- | --- |
+| [07 — Item-bound Verdicts and deadline-safe inspection](issues/07-item-verdict-deadline-safety.md) | partial | item/session identity, reject fallback, ป้องกัน late Verdict, ลด pre-verdict path, model warm-up และ integrated tests | เริ่ม software implementation ได้; physical acceptance ต้องมีหลักฐาน reject/hold และ production timing จริง |
+
+สถานะของ 07 คือ partial: implement ฝั่ง software แล้ว แต่ production model deadline และ physical acceptance ยังไม่ผ่าน สรุป implemented 5 / partial 1 ด้านบนเป็นสถานะเดิมของ 01–06 เท่านั้น หลักฐานเริ่มต้นสำหรับงานใหม่นี้อยู่ใน [รายงานทดสอบภาพ 26 ตุลาคม](../../docs/evidence/static-image-inspection/2026-10-26/README.md) ซึ่งยืนยันว่า #24 ยังไม่ผ่าน การเพิ่ม local ticket นี้ไม่แก้ไขหรือปิด GitHub issue
+
+
+Ticket 07 implementation evidence: [26 October report](../../docs/evidence/item-verdict-deadline-2026-10-26/README.md). Controller timeout/item protection and integrated picture tests are implemented; all nine direct production predictions still timed out after warm-up. Automatic admission stays disabled pending physical reject/retention validation.

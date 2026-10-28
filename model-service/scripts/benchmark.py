@@ -51,6 +51,8 @@ def main() -> None:
     env = {**os.environ, "LA_DEVICE": args.device, "CN360_MODEL_LIBRARY": str(args.library.resolve()),
            "CN360_MODEL_PATH": str(args.model.resolve()), "CN360_MODEL_THREADS": str(args.threads),
            "CN360_MODEL_MODE": args.mode, "CN360_MODEL_REQUEST_TIMEOUT": "120", "CN360_MODEL_PORT": str(args.port)}
+    env["CN360_MODEL_WARMUP_IMAGE"] = str(args.image.resolve())
+    env["CN360_MODEL_WARMUP_TIMEOUT"] = "120"  # Measurement initialization, never an admitted item budget.
     if args.device.lower() == "auto":
         env.pop("LA_DEVICE", None)
     root = Path(__file__).resolve().parents[1]
@@ -84,15 +86,16 @@ def main() -> None:
         server = subprocess.Popen([sys.executable, "-m", "cn360_model"], cwd=root, env=env, stdout=log, stderr=log, creationflags=flags)
         try:
             with httpx.Client(base_url=f"http://127.0.0.1:{args.port}", timeout=125) as client:
-                for _ in range(120):
+                initialization_deadline = time.monotonic() + float(env.get("CN360_MODEL_STARTUP_TIMEOUT", "120")) + float(env["CN360_MODEL_WARMUP_TIMEOUT"]) + 10
+                while time.monotonic() < initialization_deadline:
                     if server.poll() is not None:
                         raise RuntimeError(f"server exited; see {log_path}")
                     try:
-                        health = client.get("/health")
+                        health = client.get("/health", timeout=2)
                         if health.status_code == 200:
                             report["health"] = health.json()
                             break
-                        if health.status_code == 503:
+                        if health.status_code == 503 and health.json().get("reason") not in {"model_loading", "model_warming"}:
                             report["health"] = health.json()
                             raise RuntimeError(f"model unavailable; see {log_path}")
                     except httpx.HTTPError:
@@ -125,7 +128,7 @@ def main() -> None:
     report["resident_http"] = distribution([row["http_ms"] for row in report["resident"]])
     if report["errors"]:
         report["server_log_tail"] = log_path.read_text(encoding="utf-8", errors="replace")[-20000:]
-    report["note"] = "Small-sample descriptive percentiles; includes the first prediction, no omitted warmup. Baseline total includes process/model startup. Native timing includes vision preprocessing and decode."
+    report["note"] = "Small-sample descriptive percentiles; resident samples begin after the separately recorded startup/warm-up and include the first admitted prediction. Baseline total includes process/model startup. Native timing includes vision preprocessing and decode."
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2), encoding="utf-8")
     print(json.dumps({"output": str(args.output), "baseline": report["baseline_total"], "resident": report["resident_http"], "errors": len(report["errors"])}), flush=True)

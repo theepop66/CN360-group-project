@@ -1,0 +1,111 @@
+{
+  "database": "postgres:17-alpine",
+  "cases": [
+    {
+      "id": "20-concurrent-callers",
+      "passed": true,
+      "rows": [
+        [
+          "1",
+          "t"
+        ],
+        [
+          "1",
+          "f"
+        ],
+        [
+          "1",
+          "f"
+        ],
+        [
+          "1",
+          "f"
+        ],
+        [
+          "1",
+          "f"
+        ],
+        [
+          "1",
+          "f"
+        ],
+        [
+          "1",
+          "f"
+        ],
+        [
+          "1",
+          "f"
+        ],
+        [
+          "1",
+          "f"
+        ],
+        [
+          "1",
+          "f"
+        ],
+        [
+          "1",
+          "f"
+        ],
+        [
+          "1",
+          "f"
+        ],
+        [
+          "1",
+          "f"
+        ],
+        [
+          "1",
+          "f"
+        ],
+        [
+          "1",
+          "f"
+        ],
+        [
+          "1",
+          "f"
+        ],
+        [
+          "1",
+          "f"
+        ],
+        [
+          "1",
+          "f"
+        ],
+        [
+          "1",
+          "f"
+        ],
+        [
+          "1",
+          "f"
+        ]
+      ]
+    },
+    {
+      "id": "different-items-stay-distinct",
+      "passed": true
+    },
+    {
+      "id": "rollback-does-not-poison-claim",
+      "passed": true
+    },
+    {
+      "id": "legacy-duplicates-preserved-without-more-inserts",
+      "passed": true
+    },
+    {
+      "id": "invalid-identity-role-and-isolation-refused",
+      "passed": true
+    },
+    {
+      "id": "observational-records-stay-distinct",
+      "passed": true
+    }
+  ]
+}

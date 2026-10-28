@@ -110,7 +110,9 @@ test("an inspection row carries the target, the instruction and the decision", (
     coverage_threshold: 0.005,
     verdict: VERDICT.PASS,
     prompt_verified: true,
-    frame_url: null
+    frame_url: null,
+    controller_session: null,
+    item_id: null
   });
 });
 
@@ -175,7 +177,13 @@ test("a control action row records the ESP32 outcome", () => {
     esp32_status: "applied",
     esp32_http_status: 200,
     esp32_error: null,
-    requested_at: INSPECTED_AT
+    requested_at: INSPECTED_AT,
+    controller_session: null,
+    item_id: null,
+    control_outcome: "delivery_unknown",
+    control_reason: null,
+    ack_controller_session: null,
+    ack_item_id: null
   });
 });
 

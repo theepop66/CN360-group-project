@@ -1,0 +1,833 @@
+{
+  "runId": "issue17-1793185881427",
+  "startedAt": "2026-10-28T11:11:21.427Z",
+  "scope": "Deployed n8n, real C++ controller core on PC, actual Supabase DB/Storage, real relay/WebSocket and HUD parser. Static test picture and controlled model responses; no hardware or AI-quality acceptance.",
+  "cases": [
+    {
+      "id": "prompt-normalization-and-history",
+      "failures": [
+        "Expected values to be strictly equal:\n\n502 !== 200\n"
+      ],
+      "status": "failed"
+    },
+    {
+      "id": "item-pass",
+      "failures": [
+        "Expected values to be strictly equal:\n\n502 !== 200\n"
+      ],
+      "status": "failed"
+    },
+    {
+      "id": "item-reject",
+      "failures": [
+        "Expected values to be strictly equal:\n\n404 !== 200\n"
+      ],
+      "status": "failed"
+    },
+    {
+      "id": "item-error",
+      "failures": [],
+      "response": {
+        "inspection": {
+          "status": "error",
+          "result": "error",
+          "reason": "model_error_status",
+          "item": {
+            "controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+            "item_id": "3",
+            "verdict_window_ms": 3000
+          },
+          "control": {
+            "esp32Accepted": true,
+            "esp32Status": "accepted",
+            "esp32HttpStatus": 200,
+            "esp32Error": null,
+            "controllerSession": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+            "itemId": "3",
+            "acknowledgedControllerSession": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+            "acknowledgedItemId": "3",
+            "controlOutcome": "accepted",
+            "controlReason": "accepted"
+          }
+        },
+        "item": {
+          "controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+          "item_id": "3",
+          "verdict_window_ms": 3000
+        },
+        "hardware": false
+      },
+      "executions": [
+        {
+          "id": 1000,
+          "status": "success"
+        }
+      ],
+      "inspection": {
+        "id": 24,
+        "created_at": "2026-10-28T11:11:38.87407+00:00",
+        "prompt": null,
+        "defect_type": null,
+        "confidence": null,
+        "result": null,
+        "bbox": null,
+        "image_url": null,
+        "inspection_at": "2026-10-28T11:11:35.983+00:00",
+        "inspection_target": "visible surface defect",
+        "model_instruction": "Locate all the instances that matches the following description: visible surface defect.",
+        "camera_session": "c6f91dd6-a342-4a32-a0c3-320e43e9bb5b",
+        "frame_sequence": 2,
+        "frame_width": 900,
+        "frame_height": 900,
+        "box_count": 0,
+        "defect_coverage": null,
+        "coverage_threshold": 0.005,
+        "verdict": "reject",
+        "prompt_verified": null,
+        "frame_url": "https://zjxcxgpcbmpjinwgvejx.supabase.co/storage/v1/object/public/cn360-test-snapshots/c6f91dd6-a342-4a32-a0c3-320e43e9bb5b-2.jpg",
+        "controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+        "item_id": "3"
+      },
+      "control": {
+        "id": 28,
+        "created_at": "2026-10-28T11:11:39.465655+00:00",
+        "inspection_id": 24,
+        "action": "reject",
+        "device": null,
+        "status": null,
+        "response_messege": null,
+        "esp32_accepted": true,
+        "esp32_status": "accepted",
+        "esp32_http_status": 200,
+        "esp32_error": null,
+        "requested_at": "2026-10-28T11:11:35.983+00:00",
+        "controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+        "item_id": "3",
+        "control_outcome": "accepted",
+        "control_reason": "accepted",
+        "ack_controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+        "ack_item_id": "3"
+      },
+      "controls": [
+        {
+          "id": 28,
+          "created_at": "2026-10-28T11:11:39.465655+00:00",
+          "inspection_id": 24,
+          "action": "reject",
+          "device": null,
+          "status": null,
+          "response_messege": null,
+          "esp32_accepted": true,
+          "esp32_status": "accepted",
+          "esp32_http_status": 200,
+          "esp32_error": null,
+          "requested_at": "2026-10-28T11:11:35.983+00:00",
+          "controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+          "item_id": "3",
+          "control_outcome": "accepted",
+          "control_reason": "accepted",
+          "ack_controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+          "ack_item_id": "3"
+        }
+      ],
+      "relayPayload": {
+        "type": "detections",
+        "coordinateSpace": "pixel",
+        "status": "reject",
+        "reason": "model_error_status",
+        "timestamp": "2026-10-28T11:11:35.870Z",
+        "frame": {
+          "id": "c6f91dd6-a342-4a32-a0c3-320e43e9bb5b:2",
+          "sessionId": "c6f91dd6-a342-4a32-a0c3-320e43e9bb5b",
+          "sequence": 2,
+          "width": 900,
+          "height": 900
+        },
+        "snapshotUrl": "https://zjxcxgpcbmpjinwgvejx.supabase.co/storage/v1/object/public/cn360-test-snapshots/c6f91dd6-a342-4a32-a0c3-320e43e9bb5b-2.jpg",
+        "detections": []
+      },
+      "snapshotSha256": "c1ea10ec9215056d5d88b7f2a85f24520a99cedbd8eb7a75029266441373f150",
+      "controllerBefore": {
+        "accepted": false,
+        "status": "ok",
+        "reason": "no_active_item",
+        "controller_session": "",
+        "item_id": "",
+        "active_item": {
+          "controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+          "item_id": "2",
+          "verdict_window_ms": 3000
+        },
+        "state": "idle",
+        "pass_count": 0,
+        "reject_count": 2,
+        "resolution_reason": "verdict_timeout",
+        "admission_ready": true,
+        "actions": [],
+        "error": null,
+        "hardware": false,
+        "mode": "auto",
+        "profile": "pc-controller"
+      },
+      "controllerAfter": {
+        "accepted": false,
+        "status": "ok",
+        "reason": "no_active_item",
+        "controller_session": "",
+        "item_id": "",
+        "active_item": {
+          "controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+          "item_id": "3",
+          "verdict_window_ms": 3000
+        },
+        "state": "idle",
+        "pass_count": 0,
+        "reject_count": 3,
+        "resolution_reason": "verdict",
+        "admission_ready": true,
+        "actions": [],
+        "error": null,
+        "hardware": false,
+        "mode": "auto",
+        "profile": "pc-controller"
+      },
+      "status": "passed"
+    },
+    {
+      "id": "item-timeout",
+      "failures": [],
+      "response": {
+        "inspection": {
+          "status": "error",
+          "result": "error",
+          "reason": "model_timeout",
+          "item": {
+            "controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+            "item_id": "4",
+            "verdict_window_ms": 3000
+          },
+          "control": {
+            "esp32Accepted": true,
+            "esp32Status": "accepted",
+            "esp32HttpStatus": 200,
+            "esp32Error": null,
+            "controllerSession": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+            "itemId": "4",
+            "acknowledgedControllerSession": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+            "acknowledgedItemId": "4",
+            "controlOutcome": "accepted",
+            "controlReason": "accepted"
+          }
+        },
+        "item": {
+          "controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+          "item_id": "4",
+          "verdict_window_ms": 3000
+        },
+        "hardware": false
+      },
+      "executions": [
+        {
+          "id": 1003,
+          "status": "success"
+        }
+      ],
+      "inspection": {
+        "id": 25,
+        "created_at": "2026-10-28T11:11:48.862154+00:00",
+        "prompt": null,
+        "defect_type": null,
+        "confidence": null,
+        "result": null,
+        "bbox": null,
+        "image_url": null,
+        "inspection_at": "2026-10-28T11:11:46.501+00:00",
+        "inspection_target": "visible surface defect",
+        "model_instruction": "Locate all the instances that matches the following description: visible surface defect.",
+        "camera_session": "c6f91dd6-a342-4a32-a0c3-320e43e9bb5b",
+        "frame_sequence": 5,
+        "frame_width": 900,
+        "frame_height": 900,
+        "box_count": 0,
+        "defect_coverage": null,
+        "coverage_threshold": 0.005,
+        "verdict": "reject",
+        "prompt_verified": null,
+        "frame_url": "https://zjxcxgpcbmpjinwgvejx.supabase.co/storage/v1/object/public/cn360-test-snapshots/c6f91dd6-a342-4a32-a0c3-320e43e9bb5b-5.jpg",
+        "controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+        "item_id": "4"
+      },
+      "control": {
+        "id": 29,
+        "created_at": "2026-10-28T11:11:49.753429+00:00",
+        "inspection_id": 25,
+        "action": "reject",
+        "device": null,
+        "status": null,
+        "response_messege": null,
+        "esp32_accepted": true,
+        "esp32_status": "accepted",
+        "esp32_http_status": 200,
+        "esp32_error": null,
+        "requested_at": "2026-10-28T11:11:46.501+00:00",
+        "controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+        "item_id": "4",
+        "control_outcome": "accepted",
+        "control_reason": "accepted",
+        "ack_controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+        "ack_item_id": "4"
+      },
+      "controls": [
+        {
+          "id": 29,
+          "created_at": "2026-10-28T11:11:49.753429+00:00",
+          "inspection_id": 25,
+          "action": "reject",
+          "device": null,
+          "status": null,
+          "response_messege": null,
+          "esp32_accepted": true,
+          "esp32_status": "accepted",
+          "esp32_http_status": 200,
+          "esp32_error": null,
+          "requested_at": "2026-10-28T11:11:46.501+00:00",
+          "controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+          "item_id": "4",
+          "control_outcome": "accepted",
+          "control_reason": "accepted",
+          "ack_controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+          "ack_item_id": "4"
+        }
+      ],
+      "relayPayload": {
+        "type": "detections",
+        "coordinateSpace": "pixel",
+        "status": "reject",
+        "reason": "model_timeout",
+        "timestamp": "2026-10-28T11:11:45.201Z",
+        "frame": {
+          "id": "c6f91dd6-a342-4a32-a0c3-320e43e9bb5b:5",
+          "sessionId": "c6f91dd6-a342-4a32-a0c3-320e43e9bb5b",
+          "sequence": 5,
+          "width": 900,
+          "height": 900
+        },
+        "snapshotUrl": "https://zjxcxgpcbmpjinwgvejx.supabase.co/storage/v1/object/public/cn360-test-snapshots/c6f91dd6-a342-4a32-a0c3-320e43e9bb5b-5.jpg",
+        "detections": []
+      },
+      "snapshotSha256": "c1ea10ec9215056d5d88b7f2a85f24520a99cedbd8eb7a75029266441373f150",
+      "controllerBefore": {
+        "accepted": false,
+        "status": "ok",
+        "reason": "no_active_item",
+        "controller_session": "",
+        "item_id": "",
+        "active_item": {
+          "controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+          "item_id": "3",
+          "verdict_window_ms": 3000
+        },
+        "state": "idle",
+        "pass_count": 0,
+        "reject_count": 3,
+        "resolution_reason": "verdict",
+        "admission_ready": true,
+        "actions": [],
+        "error": null,
+        "hardware": false,
+        "mode": "auto",
+        "profile": "pc-controller"
+      },
+      "controllerAfter": {
+        "accepted": false,
+        "status": "ok",
+        "reason": "no_active_item",
+        "controller_session": "",
+        "item_id": "",
+        "active_item": {
+          "controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+          "item_id": "4",
+          "verdict_window_ms": 3000
+        },
+        "state": "idle",
+        "pass_count": 0,
+        "reject_count": 4,
+        "resolution_reason": "verdict",
+        "admission_ready": true,
+        "actions": [],
+        "error": null,
+        "hardware": false,
+        "mode": "auto",
+        "profile": "pc-controller"
+      },
+      "status": "passed"
+    },
+    {
+      "id": "duplicate-five-events-one-controller-resolution",
+      "failures": [],
+      "responses": [
+        {
+          "status": 200,
+          "body": {
+            "status": "success",
+            "result": "reject",
+            "item": {
+              "controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+              "item_id": "5",
+              "verdict_window_ms": 3000
+            },
+            "control": {
+              "esp32Accepted": true,
+              "esp32Status": "accepted",
+              "esp32HttpStatus": 200,
+              "esp32Error": null,
+              "controllerSession": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+              "itemId": "5",
+              "acknowledgedControllerSession": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+              "acknowledgedItemId": "5",
+              "controlOutcome": "accepted",
+              "controlReason": "accepted"
+            }
+          }
+        },
+        {
+          "status": 200,
+          "body": {
+            "status": "success",
+            "result": "reject",
+            "item": {
+              "controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+              "item_id": "5",
+              "verdict_window_ms": 3000
+            },
+            "control": {
+              "esp32Accepted": false,
+              "esp32Status": "ignored",
+              "esp32HttpStatus": 200,
+              "esp32Error": null,
+              "controllerSession": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+              "itemId": "5",
+              "acknowledgedControllerSession": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+              "acknowledgedItemId": "5",
+              "controlOutcome": "ignored",
+              "controlReason": "already_resolved"
+            }
+          }
+        },
+        {
+          "status": 200,
+          "body": {
+            "status": "success",
+            "result": "reject",
+            "item": {
+              "controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+              "item_id": "5",
+              "verdict_window_ms": 3000
+            },
+            "control": {
+              "esp32Accepted": false,
+              "esp32Status": "ignored",
+              "esp32HttpStatus": 200,
+              "esp32Error": null,
+              "controllerSession": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+              "itemId": "5",
+              "acknowledgedControllerSession": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+              "acknowledgedItemId": "5",
+              "controlOutcome": "ignored",
+              "controlReason": "already_resolved"
+            }
+          }
+        },
+        {
+          "status": 200,
+          "body": {
+            "status": "success",
+            "result": "reject",
+            "item": {
+              "controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+              "item_id": "5",
+              "verdict_window_ms": 3000
+            },
+            "control": {
+              "esp32Accepted": false,
+              "esp32Status": "ignored",
+              "esp32HttpStatus": 200,
+              "esp32Error": null,
+              "controllerSession": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+              "itemId": "5",
+              "acknowledgedControllerSession": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+              "acknowledgedItemId": "5",
+              "controlOutcome": "ignored",
+              "controlReason": "already_resolved"
+            }
+          }
+        },
+        {
+          "status": 200,
+          "body": {
+            "status": "success",
+            "result": "reject",
+            "item": {
+              "controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+              "item_id": "5",
+              "verdict_window_ms": 3000
+            },
+            "control": {
+              "esp32Accepted": false,
+              "esp32Status": "ignored",
+              "esp32HttpStatus": 200,
+              "esp32Error": null,
+              "controllerSession": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+              "itemId": "5",
+              "acknowledgedControllerSession": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+              "acknowledgedItemId": "5",
+              "controlOutcome": "ignored",
+              "controlReason": "already_resolved"
+            }
+          }
+        }
+      ],
+      "executions": [
+        {
+          "id": 1005,
+          "status": "success"
+        },
+        {
+          "id": 1006,
+          "status": "success"
+        },
+        {
+          "id": 1007,
+          "status": "success"
+        },
+        {
+          "id": 1008,
+          "status": "success"
+        },
+        {
+          "id": 1009,
+          "status": "success"
+        }
+      ],
+      "inspection": {
+        "id": 26,
+        "created_at": "2026-10-28T11:11:58.252892+00:00",
+        "prompt": null,
+        "defect_type": null,
+        "confidence": null,
+        "result": null,
+        "bbox": null,
+        "image_url": null,
+        "inspection_at": "2026-10-28T11:11:54.983+00:00",
+        "inspection_target": "visible surface defect",
+        "model_instruction": "Locate all the instances that matches the following description: visible surface defect.",
+        "camera_session": "c6f91dd6-a342-4a32-a0c3-320e43e9bb5b",
+        "frame_sequence": 7,
+        "frame_width": 900,
+        "frame_height": 900,
+        "box_count": 1,
+        "defect_coverage": 0.09,
+        "coverage_threshold": 0.005,
+        "verdict": "reject",
+        "prompt_verified": true,
+        "frame_url": "https://zjxcxgpcbmpjinwgvejx.supabase.co/storage/v1/object/public/cn360-test-snapshots/c6f91dd6-a342-4a32-a0c3-320e43e9bb5b-7.jpg",
+        "controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+        "item_id": "5"
+      },
+      "control": {
+        "id": 30,
+        "created_at": "2026-10-28T11:11:59.315935+00:00",
+        "inspection_id": 26,
+        "action": "reject",
+        "device": null,
+        "status": null,
+        "response_messege": null,
+        "esp32_accepted": true,
+        "esp32_status": "accepted",
+        "esp32_http_status": 200,
+        "esp32_error": null,
+        "requested_at": "2026-10-28T11:11:54.983+00:00",
+        "controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+        "item_id": "5",
+        "control_outcome": "accepted",
+        "control_reason": "accepted",
+        "ack_controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+        "ack_item_id": "5"
+      },
+      "controls": [
+        {
+          "id": 30,
+          "created_at": "2026-10-28T11:11:59.315935+00:00",
+          "inspection_id": 26,
+          "action": "reject",
+          "device": null,
+          "status": null,
+          "response_messege": null,
+          "esp32_accepted": true,
+          "esp32_status": "accepted",
+          "esp32_http_status": 200,
+          "esp32_error": null,
+          "requested_at": "2026-10-28T11:11:54.983+00:00",
+          "controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+          "item_id": "5",
+          "control_outcome": "accepted",
+          "control_reason": "accepted",
+          "ack_controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+          "ack_item_id": "5"
+        },
+        {
+          "id": 31,
+          "created_at": "2026-10-28T11:11:59.964167+00:00",
+          "inspection_id": 26,
+          "action": "reject",
+          "device": null,
+          "status": null,
+          "response_messege": null,
+          "esp32_accepted": false,
+          "esp32_status": "ignored",
+          "esp32_http_status": 200,
+          "esp32_error": null,
+          "requested_at": "2026-10-28T11:11:55.004+00:00",
+          "controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+          "item_id": "5",
+          "control_outcome": "ignored",
+          "control_reason": "already_resolved",
+          "ack_controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+          "ack_item_id": "5"
+        },
+        {
+          "id": 32,
+          "created_at": "2026-10-28T11:11:59.980427+00:00",
+          "inspection_id": 26,
+          "action": "reject",
+          "device": null,
+          "status": null,
+          "response_messege": null,
+          "esp32_accepted": false,
+          "esp32_status": "ignored",
+          "esp32_http_status": 200,
+          "esp32_error": null,
+          "requested_at": "2026-10-28T11:11:55.117+00:00",
+          "controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+          "item_id": "5",
+          "control_outcome": "ignored",
+          "control_reason": "already_resolved",
+          "ack_controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+          "ack_item_id": "5"
+        },
+        {
+          "id": 33,
+          "created_at": "2026-10-28T11:12:00.127252+00:00",
+          "inspection_id": 26,
+          "action": "reject",
+          "device": null,
+          "status": null,
+          "response_messege": null,
+          "esp32_accepted": false,
+          "esp32_status": "ignored",
+          "esp32_http_status": 200,
+          "esp32_error": null,
+          "requested_at": "2026-10-28T11:11:55.207+00:00",
+          "controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+          "item_id": "5",
+          "control_outcome": "ignored",
+          "control_reason": "already_resolved",
+          "ack_controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+          "ack_item_id": "5"
+        },
+        {
+          "id": 34,
+          "created_at": "2026-10-28T11:12:00.134613+00:00",
+          "inspection_id": 26,
+          "action": "reject",
+          "device": null,
+          "status": null,
+          "response_messege": null,
+          "esp32_accepted": false,
+          "esp32_status": "ignored",
+          "esp32_http_status": 200,
+          "esp32_error": null,
+          "requested_at": "2026-10-28T11:11:55.071+00:00",
+          "controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+          "item_id": "5",
+          "control_outcome": "ignored",
+          "control_reason": "already_resolved",
+          "ack_controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+          "ack_item_id": "5"
+        }
+      ],
+      "relayPayload": {
+        "type": "detections",
+        "coordinateSpace": "pixel",
+        "status": "reject",
+        "reason": "defect_detected",
+        "timestamp": "2026-10-28T11:11:54.785Z",
+        "frame": {
+          "id": "c6f91dd6-a342-4a32-a0c3-320e43e9bb5b:7",
+          "sessionId": "c6f91dd6-a342-4a32-a0c3-320e43e9bb5b",
+          "sequence": 7,
+          "width": 900,
+          "height": 900
+        },
+        "snapshotUrl": "https://zjxcxgpcbmpjinwgvejx.supabase.co/storage/v1/object/public/cn360-test-snapshots/c6f91dd6-a342-4a32-a0c3-320e43e9bb5b-7.jpg",
+        "detections": [
+          {
+            "label": "defect",
+            "box": [
+              180,
+              180,
+              450,
+              450
+            ],
+            "status": "reject"
+          }
+        ]
+      },
+      "snapshotSha256": "c1ea10ec9215056d5d88b7f2a85f24520a99cedbd8eb7a75029266441373f150",
+      "controllerBefore": {
+        "accepted": false,
+        "status": "ok",
+        "reason": "no_active_item",
+        "controller_session": "",
+        "item_id": "",
+        "active_item": {
+          "controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+          "item_id": "4",
+          "verdict_window_ms": 3000
+        },
+        "state": "idle",
+        "pass_count": 0,
+        "reject_count": 4,
+        "resolution_reason": "verdict",
+        "admission_ready": true,
+        "actions": [],
+        "error": null,
+        "hardware": false,
+        "mode": "auto",
+        "profile": "pc-controller"
+      },
+      "controllerAfter": {
+        "accepted": false,
+        "status": "ok",
+        "reason": "no_active_item",
+        "controller_session": "",
+        "item_id": "",
+        "active_item": {
+          "controller_session": "pc-6d04b529-2700-4375-9567-0991eac6948f",
+          "item_id": "5",
+          "verdict_window_ms": 3000
+        },
+        "state": "idle",
+        "pass_count": 0,
+        "reject_count": 5,
+        "resolution_reason": "verdict",
+        "admission_ready": true,
+        "actions": [],
+        "error": null,
+        "hardware": false,
+        "mode": "auto",
+        "profile": "pc-controller"
+      },
+      "status": "passed"
+    },
+    {
+      "id": "manual-observation-does-not-actuate",
+      "failures": [],
+      "response": {
+        "status": 200,
+        "body": {
+          "status": "success",
+          "result": "pass",
+          "item": null,
+          "control": {
+            "esp32Accepted": null,
+            "esp32Status": null,
+            "esp32HttpStatus": null,
+            "esp32Error": null,
+            "controllerSession": null,
+            "itemId": null,
+            "acknowledgedControllerSession": null,
+            "acknowledgedItemId": null,
+            "controlOutcome": "not_requested",
+            "controlReason": "observational"
+          }
+        }
+      },
+      "executions": [
+        {
+          "id": 1013,
+          "status": "success"
+        }
+      ],
+      "status": "passed"
+    },
+    {
+      "id": "relay-heartbeat-and-reconnect",
+      "failures": [],
+      "messages": [
+        {
+          "type": "connected"
+        },
+        {
+          "type": "heartbeat",
+          "timestamp": "2026-10-28T11:12:10.939Z"
+        }
+      ],
+      "status": "passed"
+    },
+    {
+      "id": "watchdog-outage-dedup-and-recovery",
+      "failures": [],
+      "secondOfflinePoll": [
+        {
+          "id": 1016,
+          "status": "success"
+        }
+      ],
+      "down": {
+        "id": 59,
+        "created_at": "2026-10-28T11:12:15.252471+00:00",
+        "source": null,
+        "event_type": null,
+        "message": "model-server is not responding",
+        "status": null,
+        "inspection_id": null,
+        "logged_at": "2026-10-28T11:12:15.064+00:00",
+        "severity": "error",
+        "component": "model-server",
+        "details": {
+          "healthy": false
+        }
+      },
+      "recovered": {
+        "id": 60,
+        "created_at": "2026-10-28T11:12:25.188779+00:00",
+        "source": null,
+        "event_type": null,
+        "message": "model-server recovered",
+        "status": null,
+        "inspection_id": null,
+        "logged_at": "2026-10-28T11:12:25.063+00:00",
+        "severity": "info",
+        "component": "model-server",
+        "details": {
+          "healthy": true
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "id": "actual-scheduled-observation",
+      "failures": [
+        "fetch failed"
+      ],
+      "executions": [
+        {
+          "id": 1,
+          "status": "success"
+        }
+      ],
+      "status": "failed"
+    }
+  ]
+}

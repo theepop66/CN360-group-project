@@ -4,6 +4,8 @@
   "esp32BaseUrl": "http://REPLACE_ESP32_HOST",
   "relayBaseUrl": "http://REPLACE_RELAY_HOST:8081",
   "supabaseBaseUrl": "https://REPLACE_SUPABASE_HOST",
+  "supabaseCredentialId": "REPLACE_CREDENTIAL_ID",
+  "supabaseCredentialName": "CN360 Supabase",
   "snapshotBucket": "REPLACE_SNAPSHOT_BUCKET",
   "coverageThreshold": 0.005,
   "modelTimeoutMs": 1200

@@ -1,0 +1,9 @@
+**********************************************************************
+** Visual Studio 2026 Developer Command Prompt v18.9.1
+** Copyright (c) 2026 Microsoft Corporation
+**********************************************************************
+[vcvarsall.bat] Environment initialized for: 'x64'
+control_unit_state_test.cpp
+ControlUnitState.cpp
+Generating Code...
+135 checks, 0 failures

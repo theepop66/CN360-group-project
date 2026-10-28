@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 
 namespace controlunit {
 
@@ -11,6 +12,8 @@ enum class Verdict : uint8_t { Pass, Reject };
 enum class State : uint8_t { Idle, AwaitingVerdict, Rejecting, Passing };
 
 struct Config {
+  // Enable only under a validated single-item reject/hold bench arrangement.
+  bool admissionEnabled = false;
   uint32_t debounceMs = 30;
   uint32_t verdictTimeoutMs = 3000;
   int restAngle = 0;
@@ -20,6 +23,25 @@ struct Config {
   uint32_t rejectReturnMs = 150;
   uint32_t passSignalMs = 200;
   uint32_t alertHoldMs = 400;
+};
+
+struct ItemIdentity {
+  std::string controllerSession;
+  std::string itemId;
+};
+
+bool validItemIdentity(const ItemIdentity& item);
+
+enum class ReceiptReason : uint8_t {
+  Accepted, Expired, WrongSession, WrongItem, AlreadyResolved, NoActiveItem, InvalidRequest
+};
+
+const char* receiptReasonName(ReceiptReason reason);
+
+struct VerdictReceipt {
+  bool accepted = false;
+  ReceiptReason reason = ReceiptReason::NoActiveItem;
+  uint8_t actionCount = 0;
 };
 
 struct Action {
@@ -40,10 +62,11 @@ struct Action {
 
 class ControlUnit {
  public:
-  void init(uint32_t now, Config config = Config{});
+  void init(uint32_t now, Config config = Config{}, const char* session = "");
 
   uint8_t step(uint32_t now, bool sensorPresent, Action* out, uint8_t cap);
-  uint8_t acceptVerdict(uint32_t now, Verdict verdict, Action* out, uint8_t cap);
+  VerdictReceipt acceptVerdict(uint32_t now, const ItemIdentity& item, Verdict verdict,
+                               Action* out, uint8_t cap);
   bool setMode(uint32_t now, Mode mode);
   uint8_t manualAngle(uint32_t now, int angle, Action* out, uint8_t cap);
   uint8_t manualSweep(uint32_t now, Action* out, uint8_t cap);
@@ -53,6 +76,9 @@ class ControlUnit {
   bool itemPresent() const;
   uint32_t passCount() const;
   uint32_t rejectCount() const;
+  const ItemIdentity& itemIdentity() const;
+  bool admissionReady() const;
+  const char* resolutionReason() const;
 
  private:
   enum class Phase : uint8_t {
@@ -67,6 +93,7 @@ class ControlUnit {
 
   uint8_t emit(Action::Kind kind, int angle, Action* out, uint8_t cap, uint8_t idx) const;
   uint8_t resolvePass(uint32_t now, Action* out, uint8_t cap, uint8_t idx);
+  uint8_t resolveReject(uint32_t now, Action* out, uint8_t cap, uint8_t idx);
 
   Config config_;
   uint32_t now_ = 0;
@@ -80,6 +107,10 @@ class ControlUnit {
   bool rejectSequenceAlerted_ = false;
   uint32_t passCount_ = 0;
   uint32_t rejectCount_ = 0;
+  ItemIdentity item_;
+  uint64_t itemCounter_ = 0;
+  bool stationCleared_ = false;
+  bool timedOut_ = false;
 };
 
 }  // namespace controlunit

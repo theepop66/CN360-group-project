@@ -1,0 +1,65 @@
+{
+  "scope": "Fresh real model workers, default 1100 ms request deadline; no hardware",
+  "startupLimitSeconds": 300.0,
+  "maxSide": 448,
+  "samples": [
+    {
+      "restart": 1,
+      "health": {
+        "status": "ok",
+        "backend": "CUDA0",
+        "busy": false
+      },
+      "startupMs": 16162.083999999595,
+      "httpStatus": 504,
+      "body": {
+        "status": "error",
+        "reason": "model_timeout"
+      },
+      "elapsedMs": 1174.4971000007354,
+      "afterHealth": {
+        "status": "error",
+        "reason": "model_timeout"
+      }
+    },
+    {
+      "restart": 2,
+      "health": {
+        "status": "ok",
+        "backend": "CUDA0",
+        "busy": false
+      },
+      "startupMs": 17576.652200000353,
+      "httpStatus": 504,
+      "body": {
+        "status": "error",
+        "reason": "model_timeout"
+      },
+      "elapsedMs": 1184.803600000123,
+      "afterHealth": {
+        "status": "error",
+        "reason": "model_timeout"
+      }
+    },
+    {
+      "restart": 3,
+      "health": {
+        "status": "ok",
+        "backend": "CUDA0",
+        "busy": false
+      },
+      "startupMs": 11574.268200000006,
+      "httpStatus": 504,
+      "body": {
+        "status": "error",
+        "reason": "model_timeout"
+      },
+      "elapsedMs": 1192.4474999996164,
+      "afterHealth": {
+        "status": "error",
+        "reason": "model_timeout"
+      }
+    }
+  ],
+  "productionWarmRun": "blocked: fresh production worker did not complete its first prediction; diagnostic repetitions run separately"
+}

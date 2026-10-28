@@ -90,7 +90,8 @@ export function buildInspectionRow(decision, {
   inspectionTarget,
   modelInstruction,
   inspectedAt,
-  frameUrl
+  frameUrl,
+  itemContext
 } = {}) {
   const frame = readFrameContext(frameContext);
   return {
@@ -106,7 +107,9 @@ export function buildInspectionRow(decision, {
     coverage_threshold: decision.coverageThreshold ?? null,
     verdict: decision.verdict,
     prompt_verified: decision.promptVerified ?? null,
-    frame_url: orNull(frameUrl)
+    frame_url: orNull(frameUrl),
+    controller_session: itemContext?.controller_session ?? null,
+    item_id: itemContext?.item_id ?? null
   };
 }
 
@@ -117,7 +120,12 @@ export function buildControlActionRow({
   esp32Status,
   esp32HttpStatus,
   esp32Error,
-  requestedAt
+  requestedAt,
+  itemContext,
+  controlOutcome,
+  controlReason,
+  acknowledgedControllerSession,
+  acknowledgedItemId
 } = {}) {
   return {
     inspection_id: orNull(inspectionId),
@@ -126,7 +134,13 @@ export function buildControlActionRow({
     esp32_status: esp32Status ?? null,
     esp32_http_status: esp32HttpStatus ?? null,
     esp32_error: esp32Error ?? null,
-    requested_at: orNull(requestedAt)
+    requested_at: orNull(requestedAt),
+    controller_session: itemContext?.controller_session ?? null,
+    item_id: itemContext?.item_id ?? null,
+    control_outcome: controlOutcome ?? "delivery_unknown",
+    control_reason: controlReason ?? null,
+    ack_controller_session: acknowledgedControllerSession ?? null,
+    ack_item_id: acknowledgedItemId ?? null
   };
 }
 

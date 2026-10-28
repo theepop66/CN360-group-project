@@ -1,0 +1,34 @@
+
+> cn360-detection-relay@0.1.0 test
+> node --test
+
+✔ defaults suit a relay on the n8n machine with the token off (2.5271ms)
+✔ environment values override the defaults (0.3895ms)
+✔ an empty token leaves the token check off (0.2678ms)
+✔ invalid values fail at startup instead of later (0.7856ms)
+✔ an n8n HUD payload survives the relay and the HUD parser (55.1111ms)
+✔ the relay's own messages are ignored by the HUD parser (0.2683ms)
+✔ test\helpers.mjs (158.3258ms)
+✔ a posted payload reaches every connected HUD unchanged (60.6954ms)
+✔ posting with no HUD connected still succeeds (12.1455ms)
+✔ an empty detection list is forwarded so the HUD clears its overlay (12.1256ms)
+✔ confidence is removed before the payload reaches a HUD (14.6726ms)
+✔ a HUD that connects late gets a greeting and no earlier frame (120.9762ms)
+✔ malformed bodies are rejected and not broadcast (125.9539ms)
+✔ an oversized body is rejected with 413 (6.8479ms)
+✔ other methods on the detection path get 405 (4.9756ms)
+✔ unknown paths get 404 over HTTP and WebSocket (10.1084ms)
+✔ the health endpoint reports connected HUDs and the last ingest (10.8752ms)
+✔ healthy HUDs receive heartbeats the HUD parser ignores (263.7671ms)
+✔ a HUD that stops answering pings is dropped (138.7135ms)
+✔ with no ingest token configured, any token header is ignored (5.621ms)
+✔ with an ingest token configured, only the matching token is accepted (72.2937ms)
+✔ validatePayload and stripConfidence handle the edge cases directly (0.313ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1088.2521

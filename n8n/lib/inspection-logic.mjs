@@ -7,6 +7,7 @@ export const MODEL_PROMPT_TIMEOUT_MS = 250;
 export const CAPTURE_TIMEOUT_MS = 800;
 // Cloud persistence runs after the verdict and needs its own network allowance.
 export const SNAPSHOT_UPLOAD_TIMEOUT_MS = 3000;
+export const PERSISTENCE_TIMEOUT_MS = 3000;
 export const MODEL_TIMEOUT_MS = 1200;
 export const VERDICT_POST_TIMEOUT_MS = 250;
 export const PRE_VERDICT_BUDGET_MS =

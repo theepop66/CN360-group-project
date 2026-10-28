@@ -5,6 +5,7 @@ import { dirname, join } from "node:path";
 import {
   CAPTURE_TIMEOUT_MS,
   MODEL_PROMPT_TIMEOUT_MS,
+  PERSISTENCE_TIMEOUT_MS,
   SNAPSHOT_UPLOAD_TIMEOUT_MS,
   VERDICT_POST_TIMEOUT_MS
 } from "./inspection-logic.mjs";
@@ -86,7 +87,7 @@ function supabaseTable(name, position, table, jsonBody) {
     sendBody: true,
     specifyBody: "json",
     jsonBody,
-    options: {}
+    options: { timeout: PERSISTENCE_TIMEOUT_MS }
   });
   delete node.parameters.__continueOnError;
   return node;
@@ -296,7 +297,7 @@ const inserted = $input.first().json;
 const base = $('build-snapshot-url').first().json;
 const row = Array.isArray(inserted) ? inserted[0] : inserted;
 const inspectionId = row && typeof row === 'object' && row.id !== undefined ? row.id : null;
-return [{ json: { ...base, inspectionId, controlActionRow: buildControlActionRow({
+return [{ json: { ...base, inspectionId, inspectionWasInserted: row?.was_inserted !== false, controlActionRow: buildControlActionRow({
   inspectionId,
   action: base.action,
   esp32Accepted: base.esp32?.esp32Accepted ?? null,
@@ -546,8 +547,8 @@ return [{ json: { ...$input.first().json, snapshotObjectName: capturedItem.json.
       supabaseTable(
         "insert-inspection",
         [3120, 60],
-        "inspection_results",
-        "={{ JSON.stringify($json.inspectionRow) }}"
+        "rpc/cn360_record_inspection",
+        "={{ JSON.stringify({ inspection: $json.inspectionRow }) }}"
       ),
       codeNode("build-control-action", "build-control-action", [3340, 60], buildControlAction),
       supabaseTable(
@@ -556,6 +557,10 @@ return [{ json: { ...$input.first().json, snapshotObjectName: capturedItem.json.
         "control_actions",
         "={{ JSON.stringify($json.controlActionRow) }}"
       ),
+      booleanIfNode("inspection-record-is-new", [3680, 60], "={{ $('build-control-action').first().json.inspectionWasInserted }}"),
+      codeNode("build-record-duplicate", "build-record-duplicate", [3780, 260], `
+const base = $('build-control-action').first().json;
+return [{ json: { ...base, duplicate: true, duplicateSuppressedAt: new Date().toISOString() } }];`),
       codeNode("build-hud-broadcast", "build-hud-broadcast", [3780, 60], buildHudBroadcast),
       httpNode("broadcast-hud", "broadcast-hud", [4000, 60], {
         __continueOnError: true,
@@ -622,7 +627,9 @@ return [{ json: { ...$input.first().json, snapshotObjectName: capturedItem.json.
       link("build-inspection-record", "insert-inspection"),
       link("insert-inspection", "build-control-action"),
       link("build-control-action", "insert-control-action"),
-      link("insert-control-action", "build-hud-broadcast"),
+      link("insert-control-action", "inspection-record-is-new"),
+      branch("inspection-record-is-new", ["build-hud-broadcast", "build-record-duplicate"]),
+      link("build-record-duplicate", "build-duplicate-log"),
       link("build-hud-broadcast", "broadcast-hud"),
       link("broadcast-hud", "build-outcome-log"),
       link("build-outcome-log", "log-outcome"),
@@ -823,8 +830,6 @@ const emitted = [];
 for (const probe of rows) {
   const previous = store.health?.[probe.component];
   if (previous === probe.healthy) continue;
-  store.health = store.health ?? {};
-  store.health[probe.component] = probe.healthy;
   emitted.push({
     json: buildSystemLogRow({
       loggedAt: new Date().toISOString(),
@@ -838,6 +843,18 @@ for (const probe of rows) {
   });
 }
 return emitted;
+`;
+  // A failed/uncertain write must leave the transition pending for the next poll.
+  const commitHealthTransition = `
+const store = $getWorkflowStaticData('global');
+for (const item of $input.all()) {
+  for (const row of (Array.isArray(item.json) ? item.json : [item.json])) {
+    if (row.error || row.id == null || typeof row.component !== 'string' || typeof row.details?.healthy !== 'boolean') continue;
+    store.health = store.health ?? {};
+    store.health[row.component] = row.details.healthy;
+  }
+}
+return $input.all();
 `;
 
   return {
@@ -872,7 +889,8 @@ return emitted;
       codeNode("probe-capture-result", "probe-capture-result", [40, 100], probePi),
       codeNode("record-transitions", "record-transitions", [260, 0], recordTransitions),
       // record-transitions already emits a built system log row as $json.
-      supabaseTable("insert-health-log", [480, 0], "system_logs", "={{ JSON.stringify($json) }}")
+      supabaseTable("insert-health-log", [480, 0], "system_logs", "={{ JSON.stringify($json) }}"),
+      codeNode("commit-health-transition", "commit-health-transition", [700, 0], commitHealthTransition)
     ],
     connections: mergeLinks(
       link("trigger-health-schedule", "probe-model-health"),
@@ -881,7 +899,8 @@ return emitted;
       link("probe-capture", "probe-capture-result"),
       link("probe-model-result", "record-transitions"),
       link("probe-capture-result", "record-transitions"),
-      link("record-transitions", "insert-health-log")
+      link("record-transitions", "insert-health-log"),
+      link("insert-health-log", "commit-health-transition")
     ),
     settings: { executionOrder: "v1" },
     active: false,

@@ -815,6 +815,21 @@ test("the control action is anchored to the id PostgREST returns", () => {
   );
 });
 
+test("a concurrent retry reuses the inspection anchor while preserving its own control receipt", () => {
+  const base = { action: "reject", decidedAt: "2026-01-01T00:00:00Z",
+    itemContext: { controller_session: "boot", item_id: "9" },
+    esp32: { esp32Accepted: false, esp32Status: "ignored", controlOutcome: "ignored", controlReason: "already_resolved" } };
+  const result = runCode(inspection, "build-control-action", {
+    items: [{ json: { id: "first-inspection", was_inserted: false } }], nodes: { "build-snapshot-url": base }
+  })[0].json;
+  assert.equal(result.inspectionWasInserted, false);
+  assert.equal(result.controlActionRow.inspection_id, "first-inspection");
+  assert.equal(result.controlActionRow.esp32_accepted, false);
+  const duplicate = runCode(inspection, "build-record-duplicate", { nodes: { "build-control-action": result } })[0].json;
+  assert.equal(duplicate.duplicate, true);
+  assert.equal(duplicate.itemContext.item_id, "9");
+});
+
 test("every Supabase insert sends one named row, not the execution envelope", () => {
   const expected = {
     "insert-inspection": "inspectionRow",
@@ -828,7 +843,9 @@ test("every Supabase insert sends one named row, not the execution envelope", ()
       candidate.nodes.some((n) => n.name === node)
     );
     const body = nodeNamed(workflow, node).parameters.jsonBody;
-    assert.equal(body, `={{ JSON.stringify($json.${field}) }}`, `${node} must send $json.${field}`);
+    const value = { proof: "row-content" };
+    const serialized = new Function("$json", `return ${body.slice(3, -2)}`)({ [field]: value, privateExecutionEnvelope: "must-not-be-sent" });
+    assert.deepEqual(JSON.parse(serialized), node === "insert-inspection" ? { inspection: value } : value);
   }
 });
 
@@ -882,9 +899,9 @@ test("the broadcast targets the relay ingest rather than the HUD websocket", () 
   );
 });
 
-test("Supabase is written over PostgREST so the column names stay visible", () => {
+test("inspection persistence uses the atomic PostgREST RPC and other audit writes retain named resources", () => {
   const insert = nodeNamed(inspection, "insert-inspection");
-  assert.equal(insert.parameters.url, `=https://${PLACEHOLDERS.supabaseHost}/rest/v1/inspection_results`);
+  assert.equal(insert.parameters.url, `=https://${PLACEHOLDERS.supabaseHost}/rest/v1/rpc/cn360_record_inspection`);
   assert.equal(insert.parameters.sendBody, true);
   assert.ok(insert.parameters.jsonBody.includes("$json."), "an insert must name the row it sends");
 
@@ -895,7 +912,7 @@ test("Supabase is written over PostgREST so the column names stay visible", () =
     .map((url) => url.split("/rest/v1/")[1]);
 
   for (const table of [
-    "inspection_results",
+    "rpc/cn360_record_inspection",
     "control_actions",
     "prompt_history",
     "system_logs"
@@ -967,6 +984,10 @@ test("the health watchdog records transitions rather than every poll", () => {
   );
   assert.equal(first[1].json.message, "capture is not responding");
 
+  runCode(healthWatchdog, "commit-health-transition", {
+    items: first.map((item, index) => ({ json: { ...item.json, id: index + 1 } })), store
+  });
+
   const unchanged = runCode(healthWatchdog, "record-transitions", {
     items: [{ json: { component: "model", healthy: true } }, { json: { component: "capture", healthy: false } }],
     store
@@ -979,6 +1000,16 @@ test("the health watchdog records transitions rather than every poll", () => {
   });
   assert.equal(flipped.length, 1);
   assert.equal(flipped[0].json.severity, "error");
+});
+
+test("a failed health log write leaves the transition pending until persistence confirms it", () => {
+  const store = {};
+  const probe = { items: [{ json: { component: "model", healthy: true } }], store };
+  const pending = runCode(healthWatchdog, "record-transitions", probe);
+  runCode(healthWatchdog, "commit-health-transition", { items: [{ json: { error: "timeout" } }], store });
+  assert.equal(runCode(healthWatchdog, "record-transitions", probe).length, 1);
+  runCode(healthWatchdog, "commit-health-transition", { items: [{ json: { ...pending[0].json, id: 42 } }], store });
+  assert.deepEqual(runCode(healthWatchdog, "record-transitions", probe), []);
 });
 
 test("the health watchdog probes the model server and the capture service", () => {

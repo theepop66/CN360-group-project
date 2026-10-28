@@ -19,10 +19,13 @@ const { values: options } = parseArgs({ options: {
   "n8n-port": { type: "string", default: "5682" }, docker: { type: "string", default: process.env.CN360_DOCKER ?? "docker" },
   image: { type: "string", default: "n8n-backup:latest" },
   "credential-store": { type: "boolean", default: false },
+  "stress-rounds": { type: "string", default: "0" },
   "max-side": { type: "string", default: "0" }, "direct-variants": { type: "string", default: "original,jpeg" },
 } });
 if (!["fixtures", "real", "all", "diagnostic"].includes(options.mode)) throw new Error("mode must be fixtures, real, all or diagnostic");
 const repetitions = Number(options.repetitions);
+const stressRounds = Number(options["stress-rounds"]);
+if (!Number.isInteger(stressRounds) || stressRounds < 0 || stressRounds > 100) throw new Error("stress-rounds must be 0..100");
 if (!Number.isInteger(repetitions) || repetitions < 1 || repetitions > 1000) throw new Error("repetitions must be 1..1000");
 const runId = new Date().toISOString().replace(/[:.]/g, "-");
 const output = resolve(options.output ?? join(root, "n8n/.runtime/static-inspection", runId));
@@ -33,7 +36,7 @@ const frameFor = c => ({ bytes: readFileSync(c.file), width: c.width, height: c.
 const report = {
   runId, startedAt: new Date().toISOString(), mode: options.mode, gitRevision: (await command("git", ["rev-parse", "HEAD"], { cwd: root })).trim(),
   scope: "Real isolated n8n webhooks; still-image capture substitute; recording actuator/database/storage/relay. Physical acceptance and actual DB/Pico delivery remain unverified.",
-  settings: { threshold: 0.005, n8nModelTimeoutMs: 1200, controllerWindowMs: 3000, jpegQuality: 95, jpegSubsampling: 0, repetitions, maxSide: Number(options["max-side"]), authentication: options["credential-store"] ? "n8n-stored-supabase-credential" : "inline-fixture-key" },
+  settings: { threshold: 0.005, n8nModelTimeoutMs: 1200, controllerWindowMs: 3000, jpegQuality: 95, jpegSubsampling: 0, repetitions, stressRounds, maxSide: Number(options["max-side"]), authentication: options["credential-store"] ? "n8n-stored-supabase-credential" : "inline-fixture-key" },
   cases: [], blocked: ["Camera deployment deferred", "Physical sensor/servo and Pico acceptance not executed", "Real database/storage/relay acceptance needs configured test services"],
 };
 if (options.mode === "diagnostic") report.scope += " Measurement-only model service; this run cannot establish the production service's 1100 ms deadline.";
@@ -90,6 +93,8 @@ async function inspect(id, scenario = {}, c = baseCase, count = 1) {
     const receipt = context.events.find(e => e.stage === "verdict-received");
     row.verdictReceiptMs = receipt ? receipt.atMs - started : null;
     await fixture.waitFor(context, "completed", count, 30000);
+    row.completionMs = performance.now() - started;
+    if (scenario.maxCompletionMs) check(row, row.completionMs < scenario.maxCompletionMs, "Persistence stalled workflow completion");
     row.executions = await runtime.waitExecutions(context.completions.map(c => c.executionId));
     check(row, row.executions.every(e => e.status === "success"), "n8n execution did not finish successfully");
     if (scenario.modelDelayMs || scenario.realModel) {
@@ -117,7 +122,7 @@ async function inspect(id, scenario = {}, c = baseCase, count = 1) {
       check(row, Boolean(inspection?.row.frame_url), "Delayed snapshot upload did not produce a persisted URL");
       check(row, context.events.some(e => e.stage === "hud-delivery" && e.payload.snapshotUrl === inspection?.row.frame_url), "HUD snapshot URL differs from persisted URL");
     }
-    if (control && inspection) check(row, control.row.inspection_id === (scenario.databaseError ? null : `${id}-inspection_results`), "Control Action FK differs from returned inspection ID");
+    if (control) check(row, control.row.inspection_id === (scenario.databaseError || scenario.databaseUnresponsive ? null : context.events.find(e => e.stage === "inspection-record-result")?.id), "Control Action FK differs from returned inspection ID");
     if (scenario.echoMismatch) check(row, context.completions[0].decision.promptVerified === false, "Prompt mismatch not recorded");
     if (scenario.verdictIgnored) check(row, context.completions[0].control?.esp32Accepted === false, "Ignored verdict recorded as accepted");
     if (scenario.repeatFrame) check(row, context.completions[0].duplicate === true && !inspection && !context.events.some(e => e.stage === "hud-delivery"), "Duplicate record/HUD suppression failed");
@@ -125,6 +130,8 @@ async function inspect(id, scenario = {}, c = baseCase, count = 1) {
     if (scenario.checkBusy) check(row, context.events.some(e => e.stage === "model-end" && e.body?.reason === "model_busy"), "Concurrent native request rejection was not observed");
   } catch (error) {
     row.failures.push(error.message); row.result ??= "error"; row.reason ??= "test_execution_failed";
+    const ids = [...new Set(context.events.map(event => event.executionId).filter(Boolean))];
+    row.executionDiagnostics = await runtime.executionDetails(ids).catch(diagnosticError => ({ error: diagnosticError.message }));
     if (row.elapsedMs == null && inspectionStarted != null) { row.elapsedMs = performance.now() - inspectionStarted; row.elapsedCensored = true; }
   }
   // Downstream completion failure must not cause the next sequential case to
@@ -159,6 +166,7 @@ try {
       ["prompt-echo-mismatch", { echoMismatch: true, coverage: 0.01, expected: "reject" }],
       ["ignored-verdict", { verdictIgnored: true, expected: "pass" }], ["verdict-offline", { verdictOffline: true, expected: "pass" }],
       ["snapshot-offline", { snapshotError: true, expected: "pass" }], ["database-offline", { databaseError: true, expected: "pass" }],
+      ["database-stall", { databaseUnresponsive: true, expected: "pass", maxCompletionMs: 15000 }],
       ["snapshot-cloud-latency", { snapshotDelayMs: 550, snapshotRequired: true, expected: "pass" }],
       ["relay-offline", { relayError: true, expected: "pass" }], ["item-event", { path: "item-detected", expected: "pass" }],
       ["fresh-for-duplicate", { expected: "pass" }], ["repeat-frame", { repeatFrame: true, verdictIgnored: true, expected: "pass" }],
@@ -169,6 +177,10 @@ try {
     for (const [id, scenario] of scenarios) await inspect(id, scenario);
     fixture.restartSession(); await inspect("new-session", { expected: "pass" });
     for (const count of [2, 5]) await inspect(`concurrent-${count}`, { expected: "reject", coverage: 0.01 }, baseCase, count);
+    for (let round = 1; round <= stressRounds; round++) {
+      await inspect(`stress-${round}-timeout`, { modelDelayMs: 1250, expected: "error" });
+      await inspect(`stress-${round}-burst`, { coverage: 0.01 }, baseCase, 5);
+    }
     for (const [id, target, failure, http] of [["prompt-normalized", " scratch. ", false, 200], ["prompt-blank", " ", false, 400], ["prompt-failure", "hole", true, 502]]) {
       const context = fixture.select({ id, frame: frameFor(baseCase), promptError: failure });
       const response = await post("detection-prompt", { prompt: target });

@@ -34,6 +34,9 @@ export async function startInspectionFixture({ port = 0, upstream = null, verdic
   let sequence = 0;
   let active = null;
   const contexts = new Map();
+  const inspectionIds = new Map();
+  const inspectionSequences = new Map();
+  const completionKeys = new WeakMap();
   let currentPrompt = buildModelInstruction("scratch");
   const sockets = new Set();
   const server = createServer(async (req, res) => {
@@ -62,8 +65,15 @@ export async function startInspectionFixture({ port = 0, upstream = null, verdic
           if (!owner) { reply(409, { error: "unknown test case" }); return; }
           context = owner;
         }
-        context.completions.push(completion);
-        event("completed", { executionId: completion.executionId });
+        const keys = completionKeys.get(context) ?? new Set();
+        completionKeys.set(context, keys);
+        const kind = completion.healthProbe ? "health:" + completion.healthProbe : completion.promptComplete ? "prompt" : "inspection";
+        const key = completion.executionId == null ? null : JSON.stringify([completion.executionId, kind]);
+        if (key === null || !keys.has(key)) {
+          if (key !== null) keys.add(key);
+          context.completions.push(completion);
+          event("completed", { executionId: completion.executionId });
+        }
         reply(200, {}); return;
       }
       if (url.pathname === "/health") {
@@ -169,10 +179,28 @@ export async function startInspectionFixture({ port = 0, upstream = null, verdic
         if (context.snapshotDelayMs) await delay(context.snapshotDelayMs);
         reply(context.snapshotError ? 503 : 200, { Key: "test/snapshot.jpg" }); return;
       }
+      if (url.pathname === "/rest/v1/rpc/cn360_record_inspection") {
+        const { inspection: row } = JSON.parse(body.toString());
+        event("inspection-record-request", { row });
+        if (context.databaseUnresponsive) return;
+        if (context.databaseError) { reply(503, { error: "database_unavailable" }); return; }
+        const key = row.controller_session && row.item_id ? JSON.stringify([row.controller_session, row.item_id]) : null;
+        const existing = key ? inspectionIds.get(key) : null;
+        let id = existing;
+        if (!id) {
+          const number = (inspectionSequences.get(context.id) ?? 0) + 1; inspectionSequences.set(context.id, number);
+          id = `${context.id}-inspection_results${number === 1 ? "" : "-" + number}`;
+          if (key) inspectionIds.set(key, id);
+          event("database-write", { table: "inspection_results", row });
+        }
+        event("inspection-record-result", { id, was_inserted: !existing });
+        reply(200, [{ id, was_inserted: !existing }]); return;
+      }
       if (url.pathname.startsWith("/rest/v1/")) {
         const table = url.pathname.split("/").at(-1);
         const row = JSON.parse(body.toString());
         event("database-write", { table, row });
+        if (context.databaseUnresponsive) return;
         reply(context.databaseError ? 503 : 200, [{ ...row, id: `${context.id}-${table}` }]); return;
       }
       if (url.pathname === "/detections") {
@@ -191,6 +219,7 @@ export async function startInspectionFixture({ port = 0, upstream = null, verdic
   return {
     origin: `http://127.0.0.1:${server.address().port}`,
     get current() { return active; },
+    get modelPrompt() { return currentPrompt; },
     select(options) {
       active = { instruction: buildModelInstruction(options.target ?? "scratch"), events: [], completions: [], ...options };
       contexts.set(active.id, active);

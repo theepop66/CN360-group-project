@@ -12,6 +12,9 @@ defined in [local ticket 07](../.scratch/locate-anything-n8n/issues/07-item-verd
 
 ## Import
 
+For saved-picture testing with the PC controller and real cloud/relay services,
+use the [software integration profile](SOFTWARE-BENCH.md).
+
 1. Create/select an n8n **Supabase API** credential and copy `runtime.example.json`
    to `runtime.local.json`. Fill service origins, bucket and credential ID.
 2. Run `node configure.mjs` from this folder. Import the three generated files
@@ -140,6 +143,10 @@ create a complete database from scratch.
 
 The applied access/schema SQL and live verification are in the
 [Supabase runtime report](../docs/evidence/supabase-runtime-2026-10-27/README.md).
+Apply [002-idempotent-inspections.sql](sql/002-idempotent-inspections.sql) after
+that compatibility migration. Inspection inserts now call
+`/rest/v1/rpc/cn360_record_inspection`; the backend role requires execute access
+to this function as well as the existing table/sequence access.
 The required workflow fields are:
 
 - `inspection_results` เน€เธยเนยเธเนโฌย `inspection_at`, `inspection_target`,
@@ -187,17 +194,19 @@ model timeout. The revised controller prevents timeout auto-pass and stale-item 
 Automatic sorting still requires measured production timing and a demonstrated
 physical reject/hold arrangement; the default firmware disables admission.
 
-## The HUD overlay is not done yet
+## HUD delivery
 
 Stock n8n cannot broadcast to a WebSocket, so the workflow POSTs to a relay's
 HTTP ingest (`/detections`) and that relay fans out to
-`ws://n8n-gateway.local:8081/detections`. The relay does not exist yet; the
-broadcast is a fire-and-forget no-op until it does. The ingest path is a
-proposal and needs confirming with whoever builds it.
+the configured relay's WebSocket `/detections`. The
+[detection relay](../detection-relay/README.md) supplies this bridge and is
+included in the software test profile. Hardware HUD configuration still needs
+the reachable host address rather than the old placeholder.
 
 The payload itself is verified: the tests feed it to the HUD's real
 `parseDetectionPayload` and assert a box round-trips to the same pixel
-coordinates, so the overlay will land in the right place once the relay exists.
+coordinates. The software acceptance additionally observes real relay messages;
+physical Pico acceptance remains separate.
 
 ## Duplicate suppression, and its limit
 
@@ -206,8 +215,13 @@ observational inspections use camera session and frame sequence. A repeated
 paired event still reaches the controller, whose identity/deadline checks prevent
 repeated actuation. A duplicate audit row retains the original item context.
 
-Workflow suppression is per n8n instance and does not survive a restart. The
-controller remains the backstop against double actuation.
+The fast workflow cache is per n8n instance. Durable paired inspection ownership
+is enforced by `cn360_record_inspection` in PostgreSQL, serializing concurrent
+callers for the same full item pair and returning the original inspection ID.
+Racing attempts retain their own control receipts against that ID while only the
+inserting execution broadcasts the HUD result. Historical duplicates are not
+rewritten. Observational checks retain the workflow cache behavior.
+The controller remains the backstop against double actuation.
 
 ## Development
 

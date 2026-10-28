@@ -8,6 +8,34 @@ import { testWorkflows } from "../lib/inspection-test-runtime.mjs";
 const image = readFileSync(new URL("../../test-assets/product-defects/bottle__good__000.png", import.meta.url));
 const frame = { bytes: image, width: 900, height: 900, mimeType: "image/png", file: "bottle.png" };
 
+test("completion observers retry idempotently without suppressing distinct health probes or executions", async t => {
+  const fixture = await startInspectionFixture(); t.after(() => fixture.close());
+  const context = fixture.select({ id: "observers", frame });
+  const send = body => fetch(fixture.origin + "/completed", { method: "POST", body: JSON.stringify({ testCaseId: context.id, ...body }) });
+  await send({ executionId: "1" }); await send({ executionId: "1" });
+  await send({ executionId: "2", healthProbe: "model" });
+  await send({ executionId: "2", healthProbe: "capture" });
+  await send({ executionId: "2", healthProbe: "capture" });
+  assert.equal(context.completions.length, 3);
+  context.completions.length = 0;
+  await send({ executionId: "1" });
+  assert.equal(context.completions.length, 0, "clearing observations must not make an old retry look new");
+  await send({ executionId: "3" }); assert.equal(context.completions.length, 1);
+});
+
+test("inspection RPC fixture gives concurrent retries one stable record without merging different items", async t => {
+  const fixture = await startInspectionFixture(); t.after(() => fixture.close());
+  const context = fixture.select({ id: "atomic", frame });
+  const submit = async item => (await (await fetch(fixture.origin + "/rest/v1/rpc/cn360_record_inspection", {
+    method: "POST", body: JSON.stringify({ inspection: { controller_session: "session", item_id: item } })
+  })).json())[0];
+  const results = await Promise.all(Array.from({ length: 5 }, () => submit("18446744073709551615")));
+  assert.equal(new Set(results.map(r => r.id)).size, 1);
+  assert.equal(results.filter(r => r.was_inserted).length, 1);
+  assert.notEqual((await submit("another-item")).id, results[0].id);
+  assert.equal(context.events.filter(e => e.stage === "database-write").length, 2);
+});
+
 test("credential fixture requires both Supabase headers before any persistence side effect", async t => {
   const fixture = await startInspectionFixture({ requireSupabaseAuth: true });
   t.after(() => fixture.close());

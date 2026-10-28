@@ -35,6 +35,11 @@ export function configureWorkflows(config, supabaseKey) {
     throw new Error("Explicit coverageThreshold and modelTimeoutMs must satisfy the Verdict Window");
   }
   mappings.set(PLACEHOLDERS.supabaseKey, useStoredCredential ? "__CN360_CREDENTIAL__" : supabaseKey);
+  const relayIngestToken = config.relayIngestToken ?? "";
+  if (typeof relayIngestToken !== "string" || !/^[A-Za-z0-9._~-]*$/.test(relayIngestToken) || relayIngestToken.includes("REPLACE_")) {
+    throw new Error("relayIngestToken must be empty or use only letters, digits, '.', '_', '~' and '-'");
+  }
+  mappings.set(PLACEHOLDERS.relayIngestToken, relayIngestToken);
   mappings.set(PLACEHOLDERS.snapshotBucket, config.snapshotBucket);
   mappings.set(PLACEHOLDERS.coverageThreshold, String(threshold.value));
   mappings.set(PLACEHOLDERS.modelTimeoutMs, String(budget.modelTimeoutMs));

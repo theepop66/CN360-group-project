@@ -50,6 +50,7 @@ function parseArgs(argv) {
     cert: "",
     key: "",
     controlUnit: DEFAULT_CONTROL_UNIT,
+    relayOrigin: "http://127.0.0.1:8081",
     root: DEFAULT_ROOT
   };
   const names = new Map([
@@ -58,6 +59,7 @@ function parseArgs(argv) {
     ["--cert", "cert"],
     ["--key", "key"],
     ["--control-unit", "controlUnit"],
+    ["--relay-origin", "relayOrigin"],
     ["--root", "root"]
   ]);
 
@@ -193,6 +195,52 @@ export function createHandler({ root, controlUnit }) {
   };
 }
 
+// Tunnel the fixed read-only channel through the HUD's HTTP/TLS listener.
+// No browser cookies or credentials are forwarded to the relay.
+export function attachDetectionRelay(server, { relayOrigin = "http://127.0.0.1:8081" } = {}) {
+  const target = new URL(relayOrigin);
+  if (!["http:", "https:"].includes(target.protocol) || target.username || target.password || target.pathname !== "/" || target.search || target.hash) {
+    throw new Error("--relay-origin must be an HTTP(S) origin without credentials or a path");
+  }
+  const sockets = new Set();
+  const upgrade = (req, socket, head) => {
+    // An upgraded browser can reset before the relay finishes its handshake.
+    // Own its errors immediately, including rejected upgrade paths.
+    socket.on("error", () => socket.destroy());
+    if (req.method !== "GET" || req.url !== "/detections") { socket.end("HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n"); return; }
+    const headers = { connection: "Upgrade", upgrade: "websocket" };
+    for (const name of ["sec-websocket-key", "sec-websocket-version", "sec-websocket-protocol"]) {
+      if (req.headers[name]) headers[name] = req.headers[name];
+    }
+    const requestImpl = target.protocol === "https:" ? httpsRequest : httpRequest;
+    const proxy = requestImpl(new URL("/detections", target), { headers, agent: false });
+    sockets.add(socket); socket.once("close", () => { sockets.delete(socket); proxy.destroy(); });
+    const fail = () => { if (!socket.destroyed) socket.end("HTTP/1.1 502 Bad Gateway\r\nConnection: close\r\n\r\n"); };
+    proxy.setTimeout(3000, () => proxy.destroy(new Error("relay upgrade timeout")));
+    proxy.once("error", fail);
+    proxy.once("response", res => { res.resume(); fail(); });
+    proxy.once("upgrade", (res, upstream, upstreamHead) => {
+      proxy.setTimeout(0); sockets.add(upstream);
+      upstream.once("close", () => { sockets.delete(upstream); socket.destroy(); });
+      upstream.once("error", () => socket.destroy()); socket.once("error", () => upstream.destroy());
+      socket.once("close", () => upstream.destroy());
+      const responseHeaders = [];
+      for (const name of ["upgrade", "connection", "sec-websocket-accept", "sec-websocket-protocol"]) {
+        if (res.headers[name]) responseHeaders.push(`${name}: ${res.headers[name]}`);
+      }
+      socket.write("HTTP/1.1 101 Switching Protocols\r\n" + responseHeaders.join("\r\n") + "\r\n\r\n");
+      if (head.length) upstream.write(head);
+      if (upstreamHead.length) socket.write(upstreamHead);
+      socket.pipe(upstream).pipe(socket);
+    });
+    proxy.end();
+  };
+  server.on("upgrade", upgrade);
+  const detach = () => { server.off("upgrade", upgrade); for (const socket of sockets) socket.destroy(); sockets.clear(); };
+  server.once("close", detach);
+  return detach;
+}
+
 function lanAddresses() {
   const addresses = [];
   for (const entries of Object.values(networkInterfaces())) {
@@ -224,6 +272,7 @@ async function main() {
 
   if (options.httpPort > 0) {
     const server = createHttpServer(handler);
+    attachDetectionRelay(server, options);
     await listen(server, options.httpPort, "HTTP");
     started.push(`HTTP  http://localhost:${options.httpPort}/`);
     for (const address of addresses) started.push(`      http://${address}:${options.httpPort}/`);
@@ -237,6 +286,7 @@ async function main() {
       cert: readFileSync(options.cert),
       key: readFileSync(options.key)
     }, handler);
+    attachDetectionRelay(server, options);
     await listen(server, options.httpsPort, "HTTPS");
     started.push(`HTTPS https://localhost:${options.httpsPort}/`);
     for (const address of addresses) started.push(`      https://${address}:${options.httpsPort}/`);
@@ -246,6 +296,7 @@ async function main() {
 
   console.log("[hud] serving", options.root);
   console.log(`[hud] /esp/* -> ${options.controlUnit}`);
+  console.log(`[hud] WebSocket /detections -> ${options.relayOrigin}/detections`);
   for (const line of started) console.log(`[hud] ${line}`);
   console.log("[hud] open the PICO at the HTTPS address, e.g. https://<pc-ip>:8443/?xrdebug=1");
 }

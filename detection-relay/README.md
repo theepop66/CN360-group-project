@@ -48,8 +48,13 @@ Invalid values stop the relay at startup.
 
 then run `node configure.mjs`.
 
-**HUD.** The default is `ws://n8n.local:8081/detections`. If the n8n machine
-has another name or IP, change it in the HUD's Connection settings.
+**HUD.** Start `pico-webapp/tools/hud-server.mjs` on the PC. Its default channel
+is `/detections` on the HUD page's own host/port, using `ws://` over HTTP and
+`wss://` over HTTPS. The HUD server tunnels it to `http://127.0.0.1:8081`;
+set `--relay-origin http://<relay-host>:8081` when the relay runs elsewhere.
+This avoids a hardcoded hostname and mixed-content failures on HTTPS/WebXR.
+Static servers without this tunnel must override the channel in Connection
+settings with a reachable direct relay or TLS-proxy URL.
 
 The relay uses plain `ws://` and HTTP. It is meant for the closed line LAN.
 

@@ -23,6 +23,7 @@ export const PLACEHOLDERS = Object.freeze({
   piHost: "REPLACE_PI_HOST:8000",
   esp32Host: "REPLACE_ESP32_HOST",
   relayHost: "REPLACE_RELAY_HOST:8081",
+  relayIngestToken: "REPLACE_RELAY_INGEST_TOKEN",
   supabaseHost: "REPLACE_SUPABASE_HOST",
   supabaseKey: "REPLACE_SUPABASE_SERVICE_ROLE_KEY",
   coverageThreshold: "REPLACE_COVERAGE_THRESHOLD",
@@ -34,7 +35,7 @@ export const PLACEHOLDERS = Object.freeze({
 // inlined verbatim. The workflow tests fail if this stops matching the sources.
 export function sharedLogicSource() {
   const sources = ["inspection-logic.mjs", "inspection-records.mjs", "item-control.mjs"].map(
-    (name) => readFileSync(join(LIB, name), "utf8")
+    (name) => readFileSync(join(LIB, name), "utf8").replace(/\r\n/g, "\n")
   );
 
   return sources
@@ -567,7 +568,8 @@ return [{ json: { ...base, duplicate: true, duplicateSuppressedAt: new Date().to
         method: "POST",
         url: `=${RELAY_DETECTIONS}`,
         sendHeaders: true,
-        headerParameters: { parameters: [{ name: "Content-Type", value: "application/json" }] },
+        headerParameters: { parameters: [{ name: "Content-Type", value: "application/json" },
+          { name: "X-CN360-Relay-Token", value: PLACEHOLDERS.relayIngestToken }] },
         sendBody: true,
         specifyBody: "json",
         jsonBody: "={{ JSON.stringify($json.hudPayload) }}",

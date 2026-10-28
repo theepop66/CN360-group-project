@@ -46,3 +46,14 @@ test("invalid stored credential references are rejected instead of reverting to 
     assert.throws(() => configureWorkflows({ ...config, supabaseCredentialId: id }, "fixture-key"), /credential/i);
   }
 });
+
+test("relay tokens are optional, literal, and independent of the Supabase credential", () => {
+  for (const token of [undefined, "", "abc123-XYZ"]) {
+    const flows = configureWorkflows({ ...config, supabaseCredentialId: "stored-id", relayIngestToken: token });
+    const broadcast = Object.values(flows).flatMap(f => f.nodes).find(n => n.name === "broadcast-hud");
+    assert.equal(broadcast.parameters.headerParameters.parameters.find(h => h.name === "X-CN360-Relay-Token").value, token ?? "");
+  }
+  for (const token of ["has space", "={{ $env.X }}", "REPLACE_RELAY_INGEST_TOKEN", 42]) {
+    assert.throws(() => configureWorkflows({ ...config, relayIngestToken: token }, "fixture-key"), /relayIngestToken/);
+  }
+});

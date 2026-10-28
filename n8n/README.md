@@ -33,6 +33,7 @@ goes missing, so this list cannot drift away from the workflows.
 | `REPLACE_PI_HOST:8000` | The Raspberry Pi | Must be reachable from the n8n host. |
 | `REPLACE_ESP32_HOST` | The ESP32 | Its static IP on the line. |
 | `REPLACE_RELAY_HOST:8081` | The detection relay | See "The HUD overlay is not done yet". |
+| `REPLACE_RELAY_INGEST_TOKEN` | Optional relay ingest token | Empty by default; if configured, match `RELAY_INGEST_TOKEN` on the relay. Never commit a real token. |
 | `REPLACE_SUPABASE_HOST` | `<project-ref>.supabase.co` | Hostname only; the workflow already includes `https://`. |
 | `REPLACE_SUPABASE_SERVICE_ROLE_KEY` | Removed by stored-credential configuration | Use the native Supabase API credential below; do not paste a key into the template. |
 | `REPLACE_SNAPSHOT_BUCKET` | A **public** bucket name | Create the bucket first; the stored `frame_url` points at `/storage/v1/object/public/...`. |
@@ -195,6 +196,12 @@ Automatic sorting still requires measured production timing and a demonstrated
 physical reject/hold arrangement; the default firmware disables admission.
 
 ## HUD delivery
+
+Set `relayIngestToken` only when the relay uses `RELAY_INGEST_TOKEN`. The workflow
+sends it in `X-CN360-Relay-Token`; the empty default leaves the relay check off.
+Use `http://host.docker.internal:8081` for n8n in Docker, or
+`http://127.0.0.1:8081` for a host process. Browsers use the HUD server's
+same-origin `/detections` socket; its HTTP/TLS listener proxies to the relay.
 
 Stock n8n cannot broadcast to a WebSocket, so the workflow POSTs to a relay's
 HTTP ingest (`/detections`) and that relay fans out to

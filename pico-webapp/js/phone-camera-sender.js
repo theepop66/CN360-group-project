@@ -1,15 +1,19 @@
+import { readCameraZoom, applyCameraZoom } from "./camera-zoom.js";
+
 const form = document.querySelector("#sender-form");
 const startButton = document.querySelector("#start");
 const stopButton = document.querySelector("#stop");
 const codeInput = document.querySelector("#pairing-code");
 const status = document.querySelector("#status");
 const video = document.querySelector("#preview");
+const zoomStatus = document.querySelector("#camera-zoom-status");
 const canvas = document.createElement("canvas");
 let generation = 0;
 let media = null;
 let session = null;
 let pending = null;
 let cancelFrameWait = null;
+let zoomApplyingGeneration = null;
 
 function nextVideoFrame() {
   return new Promise((resolve, reject) => {
@@ -41,6 +45,7 @@ async function api(path, options) {
 
 function stop(message = "หยุดส่งภาพแล้ว") {
   generation++;
+  zoomApplyingGeneration = null;
   pending?.abort();
   cancelFrameWait?.();
   if (session) {
@@ -55,6 +60,8 @@ function stop(message = "หยุดส่งภาพแล้ว") {
 
 async function publish(current, serverTime, clockStart) {
   let sequence = 0;
+  let confirmedZoomCommand = 0;
+  const track = media.getVideoTracks()[0];
   while (current === generation) {
     await nextVideoFrame();
     if (current !== generation) return;
@@ -69,12 +76,44 @@ async function publish(current, serverTime, clockStart) {
     if (!blob) throw new Error("ไม่สามารถแปลงภาพจากกล้องได้");
     const result = await api("/phone-camera/frame", {
       method: "POST", body: blob,
-      headers: { Authorization: `Bearer ${session.token}`, "Content-Type": "image/jpeg", "X-Frame-Sequence": String(++sequence), "X-Captured-At-Ms": String(capturedMs) }
+      headers: { Authorization: `Bearer ${session.token}`, "Content-Type": "image/jpeg", "X-Frame-Sequence": String(++sequence), "X-Captured-At-Ms": String(capturedMs), "X-Camera-Zoom-Command": String(confirmedZoomCommand) }
     });
     if (current !== generation) return;
+    if (result.zoomCommand) {
+      zoomApplyingGeneration = current;
+      let error = null;
+      try {
+        await applyCameraZoom(track, result.zoomCommand.value, async () => {
+          if (current !== generation) throw new Error("sender_stopped");
+          await nextVideoFrame();
+          if (current !== generation) throw new Error("sender_stopped");
+          await nextVideoFrame();
+        });
+      } catch (failure) {
+        // A timed-out camera operation may still finish later. Stop this track
+        // instead of uploading pixels with an uncertain zoom revision.
+        if (failure.message === "camera_zoom_timeout") throw failure;
+        error = "camera_zoom_apply_failed";
+      }
+      finally { if (zoomApplyingGeneration === current) zoomApplyingGeneration = null; }
+      if (current !== generation) return;
+      await reportZoom(track, result.zoomCommand.id, error);
+      confirmedZoomCommand = result.zoomCommand.id;
+      if (current !== generation) return;
+    }
     status.textContent = `กำลังส่งภาพ · ${canvas.width} × ${canvas.height} · ภาพที่ ${result.sequence}`;
     await new Promise(resolve => setTimeout(resolve, 125));
   }
+}
+
+async function reportZoom(track, commandId = 0, error = null) {
+  const camera = readCameraZoom(track);
+  await api("/phone-camera/camera-state", {
+    method: "POST", headers: { Authorization: `Bearer ${session.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ ...camera, commandId, error })
+  });
+  zoomStatus.textContent = !camera.supported ? "เบราว์เซอร์/กล้องนี้ไม่รองรับการควบคุมซูมกล้อง" :
+    `ซูมกล้องจริง ${camera.value.toFixed(2)}× (${camera.min}–${camera.max}×)${error ? " · คำสั่งซูมไม่สำเร็จ" : ""}`;
 }
 
 form.addEventListener("submit", async event => {
@@ -85,11 +124,11 @@ form.addEventListener("submit", async event => {
   startButton.disabled = true; stopButton.disabled = false; codeInput.disabled = true;
   status.textContent = "กำลังขอใช้กล้อง…";
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" }, width: { ideal: 960 }, height: { ideal: 720 } }, audio: false });
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" }, width: { ideal: 960 }, height: { ideal: 720 }, zoom: true }, audio: false });
     if (current !== generation) { stream.getTracks().forEach(track => track.stop()); return; }
     media = stream;
     stream.getVideoTracks()[0].addEventListener("ended", () => { if (current === generation) stop("กล้องหยุดทำงาน กรุณาเริ่มใหม่"); });
-    stream.getVideoTracks()[0].addEventListener("mute", () => { if (current === generation) stop("กล้องถูกพัก กรุณาเริ่มใหม่"); });
+    stream.getVideoTracks()[0].addEventListener("mute", () => { if (current === generation && zoomApplyingGeneration !== current) stop("กล้องถูกพัก กรุณาเริ่มใหม่"); });
     video.srcObject = stream;
     await video.play();
     if (current !== generation) return;
@@ -100,6 +139,8 @@ form.addEventListener("submit", async event => {
     }
     session = paired;
     const clockStart = performance.now();
+    await reportZoom(stream.getVideoTracks()[0]);
+    if (current !== generation) return;
     await publish(current, paired.serverTime, clockStart);
   } catch (error) { if (current === generation) stop(`ส่งภาพไม่ได้: ${error.message}`); }
 });

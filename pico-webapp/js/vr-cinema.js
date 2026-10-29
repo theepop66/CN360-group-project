@@ -91,7 +91,7 @@ export async function startVrCinema({ compositeCanvasId, onEnd, onFrame } = {}) 
       ></a-entity>
       <a-entity
         id="vr-zoom-status"
-        text="value: Camera zoom 1.0x; align: center; color: #eafff5; width: 1.8; wrapCount: 62"
+        text="value: Phone camera zoom: waiting; align: center; color: #eafff5; width: 1.8; wrapCount: 62"
         position="0 0.32 -1"
       ></a-entity>
     </a-entity>

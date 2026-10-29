@@ -55,10 +55,10 @@
           <div class="viewer-toolbar">
             <span id="detection-summary">No recent detections</span>
             <div class="toolbar-actions">
-              <div class="zoom-controls" role="group" aria-label="Camera zoom" title="Left joystick up/down: zoom; click: reset">
+              <div class="zoom-controls" role="group" aria-label="Phone camera zoom" title="Controls the paired phone camera; left joystick up/down, click to reset">
                 <button id="camera-zoom-out" class="icon-button" type="button" aria-label="Zoom out" disabled>−</button>
-                <button id="camera-zoom-reset" class="icon-button" type="button" aria-label="Reset camera zoom (1.0×)">1.0×</button>
-                <button id="camera-zoom-in" class="icon-button" type="button" aria-label="Zoom in">+</button>
+                <button id="camera-zoom-reset" class="icon-button" type="button" aria-label="Reset phone camera zoom" disabled>Camera</button>
+                <button id="camera-zoom-in" class="icon-button" type="button" aria-label="Zoom in" disabled>+</button>
               </div>
               <div class="mode-switcher" role="group" aria-label="View mode">
                 <button type="button" class="mode-button" data-mode="flat" aria-pressed="true">2D HUD</button>
@@ -119,6 +119,10 @@
 
             <label for="health-url">Remote camera health URL (optional)</label>
             <input id="health-url" name="healthUrl" type="url" inputmode="url" />
+
+            <label for="phone-control-code">Phone camera control code</label>
+            <input id="phone-control-code" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" />
+            <p id="camera-zoom-feedback" class="settings-hint" role="status">Start the iPhone camera, then enter its pairing code here. This code is not saved.</p>
 
             <label for="websocket-url">Detection WebSocket gateway URL</label>
             <input id="websocket-url" name="websocketUrl" type="url" inputmode="url" required />

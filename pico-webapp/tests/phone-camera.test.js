@@ -25,11 +25,82 @@ async function bench(t) {
     assert.equal(response.status, 201);
     return response.json();
   };
-  const upload = (owner, sequence = 1, body = jpeg, capturedAt = time) => call("/phone-camera/frame", {
-    method: "POST", body, headers: { Authorization: `Bearer ${owner.token}`, "Content-Type": "image/jpeg", "X-Frame-Sequence": String(sequence), "X-Captured-At-Ms": String(capturedAt) }
+  const upload = (owner, sequence = 1, body = jpeg, capturedAt = time, revision = 0) => call("/phone-camera/frame", {
+    method: "POST", body, headers: { Authorization: `Bearer ${owner.token}`, "Content-Type": "image/jpeg", "X-Frame-Sequence": String(sequence), "X-Captured-At-Ms": String(capturedAt), "X-Camera-Zoom-Command": String(revision) }
   });
-  return { camera, base, call, pair, upload, advance: ms => { time += ms; } };
+  const json = (pathname, token, body) => call(pathname, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const report = (owner, body) => json("/phone-camera/camera-state", owner.token, body);
+  const zoom = (owner, action = "in", token = "test-pairing") => json("/phone-camera/zoom", token, { action, sessionId: owner.sessionId });
+  return { camera, base, call, pair, upload, report, zoom, advance: ms => { time += ms; } };
 }
+
+const zoomReport = { supported: true, min: 0.5, max: 10, step: 0.1, value: 1, commandId: 0 };
+
+test("source zoom requires camera confirmation and a new frame with the confirmed revision", async t => {
+  const b = await bench(t);
+  const owner = await b.pair();
+  assert.equal((await b.report(owner, zoomReport)).status, 200);
+  await b.upload(owner);
+  const queued = await (await b.zoom(owner)).json();
+  assert.equal(queued.status, "pending");
+  assert.equal(queued.value, 1);
+  assert.equal((await b.call("/capture")).status, 503);
+  assert.equal((await b.zoom(owner)).status, 409);
+  const command = (await (await b.upload(owner, 2)).json()).zoomCommand;
+  assert.deepEqual(command, { id: 1, value: 1.1 });
+  assert.equal((await b.report(owner, { ...zoomReport, commandId: 1 })).status, 409);
+  assert.equal((await b.report(owner, { ...zoomReport, value: 1.1 })).status, 409);
+  assert.equal((await b.report(owner, { ...zoomReport, value: 1.1, commandId: 1 })).status, 200);
+  assert.equal((await b.call("/capture")).status, 503);
+  // An upload begun before the acknowledgement must not restore old pixels.
+  assert.equal((await (await b.upload(owner, 3)).json()).accepted, false);
+  assert.equal((await b.call("/capture")).status, 503);
+  assert.equal((await (await b.upload(owner, 4, jpeg, owner.serverTime, 1)).json()).accepted, true);
+  assert.equal((await b.call("/capture")).headers.get("x-frame-sequence"), "4");
+  const actual = await (await b.call("/phone-camera/zoom")).json();
+  assert.equal(actual.value, 1.1);
+  assert.equal(actual.status, "ready");
+});
+
+test("camera zoom controls are authenticated, session bound, bounded and unavailable without fresh pixels", async t => {
+  const b = await bench(t);
+  const owner = await b.pair();
+  assert.equal((await b.zoom(owner)).status, 503);
+  await b.upload(owner);
+  assert.equal((await b.zoom(owner)).status, 400); // no camera capabilities yet
+  assert.equal((await b.zoom(owner, "in", "wrong")).status, 401);
+  assert.equal((await b.report({ token: "test-pairing" }, zoomReport)).status, 401);
+  assert.equal((await b.zoom({ sessionId: "previous-phone" })).status, 409);
+  const oversized = await b.call("/phone-camera/camera-state", { method: "POST", headers: { Authorization: `Bearer ${owner.token}`, "Content-Type": "application/json" }, body: " ".repeat(2049) });
+  assert.equal(oversized.status, 413);
+  assert.equal((await b.report(owner, { ...zoomReport, max: Infinity })).status, 400);
+  await b.report(owner, { ...zoomReport, value: 10 });
+  assert.equal((await (await b.zoom(owner)).json()).status, "ready"); // bound is a no-op
+  assert.equal((await b.call("/capture")).status, 200);
+  b.advance(10001);
+  const replacement = await b.pair();
+  assert.equal((await b.report(owner, zoomReport)).status, 401);
+  await b.report(replacement, zoomReport);
+  await b.upload(replacement);
+  assert.equal((await b.zoom(owner)).status, 409);
+  assert.equal((await (await b.call("/phone-camera/zoom")).json()).commandId, 0);
+});
+
+test("camera apply failure reports actual settings and resumes only under its acknowledged revision", async t => {
+  const b = await bench(t);
+  const owner = await b.pair();
+  await b.report(owner, zoomReport);
+  await b.upload(owner);
+  await b.zoom(owner);
+  const response = await b.report(owner, { ...zoomReport, commandId: 1, error: "constraint rejected" });
+  const state = await response.json();
+  assert.equal(state.status, "error");
+  assert.equal(state.value, 1);
+  assert.equal((await b.call("/capture")).status, 503);
+  await b.upload(owner, 2, jpeg, owner.serverTime, 1);
+  assert.equal((await b.call("/capture")).status, 200);
+  assert.equal((await b.zoom(owner)).status, 200);
+});
 
 test("phone capture preserves JPEG bytes and the five n8n identity headers", async t => {
   const b = await bench(t);

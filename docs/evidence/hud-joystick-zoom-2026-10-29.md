@@ -1,3 +1,9 @@
+Historical result: superseded by phone camera source zoom
+
+This records the earlier HUD image enlargement. The user clarified that the
+joystick must control the phone camera before upload. See
+`phone-camera-source-zoom-2026-10-29.md` for that replacement and its limits.
+
 # HUD joystick zoom software verification — 2026-10-29
 
 Spec: `../specs/hud-joystick-zoom.md`.
@@ -28,3 +34,4 @@ still require device verification. The browser control check had no active
 phone feed; it is not evidence of camera, AI accuracy or actuator acceptance.
 This work changes only viewer zoom and controller routing, not capture pixels,
 AI input, stored frames or firmware. No GitHub issue was closed.
+#

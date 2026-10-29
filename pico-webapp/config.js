@@ -19,7 +19,9 @@ window.HUD_CONFIG = Object.freeze({
   // PICO 4 controller shortcuts, active only inside the AR/VR XR modes: the
   // flat 2D browser never exposes controller buttons to the page. Thumbstick
   // on the RIGHT hand controls servo angle. LEFT up/down zooms the camera
-  // view, and left stick click resets to 1x. Buttons use the
+  // capture track on the paired phone, and left stick click resets to 1x.
+  // Camera control needs the phone pairing code entered in Connection settings.
+  // Buttons use the
   // current PICO indices (1 squeeze, 3 A/X, 4 B/Y); open the HUD with
   // ?xrdebug=1 to log the real indices if PICO reports a different layout.
   controllerShortcuts: {

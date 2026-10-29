@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <title>iPhone Camera · CN360</title>
+  <link rel="stylesheet" href="phone-camera.css">
+</head>
+<body>
+  <main>
+    <p class="eyebrow">CN360 · CAMERA</p>
+    <h1>ส่งภาพจาก iPhone</h1>
+    <p>เชื่อม Wi-Fi เดียวกับ PC แล้ววางโทรศัพท์ให้เห็นชิ้นงาน เปิดหน้านี้ค้างไว้ขณะส่งภาพ</p>
+    <form id="sender-form">
+      <label for="pairing-code">รหัสเชื่อมต่อจาก PC</label>
+      <input id="pairing-code" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" required>
+      <div class="actions">
+        <button id="start" type="submit">เริ่มส่งภาพ</button>
+        <button id="stop" type="button" disabled>หยุด</button>
+      </div>
+    </form>
+    <p id="status" role="status" aria-live="polite">พร้อมเชื่อมต่อ</p>
+    <video id="preview" autoplay muted playsinline></video>
+    <p>บน PC/Pico เปิด <a href="/?camera=phone">HUD สำหรับกล้อง iPhone</a> เพื่อดูภาพ ภาพสดอย่างเดียวไม่ได้ยืนยันว่า AI ตรวจแล้ว</p>
+    <details><summary>เชื่อมต่อไม่ได้</summary>
+      <p>เปิดผ่าน HTTPS ที่ iPhone เชื่อถือ และอนุญาตกล้อง หากเพิ่งเปลี่ยนเครื่องส่ง ให้หยุดเครื่องเดิมหรือรอ 10 วินาที เครือข่ายต้องอนุญาตให้อุปกรณ์ติดต่อกันได้</p>
+    </details>
+  </main>
+  <script type="module" src="js/phone-camera-sender.js"></script>
+</body>
+</html>

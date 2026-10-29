@@ -1,4 +1,5 @@
 import { getCoveredImageRect, mapBoxToDisplay, parseDetectionPayload } from "./overlay.js";
+import { cameraConfig } from "./camera-config.js";
 import { createDetectionOrderTracker } from "./detection-order.js";
 import { sendPrompt } from "./prompt.js";
 import { parseCameraMessage } from "./camera-message.js";
@@ -105,14 +106,11 @@ function loadConfig() {
     localStorage.removeItem(STORAGE_KEY);
   }
 
-  const cameraSource = saved.cameraSource ?? defaults.cameraSource;
   const controllerShortcuts = loadControllerShortcuts(
     saved.controllerShortcuts ?? defaults.controllerShortcuts ?? {}
   );
   return {
-    cameraSource: cameraSource === "remote" ? "remote" : "local",
-    streamUrl: saved.streamUrl ?? defaults.raspberryPiStreamUrl ?? "",
-    healthUrl: saved.healthUrl ?? defaults.raspberryPiHealthUrl ?? "",
+    ...cameraConfig(saved, defaults, window.location),
     websocketUrl: saved.websocketUrl ?? defaults.n8nDetectionWebSocketUrl ?? "",
     promptUrl: saved.promptUrl ?? defaults.n8nPromptWebhookUrl ?? "",
     servoUrl: saved.servoUrl ?? defaults.controlUnitServoUrl ?? "",

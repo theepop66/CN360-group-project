@@ -1,5 +1,6 @@
 import { getCoveredImageRect, mapBoxToDisplay, parseDetectionPayload } from "./overlay.js";
 import { cameraConfig } from "./camera-config.js";
+import { clampZoom, MIN_ZOOM, MAX_ZOOM, ZOOM_STEP } from "./zoom.js";
 import { createDetectionOrderTracker } from "./detection-order.js";
 import { sendPrompt } from "./prompt.js";
 import { parseCameraMessage } from "./camera-message.js";
@@ -45,6 +46,9 @@ const elements = {
   modeUrl: document.querySelector("#mode-url"),
   resetSettings: document.querySelector("#reset-settings"),
   fullscreenButton: document.querySelector("#fullscreen-button"),
+  zoomOut: document.querySelector("#camera-zoom-out"),
+  zoomIn: document.querySelector("#camera-zoom-in"),
+  zoomReset: document.querySelector("#camera-zoom-reset"),
   viewerToolbar: document.querySelector(".viewer-toolbar"),
   servoModeAuto: document.querySelector("#servo-mode-auto"),
   servoModeManual: document.querySelector("#servo-mode-manual"),
@@ -90,6 +94,7 @@ let currentViewMode = VIEW_MODES.FLAT;
 let activeXrController = null;
 let vrRenderLoopHandle = null;
 let activeControllerShortcuts = null;
+let cameraZoom = 1;
 // The firmware never reports the servo position, so the HUD mirrors the last
 // angle it successfully asked for; this is also the thumbstick's starting point.
 let controllerAngle = 0;
@@ -737,24 +742,23 @@ function drawDetections() {
   const context = elements.canvas.getContext("2d");
   context.setTransform(dpr, 0, 0, dpr, 0, 0);
   context.clearRect(0, 0, rect.width, rect.height);
+  drawDetectionBoxes(context, { width: rect.width, height: rect.height }, activeMediaDimensions());
+}
 
+// The DOM overlay and VR texture each map boxes using their own viewport.
+function drawDetectionBoxes(context, viewport, mediaDimensions) {
   if (!latestResult) return;
-
-  const mediaDimensions = activeMediaDimensions();
   const overlaySource = latestResult.source ?? {
-    width: mediaDimensions.width || rect.width,
-    height: mediaDimensions.height || rect.height
+    width: mediaDimensions.width || viewport.width,
+    height: mediaDimensions.height || viewport.height
   };
 
   for (const detection of latestResult.detections) {
-    const displayBox = mapBoxToDisplay(detection, overlaySource, {
-      width: rect.width,
-      height: rect.height
-    }, "cover");
+    const displayBox = mapBoxToDisplay(detection, overlaySource, viewport, "cover", cameraZoom);
 
     context.strokeStyle = detection.color;
     context.fillStyle = detection.color;
-    context.lineWidth = Math.max(3, Math.min(rect.width, rect.height) / 180);
+    context.lineWidth = Math.max(3, Math.min(viewport.width, viewport.height) / 180);
     context.strokeRect(displayBox.x, displayBox.y, displayBox.width, displayBox.height);
 
     const confidence = detection.confidence === null
@@ -786,25 +790,36 @@ function compositeVrFrame() {
   const context = elements.vrCompositeCanvas.getContext("2d");
   const media = activeMediaElement();
   const mediaDimensions = activeMediaDimensions();
+  const viewport = { width: VR_CANVAS_WIDTH, height: VR_CANVAS_HEIGHT };
+  context.fillStyle = "#030807";
+  context.fillRect(0, 0, VR_CANVAS_WIDTH, VR_CANVAS_HEIGHT);
 
   if (mediaDimensions.width > 0 && mediaDimensions.height > 0 && !media.classList.contains("video-feed--hidden")) {
     const destRect = getCoveredImageRect(
-      { width: VR_CANVAS_WIDTH, height: VR_CANVAS_HEIGHT },
-      mediaDimensions
+      viewport,
+      mediaDimensions,
+      cameraZoom
     );
     context.drawImage(media, destRect.x, destRect.y, destRect.width, destRect.height);
-  } else {
-    context.fillStyle = "#030807";
-    context.fillRect(0, 0, VR_CANVAS_WIDTH, VR_CANVAS_HEIGHT);
+    drawDetectionBoxes(context, viewport, mediaDimensions);
   }
-
-  // Layer the existing bounding-box overlay on top instead of recomputing
-  // detection boxes a second time for the VR screen texture. The overlay
-  // canvas's own size can differ from the fixed VR canvas; drawImage
-  // rescales it to fit, which stretches boxes slightly if the aspect
-  // ratios differ but keeps them aligned with the video underneath.
-  context.drawImage(elements.canvas, 0, 0, VR_CANVAS_WIDTH, VR_CANVAS_HEIGHT);
 }
+
+function setCameraZoom(value) {
+  cameraZoom = clampZoom(value);
+  elements.stage.style.setProperty("--camera-zoom", String(cameraZoom));
+  elements.zoomReset.textContent = `${cameraZoom.toFixed(1)}×`;
+  elements.zoomReset.setAttribute("aria-label", `Reset camera zoom (${cameraZoom.toFixed(1)}×)`);
+  elements.zoomOut.disabled = cameraZoom <= MIN_ZOOM;
+  elements.zoomIn.disabled = cameraZoom >= MAX_ZOOM;
+  activeControllerShortcuts?.setZoom(cameraZoom);
+  activeXrController?.setZoomText?.(`Camera zoom ${cameraZoom.toFixed(1)}x | Left stick up/down; click resets`);
+  drawDetections();
+}
+
+elements.zoomOut.addEventListener("click", () => setCameraZoom(cameraZoom - ZOOM_STEP));
+elements.zoomIn.addEventListener("click", () => setCameraZoom(cameraZoom + ZOOM_STEP));
+elements.zoomReset.addEventListener("click", () => setCameraZoom(1));
 
 function stopVrRenderLoop() {
   if (vrRenderLoopHandle !== null) {
@@ -827,6 +842,7 @@ function setModeButtonsState(mode) {
     button.setAttribute("aria-pressed", String(button.dataset.mode === mode));
   }
   elements.fullscreenButton.disabled = mode !== VIEW_MODES.FLAT;
+  setCameraZoom(cameraZoom);
 }
 
 async function exitCurrentXrMode() {
@@ -1059,6 +1075,8 @@ function startControllerShortcuts(session) {
     session,
     shortcuts: config.controllerShortcuts,
     initialAngle: controllerAngle,
+    initialZoom: cameraZoom,
+    onZoom: setCameraZoom,
     onAngle: (angle) => {
       controllerAngle = angle;
       syncAngleUi(angle);
@@ -1201,6 +1219,7 @@ window.addEventListener("pagehide", () => {
 });
 
 populateSettings();
+setCameraZoom(cameraZoom);
 connectCamera();
 connectWebSocket();
 void installXrEmulatorIfRequested();

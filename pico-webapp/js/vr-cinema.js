@@ -89,6 +89,11 @@ export async function startVrCinema({ compositeCanvasId, onEnd, onFrame } = {}) 
         text="value: ; align: center; color: #68efb3; width: 1.1; wrapCount: 32"
         position="0 -0.62 -1"
       ></a-entity>
+      <a-entity
+        id="vr-zoom-status"
+        text="value: Camera zoom 1.0x; align: center; color: #eafff5; width: 1.8; wrapCount: 62"
+        position="0 0.32 -1"
+      ></a-entity>
     </a-entity>
   `;
 
@@ -119,6 +124,7 @@ export async function startVrCinema({ compositeCanvasId, onEnd, onFrame } = {}) 
 
   const hudSummary = scene.querySelector("#vr-hud-summary");
   const servoStatus = scene.querySelector("#vr-servo-status");
+  const zoomStatus = scene.querySelector("#vr-zoom-status");
   // A-Frame owns the session, but three.js exposes it, which is what the
   // controller shortcut poller in app.js needs.
   const session = scene.renderer?.xr?.getSession?.() ?? null;
@@ -130,6 +136,9 @@ export async function startVrCinema({ compositeCanvasId, onEnd, onFrame } = {}) 
     },
     setServoStatusText(text) {
       servoStatus?.setAttribute("text", "value", text);
+    },
+    setZoomText(text) {
+      zoomStatus?.setAttribute("text", "value", text);
     },
     stop() {
       if (!ended) scene.exitVR();

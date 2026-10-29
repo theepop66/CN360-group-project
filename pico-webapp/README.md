@@ -18,8 +18,10 @@ The flat 2D browser never exposes controller buttons to page script — there th
 
 | Input | Action |
 | --- | --- |
-| Thumbstick up / right | Jog the servo +`stepDeg` (repeats while held) |
-| Thumbstick down / left | Jog the servo −`stepDeg` |
+| Left thumbstick up / down | Camera view zoom in / out (1×–4×, 0.1× steps) |
+| Left thumbstick click | Reset camera view to 1× |
+| Right thumbstick up / right | Jog the servo +`stepDeg` (repeats while held) |
+| Right thumbstick down / left | Jog the servo −`stepDeg` |
 | Right **A** (primary) | Reject now (`/verdict`) |
 | Right **B** (secondary) | Pass now (`/verdict`) |
 | **Grip** (either hand) | Sweep |
@@ -27,6 +29,21 @@ The flat 2D browser never exposes controller buttons to page script — there th
 | Left **Y** (secondary) | Mode → Auto |
 
 The action mapping, step size, repeat cadence, and deadzone live in `controllerShortcuts` in `config.js`. The current PICO button indices are defined in `js/xr-controller.js`; open the HUD with `?xrdebug=1` to print which index each press reports if a firmware/browser update changes it. The firmware still enforces its own rules — angle jogs need Manual mode and an idle unit, reject/pass only apply while an item is in the beam — and the HUD mirrors that feedback to the VR status line or the AR panel.
+
+Zoom is a centered digital crop of the HUD camera view. Live iPhone/Pi video,
+local webcam and analyzed snapshots all use the same zoom as their detection
+boxes. The VR texture computes its crop and boxes at its own 1280×720 viewport;
+it does not stretch the 2D overlay to fit. Zoom does not alter the iPhone lens,
+AI input, saved snapshots or detection coordinates.
+
+Use the **− / zoom level / +** controls in the viewer toolbar on PC or in Pico
+2D mode; click the displayed level to reset. Pico thumbstick input requires an
+active WebXR AR/VR session over trusted HTTPS. In 2D the controller is a pointer,
+so use the toolbar buttons. Left-stick horizontal movement is ignored, and zoom
+input does not issue servo commands. Other actuator button mappings remain
+active in XR. Zoom stays selected across camera reconnects and mode switches;
+a fresh page starts at 1×. Confirm the mapping on the physical Pico before a
+demo; simulated controller tests do not establish headset acceptance.
 
 ## Run locally
 

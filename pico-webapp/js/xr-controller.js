@@ -10,6 +10,8 @@
 // The discovery helper (?xrdebug=1) logs the real indices per hand because
 // the browser's reported layout can vary between controller profiles.
 
+import { clampZoom, ZOOM_STEP } from "./zoom.js";
+
 export const DEFAULT_CONTROLLER_SHORTCUTS = Object.freeze({
   stepDeg: 5,
   repeatMs: 220,
@@ -21,7 +23,8 @@ export const DEFAULT_CONTROLLER_SHORTCUTS = Object.freeze({
     rightPrimary: "reject",
     rightSecondary: "pass",
     leftPrimary: "manual",
-    leftSecondary: "auto"
+    leftSecondary: "auto",
+    leftStick: "reset-zoom"
   })
 });
 
@@ -43,7 +46,7 @@ export function stickAxes(axes) {
   return [Number(axes[fourAxis ? 2 : 0]) || 0, Number(axes[fourAxis ? 3 : 1]) || 0];
 }
 
-// Collapses both sticks to one direction: +1 increases the angle (push right
+// Collapses one stick's axes to a direction: +1 increases the angle (push right
 // or up), -1 decreases it (push left or down), 0 inside the deadzone.
 export function stickDirection(axes, deadzone = DEFAULT_CONTROLLER_SHORTCUTS.deadzone) {
   const [x, y] = stickAxes(axes);
@@ -60,6 +63,7 @@ export function resolveButtonAction(
   if (buttonIndex === SQUEEZE_BUTTON) return buttons.squeeze ?? null;
   const hand = handedness === "left" || handedness === "right" ? handedness : null;
   if (!hand) return null;
+  if (buttonIndex === 2 && hand === "left") return buttons.leftStick ?? null;
   if (buttonIndex === PRIMARY_BUTTON) return buttons[`${hand}Primary`] ?? null;
   if (buttonIndex === SECONDARY_BUTTON) return buttons[`${hand}Secondary`] ?? null;
   return null;
@@ -120,7 +124,9 @@ export function attachXrControllerShortcuts({
   session,
   shortcuts = DEFAULT_CONTROLLER_SHORTCUTS,
   initialAngle = 0,
+  initialZoom = 1,
   onAngle = () => {},
+  onZoom = () => {},
   onAction = () => {},
   onDebug = null,
   now = () => performance.now()
@@ -134,13 +140,17 @@ export function attachXrControllerShortcuts({
     repeatMs: shortcuts.repeatMs,
     firstRepeatMs: shortcuts.firstRepeatMs
   });
+  const zoomRepeater = createStickRepeater({ repeatMs: shortcuts.repeatMs, firstRepeatMs: shortcuts.firstRepeatMs });
   let angle = clampAngle(initialAngle);
+  let zoom = clampZoom(initialZoom);
   let active = true;
 
   const poll = (time) => {
     if (!active) return;
     const stamp = Number.isFinite(time) ? time : now();
     let direction = 0;
+    let zoomDirection = 0;
+    let zoomReset = false;
 
     for (const source of session.inputSources ?? []) {
       const gamepad = source?.gamepad;
@@ -159,18 +169,31 @@ export function attachXrControllerShortcuts({
         );
         onDebug?.(`${source.handedness || "unknown"} button ${index} → ${action ?? "unmapped"}`);
         if (action) {
-          onAction(action, { handedness: source.handedness, buttonIndex: index });
+          if (action === "reset-zoom") {
+            zoom = 1; zoomReset = true; onZoom(zoom);
+          } else {
+            onAction(action, { handedness: source.handedness, buttonIndex: index });
+          }
           pulse(source);
         }
       }
 
-      direction += stickDirection(gamepad.axes, shortcuts.deadzone);
+      if (source.handedness === "right") direction += stickDirection(gamepad.axes, shortcuts.deadzone);
+      if (source.handedness === "left") {
+        const vertical = -stickAxes(gamepad.axes)[1];
+        if (Math.abs(vertical) >= (shortcuts.deadzone ?? DEFAULT_CONTROLLER_SHORTCUTS.deadzone)) zoomDirection += Math.sign(vertical);
+      }
     }
 
     const step = repeater.update(Math.sign(direction), stamp);
     if (step !== 0) {
       angle = clampAngle(angle + step * shortcuts.stepDeg);
       onAngle(angle, step);
+    }
+    const zoomStep = zoomRepeater.update(zoomReset ? 0 : Math.sign(zoomDirection), stamp);
+    if (zoomStep !== 0) {
+      zoom = clampZoom(zoom + zoomStep * ZOOM_STEP);
+      onZoom(zoom);
     }
 
     session.requestAnimationFrame(poll);
@@ -190,6 +213,12 @@ export function attachXrControllerShortcuts({
     },
     setAngle(next) {
       angle = clampAngle(next);
+    },
+    zoom() {
+      return zoom;
+    },
+    setZoom(next) {
+      zoom = clampZoom(next);
     }
   };
 }

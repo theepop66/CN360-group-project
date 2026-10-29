@@ -55,6 +55,11 @@
           <div class="viewer-toolbar">
             <span id="detection-summary">No recent detections</span>
             <div class="toolbar-actions">
+              <div class="zoom-controls" role="group" aria-label="Camera zoom" title="Left joystick up/down: zoom; click: reset">
+                <button id="camera-zoom-out" class="icon-button" type="button" aria-label="Zoom out" disabled>−</button>
+                <button id="camera-zoom-reset" class="icon-button" type="button" aria-label="Reset camera zoom (1.0×)">1.0×</button>
+                <button id="camera-zoom-in" class="icon-button" type="button" aria-label="Zoom in">+</button>
+              </div>
               <div class="mode-switcher" role="group" aria-label="View mode">
                 <button type="button" class="mode-button" data-mode="flat" aria-pressed="true">2D HUD</button>
                 <button type="button" class="mode-button" data-mode="ar" aria-pressed="false">AR passthrough</button>
@@ -162,7 +167,7 @@
 
         <p id="servo-feedback" class="feedback" role="status" aria-live="polite">
           Switch to Manual to move the servo directly. Reject/Pass apply while the unit is awaiting a verdict.
-          In AR/VR, the thumbstick jogs the angle and the controller buttons send Reject, Pass, Sweep and mode changes.
+          In AR/VR, the right thumbstick jogs the servo; the left thumbstick zooms the camera (click to reset). Controller buttons send Reject, Pass, Sweep and mode changes.
         </p>
       </section>
 

@@ -22,13 +22,15 @@ function pad(handedness, { buttons = [], axes = [] } = {}) {
 
 function createFakeSession() {
   const queue = [];
+  const events = new Map();
   return {
     inputSources: [],
     requestAnimationFrame(callback) {
       queue.push(callback);
       return queue.length;
     },
-    addEventListener() {},
+    addEventListener(name, callback) { events.set(name, callback); },
+    end() { events.get("end")?.(); },
     frame(time) {
       const callback = queue.shift();
       if (callback) callback(time, {});
@@ -145,7 +147,7 @@ test("thumbstick jogs the angle immediately, then on repeat only", () => {
   assert.deepEqual(angles, [100, 110]);
 });
 
-test("negative jog stops at zero instead of wrapping", () => {
+test("right-stick negative jog stops at zero instead of wrapping", () => {
   const session = createFakeSession();
   const angles = [];
   attachXrControllerShortcuts({
@@ -155,7 +157,7 @@ test("negative jog stops at zero instead of wrapping", () => {
     onAngle: (angle) => angles.push(angle)
   });
 
-  session.inputSources = [pad("left", { axes: [0, 0, -1, 0] })];
+  session.inputSources = [pad("right", { axes: [0, 0, -1, 0] })];
   session.frame(0);
   assert.deepEqual(angles, [0]);
 });
@@ -165,5 +167,60 @@ test("stop() keeps the poll loop from rescheduling", () => {
   const handle = attachXrControllerShortcuts({ session });
   handle.stop();
   session.frame(0);
+  assert.equal(session.pendingFrames(), 0);
+});
+
+test("left-stick zoom and right-stick servo operate independently and simultaneously", () => {
+  const session = createFakeSession();
+  const angles = [], zooms = [];
+  attachXrControllerShortcuts({ session, initialAngle: 90,
+    onAngle: angle => angles.push(angle), onZoom: zoom => zooms.push(zoom) });
+  session.inputSources = [pad("left", { axes: [0, 0, 0, -1] })];
+  session.frame(0);
+  assert.deepEqual(zooms, [1.1]);
+  assert.deepEqual(angles, []);
+  session.inputSources.push(pad("right", { axes: [0, 0, 1, 0] }));
+  session.frame(350);
+  assert.deepEqual(zooms, [1.1, 1.2]);
+  assert.deepEqual(angles, [95]);
+});
+
+test("left-stick horizontal motion and drift do not zoom or move a servo", () => {
+  const session = createFakeSession();
+  const updates = [];
+  attachXrControllerShortcuts({ session, onAngle: () => updates.push("servo"), onZoom: () => updates.push("zoom") });
+  for (const axes of [[0, 0, 1, 0], [0, 0, 0, 0.1]]) {
+    session.inputSources = [pad("left", { axes })]; session.frame(0);
+  }
+  assert.deepEqual(updates, []);
+});
+
+test("zoom respects bounds, resets with left stick click, and syncs with 2D controls", () => {
+  const session = createFakeSession();
+  const zooms = [], actions = [];
+  const handle = attachXrControllerShortcuts({ session, initialZoom: 4,
+    onZoom: zoom => zooms.push(zoom), onAction: action => actions.push(action) });
+  session.inputSources = [pad("left", { axes: [0, 0, 0, -1] })]; session.frame(0);
+  assert.equal(handle.zoom(), 4);
+  session.inputSources = [pad("left", { buttons: [false, false, true], axes: [0, 0, 0, -1] })]; session.frame(20);
+  assert.equal(handle.zoom(), 1);
+  assert.deepEqual(actions, []);
+  handle.setZoom(2);
+  session.inputSources = [pad("left", { axes: [0, 0, 0, 1] })]; session.frame(40);
+  assert.equal(handle.zoom(), 1.9);
+  handle.setZoom(1);
+  session.frame(400);
+  assert.equal(handle.zoom(), 1);
+  handle.stop(); session.frame(800);
+  assert.deepEqual(zooms, [4, 1, 1.9, 1]);
+});
+
+test("ending an XR session stops further zoom and servo input", () => {
+  const session = createFakeSession();
+  const updates = [];
+  attachXrControllerShortcuts({ session, onZoom: () => updates.push("zoom"), onAngle: () => updates.push("servo") });
+  session.inputSources = [pad("left", { axes: [0, 0, 0, -1] }), pad("right", { axes: [0, 0, 1, 0] })];
+  session.end(); session.frame(0);
+  assert.deepEqual(updates, []);
   assert.equal(session.pendingFrames(), 0);
 });

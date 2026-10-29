@@ -1,6 +1,6 @@
 import { getCoveredImageRect, mapBoxToDisplay, parseDetectionPayload } from "./overlay.js";
 import { cameraConfig } from "./camera-config.js";
-import { clampZoom, MIN_ZOOM, MAX_ZOOM, ZOOM_STEP } from "./zoom.js";
+import { createPhoneCameraControls } from "./phone-camera-controls.js";
 import { createDetectionOrderTracker } from "./detection-order.js";
 import { sendPrompt } from "./prompt.js";
 import { parseCameraMessage } from "./camera-message.js";
@@ -49,6 +49,8 @@ const elements = {
   zoomOut: document.querySelector("#camera-zoom-out"),
   zoomIn: document.querySelector("#camera-zoom-in"),
   zoomReset: document.querySelector("#camera-zoom-reset"),
+  phoneControlCode: document.querySelector("#phone-control-code"),
+  zoomFeedback: document.querySelector("#camera-zoom-feedback"),
   viewerToolbar: document.querySelector(".viewer-toolbar"),
   servoModeAuto: document.querySelector("#servo-mode-auto"),
   servoModeManual: document.querySelector("#servo-mode-manual"),
@@ -94,7 +96,7 @@ let currentViewMode = VIEW_MODES.FLAT;
 let activeXrController = null;
 let vrRenderLoopHandle = null;
 let activeControllerShortcuts = null;
-let cameraZoom = 1;
+let phoneZoomChanging = false;
 // The firmware never reports the servo position, so the HUD mirrors the last
 // angle it successfully asked for; this is also the thumbstick's starting point.
 let controllerAngle = 0;
@@ -170,6 +172,7 @@ function hideStaleVideo(message = "Waiting for a camera source…") {
 }
 
 function revealFreshVideo(mediaElement = elements.stream) {
+  if (phoneZoomChanging && isPhoneCameraSource()) return;
   elements.stream.classList.toggle("video-feed--hidden", mediaElement !== elements.stream);
   elements.snapshot.classList.toggle("video-feed--hidden", mediaElement !== elements.snapshot);
   elements.webcam.classList.toggle("video-feed--hidden", mediaElement !== elements.webcam);
@@ -243,7 +246,7 @@ function showRemoteSource(source, {
   connectingText = "Camera: connecting",
   liveText = "Camera: remote live"
 } = {}) {
-  if (config.cameraSource !== "remote") return;
+  if (config.cameraSource !== "remote" || (phoneZoomChanging && isPhoneCameraSource())) return;
 
   window.clearTimeout(streamRetryTimer);
   detachStreamListeners();
@@ -445,7 +448,7 @@ function showN8nFrame(imageUrl, {
   deferOverlay = false,
   returnToLive = false
 } = {}) {
-  if (config.cameraSource !== "remote") return;
+  if (config.cameraSource !== "remote" || (phoneZoomChanging && isPhoneCameraSource())) return;
 
   n8nFrameGeneration += 1;
   const generation = n8nFrameGeneration;
@@ -754,7 +757,7 @@ function drawDetectionBoxes(context, viewport, mediaDimensions) {
   };
 
   for (const detection of latestResult.detections) {
-    const displayBox = mapBoxToDisplay(detection, overlaySource, viewport, "cover", cameraZoom);
+    const displayBox = mapBoxToDisplay(detection, overlaySource, viewport, "cover");
 
     context.strokeStyle = detection.color;
     context.fillStyle = detection.color;
@@ -797,29 +800,56 @@ function compositeVrFrame() {
   if (mediaDimensions.width > 0 && mediaDimensions.height > 0 && !media.classList.contains("video-feed--hidden")) {
     const destRect = getCoveredImageRect(
       viewport,
-      mediaDimensions,
-      cameraZoom
+      mediaDimensions
     );
     context.drawImage(media, destRect.x, destRect.y, destRect.width, destRect.height);
     drawDetectionBoxes(context, viewport, mediaDimensions);
   }
 }
 
-function setCameraZoom(value) {
-  cameraZoom = clampZoom(value);
-  elements.stage.style.setProperty("--camera-zoom", String(cameraZoom));
-  elements.zoomReset.textContent = `${cameraZoom.toFixed(1)}×`;
-  elements.zoomReset.setAttribute("aria-label", `Reset camera zoom (${cameraZoom.toFixed(1)}×)`);
-  elements.zoomOut.disabled = cameraZoom <= MIN_ZOOM;
-  elements.zoomIn.disabled = cameraZoom >= MAX_ZOOM;
-  activeControllerShortcuts?.setZoom(cameraZoom);
-  activeXrController?.setZoomText?.(`Camera zoom ${cameraZoom.toFixed(1)}x | Left stick up/down; click resets`);
-  drawDetections();
+function isPhoneCameraSource() {
+  if (config.cameraSource !== "remote") return false;
+  try {
+    const stream = new URL(config.streamUrl, window.location.href);
+    return stream.origin === window.location.origin && stream.pathname === "/phone-camera/stream.mjpg";
+  } catch { return false; }
 }
 
-elements.zoomOut.addEventListener("click", () => setCameraZoom(cameraZoom - ZOOM_STEP));
-elements.zoomIn.addEventListener("click", () => setCameraZoom(cameraZoom + ZOOM_STEP));
-elements.zoomReset.addEventListener("click", () => setCameraZoom(1));
+const phoneCameraControls = createPhoneCameraControls({
+  isActive: isPhoneCameraSource,
+  getCode: () => elements.phoneControlCode.value,
+  onState(state) {
+    const wasChanging = phoneZoomChanging;
+    phoneZoomChanging = state.active && (state.status === "pending" || (wasChanging && !state.available));
+    if (phoneZoomChanging && !wasChanging) {
+      stopN8nFrame();
+      stopRemoteStream();
+      hideStaleVideo("Waiting for a fresh frame after phone camera zoom…");
+    } else if (wasChanging && !phoneZoomChanging && state.active) {
+      connectStream();
+    }
+    const enabled = state.active && state.available && state.supported && state.authorized && !state.busy && state.status !== "pending";
+    const value = Number.isFinite(state.value) ? `${state.value.toFixed(2)}×` : "Camera";
+    const message = !state.active ? "Select the iPhone feed to control its camera." :
+      state.status === "pending" ? "Waiting for the iPhone to confirm camera zoom…" :
+      !state.available ? "Waiting for the iPhone camera." :
+      !state.supported ? "This phone/browser does not expose camera zoom control." :
+      !state.authorized ? "Enter the phone pairing code below to enable camera controls." :
+      state.error ? `Camera zoom error: ${state.error}` : `Phone camera ${value} (${state.min}–${state.max}×)`;
+    elements.zoomReset.textContent = value;
+    elements.zoomReset.setAttribute("aria-label", `Reset phone camera zoom (${value})`);
+    elements.zoomOut.disabled = !enabled || state.value <= state.min;
+    elements.zoomIn.disabled = !enabled || state.value >= state.max;
+    elements.zoomReset.disabled = !enabled;
+    elements.zoomFeedback.textContent = message;
+    activeXrController?.setZoomText?.(message);
+  }
+});
+elements.zoomOut.addEventListener("click", () => void phoneCameraControls.send("out"));
+elements.zoomIn.addEventListener("click", () => void phoneCameraControls.send("in"));
+elements.zoomReset.addEventListener("click", () => void phoneCameraControls.send("reset"));
+elements.phoneControlCode.addEventListener("input", () => phoneCameraControls.render());
+const cameraControlTimer = window.setInterval(() => void phoneCameraControls.refresh(), 250);
 
 function stopVrRenderLoop() {
   if (vrRenderLoopHandle !== null) {
@@ -842,7 +872,7 @@ function setModeButtonsState(mode) {
     button.setAttribute("aria-pressed", String(button.dataset.mode === mode));
   }
   elements.fullscreenButton.disabled = mode !== VIEW_MODES.FLAT;
-  setCameraZoom(cameraZoom);
+  phoneCameraControls.render();
 }
 
 async function exitCurrentXrMode() {
@@ -1075,8 +1105,7 @@ function startControllerShortcuts(session) {
     session,
     shortcuts: config.controllerShortcuts,
     initialAngle: controllerAngle,
-    initialZoom: cameraZoom,
-    onZoom: setCameraZoom,
+    onCameraZoom: action => { void phoneCameraControls.send(action); },
     onAngle: (angle) => {
       controllerAngle = angle;
       syncAngleUi(angle);
@@ -1211,6 +1240,9 @@ if ("ResizeObserver" in window) {
 }
 
 window.addEventListener("pagehide", () => {
+  window.clearInterval(cameraControlTimer);
+  phoneCameraControls.stop();
+  elements.phoneControlCode.value = "";
   connectionGeneration += 1;
   socket?.close();
   stopLocalWebcam();
@@ -1219,7 +1251,8 @@ window.addEventListener("pagehide", () => {
 });
 
 populateSettings();
-setCameraZoom(cameraZoom);
+phoneCameraControls.render();
+void phoneCameraControls.refresh();
 connectCamera();
 connectWebSocket();
 void installXrEmulatorIfRequested();

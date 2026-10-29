@@ -152,8 +152,6 @@ h2 {
   object-fit: cover;
   object-position: center;
   background: #030807;
-  transform: scale(var(--camera-zoom, 1));
-  transform-origin: center;
 }
 
 #detection-overlay {

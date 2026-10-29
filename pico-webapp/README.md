@@ -18,8 +18,8 @@ The flat 2D browser never exposes controller buttons to page script — there th
 
 | Input | Action |
 | --- | --- |
-| Left thumbstick up / down | Camera view zoom in / out (1×–4×, 0.1× steps) |
-| Left thumbstick click | Reset camera view to 1× |
+| Left thumbstick up / down | Command the paired iPhone camera to zoom in / out within its reported range |
+| Left thumbstick click | Reset the phone camera to its nearest supported 1× |
 | Right thumbstick up / right | Jog the servo +`stepDeg` (repeats while held) |
 | Right thumbstick down / left | Jog the servo −`stepDeg` |
 | Right **A** (primary) | Reject now (`/verdict`) |
@@ -30,20 +30,32 @@ The flat 2D browser never exposes controller buttons to page script — there th
 
 The action mapping, step size, repeat cadence, and deadzone live in `controllerShortcuts` in `config.js`. The current PICO button indices are defined in `js/xr-controller.js`; open the HUD with `?xrdebug=1` to print which index each press reports if a firmware/browser update changes it. The firmware still enforces its own rules — angle jogs need Manual mode and an idle unit, reject/pass only apply while an item is in the beam — and the HUD mirrors that feedback to the VR status line or the AR panel.
 
-Zoom is a centered digital crop of the HUD camera view. Live iPhone/Pi video,
-local webcam and analyzed snapshots all use the same zoom as their detection
-boxes. The VR texture computes its crop and boxes at its own 1280×720 viewport;
-it does not stretch the 2D overlay to fit. Zoom does not alter the iPhone lens,
-AI input, saved snapshots or detection coordinates.
+Zoom controls the **capture camera on the iPhone before upload**. Enter the
+current phone pairing code in **Connection settings → Phone camera control
+code** on the HUD. The code stays in memory for this page only. Use the
+**− / actual zoom / +** toolbar on PC/Pico 2D, or the left thumbstick in an
+active WebXR AR/VR session over trusted HTTPS; click the level/stick to reset.
+In 2D the controller acts as a pointer. Left-stick horizontal movement is
+ignored; the right stick retains its separate servo mapping.
 
-Use the **− / zoom level / +** controls in the viewer toolbar on PC or in Pico
-2D mode; click the displayed level to reset. Pico thumbstick input requires an
-active WebXR AR/VR session over trusted HTTPS. In 2D the controller is a pointer,
-so use the toolbar buttons. Left-stick horizontal movement is ignored, and zoom
-input does not issue servo commands. Other actuator button mappings remain
-active in XR. Zoom stays selected across camera reconnects and mode switches;
-a fresh page starts at 1×. Confirm the mapping on the physical Pico before a
-demo; simulated controller tests do not establish headset acceptance.
+The phone reports its camera track's actual range, step when exposed, and current
+setting. Min/max-only ranges use 0.1× requests with the same readback check.
+The HUD shows a pending state until the phone applies the command, observes
+new camera frames and confirms its setting. Captures are unavailable during
+the change, and frames from an older zoom command are discarded. Future HUD
+and n8n captures receive the changed source image; existing saved inspections
+retain their original pixels. Each new phone session starts with its reported
+camera setting. No extra viewer zoom is applied; detection boxes still use the
+source dimensions and each viewport's normal cover geometry.
+
+Safari/device support is checked on the live camera. If zoom capabilities or
+settings are unavailable, the HUD explicitly disables control. This web API
+does not guarantee optical zoom or lens switching. The API changes the capture
+track as described by [W3C Image Capture](https://www.w3.org/TR/image-capture/);
+actual iPhone support and Pico controls must be checked on those devices.
+An ignored constraint is reported as a failure. A camera operation that times
+out stops the sender, requiring Start again rather than uploading uncertain
+pixels. Physical camera zoom and headset acceptance remain pending.
 
 ## Run locally
 
@@ -83,6 +95,11 @@ aside before regenerating and trusting the replacement CA.
 4. On the PC open `http://localhost:8080/?camera=phone`. On Pico open
    `http://<PC-IP>:8080/?camera=phone` for 2D, or the HTTPS equivalent after
    trusting the CA in its browser for XR. Physical Pico/XR acceptance is separate.
+5. For remote camera zoom, enter the same pairing code in the HUD's Connection
+   settings. Check the phone's camera zoom status and HUD range. If supported,
+   use the toolbar or left joystick and verify that the phone preview changes
+   along with the PC/Pico image. An unsupported status means this browser/camera
+   cannot provide remote zoom through the current web sender.
 
 The phone shortcut temporarily selects same-origin stream/health URLs and takes
 precedence over saved camera settings. Other saved connections, including n8n

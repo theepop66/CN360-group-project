@@ -1,4 +1,5 @@
 import { randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
+import { createCameraZoomState } from "./camera-zoom-state.mjs";
 
 const MAX_BYTES = 512 * 1024;
 const MAX_PIXELS = 1920 * 1080;
@@ -40,12 +41,12 @@ function reply(res, status, value) {
   res.end(JSON.stringify(value));
 }
 
-async function readImage(req) {
+async function readImage(req, limit = MAX_BYTES) {
   const chunks = [];
   let size = 0;
   for await (const chunk of req) {
     size += chunk.length;
-    if (size > MAX_BYTES) throw new Error("image_too_large");
+    if (size > limit) throw new Error("image_too_large");
     chunks.push(chunk);
   }
   return Buffer.concat(chunks);
@@ -87,8 +88,38 @@ export function createPhoneCamera({ pairingCode = randomBytes(12).toString("hex"
       if (!matches(bearer, `Bearer ${pairingCode}`)) return reply(res, 401, { error: "invalid_pairing_code" });
       if (publisher && now() - publisher.lastSeen < LEASE_MS) return reply(res, 409, { error: "camera_in_use_stop_other_sender_or_wait_10s" });
       clear();
-      publisher = { sessionId: randomUUID(), token: randomBytes(24).toString("hex"), lastSeen: now(), sequence: 0 };
+      publisher = { sessionId: randomUUID(), token: randomBytes(24).toString("hex"), lastSeen: now(), sequence: 0, zoom: createCameraZoomState() };
       return reply(res, 201, { sessionId: publisher.sessionId, token: publisher.token, serverTime: now() });
+    }
+    if (pathname === "/phone-camera/zoom" && req.method === "GET") {
+      return reply(res, 200, { sessionId: publisher?.sessionId ?? null, available: Boolean(fresh()), ...(publisher?.zoom.state() ?? { supported: false, status: "offline" }) });
+    }
+    if (pathname === "/phone-camera/zoom" || pathname === "/phone-camera/camera-state") {
+      const isReport = pathname.endsWith("camera-state");
+      if (req.method !== "POST") { req.resume(); return reply(res, 405, { error: "method_not_allowed" }); }
+      if (!publisher || !matches(bearer, `Bearer ${isReport ? publisher.token : pairingCode}`)) { req.resume(); return reply(res, 401, { error: "camera_control_unauthorized" }); }
+      if (req.headers["content-type"] !== "application/json") { req.resume(); return reply(res, 415, { error: "json_required" }); }
+      const owner = publisher;
+      const timeout = setTimeout(() => req.destroy(), 4000);
+      try {
+        const body = JSON.parse((await readImage(req, 2048)).toString());
+        if (owner !== publisher || now() - owner.lastSeen >= LEASE_MS) return reply(res, 409, { error: "sender_session_expired" });
+        if (isReport) {
+          const pending = owner.zoom.pending();
+          owner.zoom.report(body);
+          if (pending) clear();
+        } else {
+          if (body.sessionId !== owner.sessionId) return reply(res, 409, { error: "camera_session_mismatch" });
+          if (owner.zoom.pending()) return reply(res, 409, { error: "zoom_command_pending" });
+          if (!fresh()) return reply(res, 503, { error: "phone_camera_unavailable" });
+          if (owner.zoom.request(body.action)) clear();
+        }
+        return reply(res, 200, { sessionId: owner.sessionId, available: Boolean(fresh()), ...owner.zoom.state() });
+      } catch (error) {
+        const known = new Set(["zoom_ack_mismatch", "zoom_not_confirmed", "zoom_command_pending", "camera_zoom_not_supported", "invalid_zoom_action", "invalid_camera_zoom_report"]);
+        const reason = known.has(error.message) ? error.message : "invalid_camera_control_body";
+        return reply(res, error.message === "image_too_large" ? 413 : reason.startsWith("zoom_") ? 409 : 400, { error: reason });
+      } finally { clearTimeout(timeout); }
     }
     if (pathname === "/phone-camera/frame" || pathname === "/phone-camera/session") {
       if (!publisher || !matches(bearer, `Bearer ${publisher.token}`)) { req.resume(); return reply(res, 401, { error: "sender_session_expired" }); }
@@ -114,10 +145,14 @@ export function createPhoneCamera({ pairingCode = randomBytes(12).toString("hex"
       if (!Number.isSafeInteger(capturedMs) || capturedMs > now() + 250 || now() - capturedMs > STALE_MS || (frame && capturedMs < frame.capturedMs)) return reply(res, 409, { error: "stale_frame" });
       const dimensions = jpegDimensions(bytes);
       if (!dimensions) return reply(res, 422, { error: "invalid_jpeg_or_dimensions" });
-      frame = { bytes, ...dimensions, sessionId: owner.sessionId, sequence, capturedMs };
       owner.sequence = sequence; owner.lastSeen = now();
+      const zoomCommand = owner.zoom.pending();
+      if (zoomCommand || Number(req.headers["x-camera-zoom-command"] ?? 0) !== owner.zoom.state().commandId) {
+        return reply(res, 200, { accepted: false, sequence, zoomCommand });
+      }
+      frame = { bytes, ...dimensions, sessionId: owner.sessionId, sequence, capturedMs };
       for (const viewer of viewers) writeFrame(viewer, frame);
-      return reply(res, 200, { accepted: true, sequence });
+      return reply(res, 200, { accepted: true, sequence, zoomCommand: null });
     }
     if (req.method !== "GET") { req.resume(); return reply(res, 405, { error: "method_not_allowed" }); }
     if (pathname === "/phone-camera/health" || pathname === "/health") return reply(res, fresh() ? 200 : 503, {
@@ -137,7 +172,7 @@ export function createPhoneCamera({ pairingCode = randomBytes(12).toString("hex"
     }
     return reply(res, 404, { error: "not_found" });
   }
-  const routes = new Set(["/phone-camera/session", "/phone-camera/frame", "/phone-camera/health", "/phone-camera/stream.mjpg", "/capture", "/health"]);
+  const routes = new Set(["/phone-camera/session", "/phone-camera/frame", "/phone-camera/health", "/phone-camera/stream.mjpg", "/phone-camera/zoom", "/phone-camera/camera-state", "/capture", "/health"]);
   return {
     pairingCode,
     handle(req, res, pathname) {

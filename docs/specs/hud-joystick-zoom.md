@@ -1,5 +1,10 @@
 # Camera zoom with the Pico joystick
 
+> Superseded by `phone-camera-source-zoom.md`: the user clarified that joystick
+> input must control the iPhone capture camera, not enlarge the HUD image.
+> The implementation described below is historical and must not be used as the
+> current acceptance criteria.
+
 Add centered digital zoom from 1× to 4× to the existing HUD. It changes only
 viewing: iPhone capture, AI inputs, stored frames and detection coordinates
 remain unchanged.

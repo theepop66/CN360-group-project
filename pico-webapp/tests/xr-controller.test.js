@@ -174,51 +174,45 @@ test("left-stick zoom and right-stick servo operate independently and simultaneo
   const session = createFakeSession();
   const angles = [], zooms = [];
   attachXrControllerShortcuts({ session, initialAngle: 90,
-    onAngle: angle => angles.push(angle), onZoom: zoom => zooms.push(zoom) });
+    onAngle: angle => angles.push(angle), onCameraZoom: action => zooms.push(action) });
   session.inputSources = [pad("left", { axes: [0, 0, 0, -1] })];
   session.frame(0);
-  assert.deepEqual(zooms, [1.1]);
+  assert.deepEqual(zooms, ["in"]);
   assert.deepEqual(angles, []);
   session.inputSources.push(pad("right", { axes: [0, 0, 1, 0] }));
   session.frame(350);
-  assert.deepEqual(zooms, [1.1, 1.2]);
+  assert.deepEqual(zooms, ["in", "in"]);
   assert.deepEqual(angles, [95]);
 });
 
 test("left-stick horizontal motion and drift do not zoom or move a servo", () => {
   const session = createFakeSession();
   const updates = [];
-  attachXrControllerShortcuts({ session, onAngle: () => updates.push("servo"), onZoom: () => updates.push("zoom") });
+  attachXrControllerShortcuts({ session, onAngle: () => updates.push("servo"), onCameraZoom: () => updates.push("zoom") });
   for (const axes of [[0, 0, 1, 0], [0, 0, 0, 0.1]]) {
     session.inputSources = [pad("left", { axes })]; session.frame(0);
   }
   assert.deepEqual(updates, []);
 });
 
-test("zoom respects bounds, resets with left stick click, and syncs with 2D controls", () => {
+test("joystick emits camera commands without inventing an applied zoom", () => {
   const session = createFakeSession();
   const zooms = [], actions = [];
-  const handle = attachXrControllerShortcuts({ session, initialZoom: 4,
-    onZoom: zoom => zooms.push(zoom), onAction: action => actions.push(action) });
+  const handle = attachXrControllerShortcuts({ session,
+    onCameraZoom: action => zooms.push(action), onAction: action => actions.push(action) });
   session.inputSources = [pad("left", { axes: [0, 0, 0, -1] })]; session.frame(0);
-  assert.equal(handle.zoom(), 4);
   session.inputSources = [pad("left", { buttons: [false, false, true], axes: [0, 0, 0, -1] })]; session.frame(20);
-  assert.equal(handle.zoom(), 1);
   assert.deepEqual(actions, []);
-  handle.setZoom(2);
   session.inputSources = [pad("left", { axes: [0, 0, 0, 1] })]; session.frame(40);
-  assert.equal(handle.zoom(), 1.9);
-  handle.setZoom(1);
   session.frame(400);
-  assert.equal(handle.zoom(), 1);
   handle.stop(); session.frame(800);
-  assert.deepEqual(zooms, [4, 1, 1.9, 1]);
+  assert.deepEqual(zooms, ["in", "reset", "out", "out"]);
 });
 
 test("ending an XR session stops further zoom and servo input", () => {
   const session = createFakeSession();
   const updates = [];
-  attachXrControllerShortcuts({ session, onZoom: () => updates.push("zoom"), onAngle: () => updates.push("servo") });
+  attachXrControllerShortcuts({ session, onCameraZoom: () => updates.push("zoom"), onAngle: () => updates.push("servo") });
   session.inputSources = [pad("left", { axes: [0, 0, 0, -1] }), pad("right", { axes: [0, 0, 1, 0] })];
   session.end(); session.frame(0);
   assert.deepEqual(updates, []);

@@ -107,6 +107,8 @@ This is a local development CA. It expires after 30 days; remove it when testing
 Connect all devices to the same Wi-Fi; allow Node on Windows Private networks if prompted.
 Open the camera URL in Safari, enter the pairing code, allow camera, then tap Start.
 Keep the sender page visible. Leaving it stops the camera. Do not share the pairing code.
+To control phone camera zoom, enter this code in HUD Connection settings > Phone camera control code.
+The phone/browser must expose camera zoom support; the HUD shows confirmed camera settings only.
 No AI run or servo motion is enabled by this launcher.
 To stop this owned server: use tools/stop-phone-camera.ps1 -IpAddress $IpAddress
 "@

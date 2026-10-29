@@ -10,8 +10,6 @@
 // The discovery helper (?xrdebug=1) logs the real indices per hand because
 // the browser's reported layout can vary between controller profiles.
 
-import { clampZoom, ZOOM_STEP } from "./zoom.js";
-
 export const DEFAULT_CONTROLLER_SHORTCUTS = Object.freeze({
   stepDeg: 5,
   repeatMs: 220,
@@ -124,9 +122,8 @@ export function attachXrControllerShortcuts({
   session,
   shortcuts = DEFAULT_CONTROLLER_SHORTCUTS,
   initialAngle = 0,
-  initialZoom = 1,
   onAngle = () => {},
-  onZoom = () => {},
+  onCameraZoom = () => {},
   onAction = () => {},
   onDebug = null,
   now = () => performance.now()
@@ -142,7 +139,6 @@ export function attachXrControllerShortcuts({
   });
   const zoomRepeater = createStickRepeater({ repeatMs: shortcuts.repeatMs, firstRepeatMs: shortcuts.firstRepeatMs });
   let angle = clampAngle(initialAngle);
-  let zoom = clampZoom(initialZoom);
   let active = true;
 
   const poll = (time) => {
@@ -170,7 +166,7 @@ export function attachXrControllerShortcuts({
         onDebug?.(`${source.handedness || "unknown"} button ${index} → ${action ?? "unmapped"}`);
         if (action) {
           if (action === "reset-zoom") {
-            zoom = 1; zoomReset = true; onZoom(zoom);
+            zoomReset = true; onCameraZoom("reset");
           } else {
             onAction(action, { handedness: source.handedness, buttonIndex: index });
           }
@@ -192,8 +188,7 @@ export function attachXrControllerShortcuts({
     }
     const zoomStep = zoomRepeater.update(zoomReset ? 0 : Math.sign(zoomDirection), stamp);
     if (zoomStep !== 0) {
-      zoom = clampZoom(zoom + zoomStep * ZOOM_STEP);
-      onZoom(zoom);
+      onCameraZoom(zoomStep > 0 ? "in" : "out");
     }
 
     session.requestAnimationFrame(poll);
@@ -213,12 +208,6 @@ export function attachXrControllerShortcuts({
     },
     setAngle(next) {
       angle = clampAngle(next);
-    },
-    zoom() {
-      return zoom;
-    },
-    setZoom(next) {
-      zoom = clampZoom(next);
     }
   };
 }

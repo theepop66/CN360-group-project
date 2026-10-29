@@ -9,6 +9,23 @@ let generation = 0;
 let media = null;
 let session = null;
 let pending = null;
+let cancelFrameWait = null;
+
+function nextVideoFrame() {
+  return new Promise((resolve, reject) => {
+    let callbackId;
+    const finish = error => {
+      clearTimeout(timer);
+      if (callbackId !== undefined) video.cancelVideoFrameCallback(callbackId);
+      if (cancelFrameWait === cancel) cancelFrameWait = null;
+      if (error) reject(error); else resolve();
+    };
+    const cancel = () => finish(new Error("หยุดรอภาพจากกล้องแล้ว"));
+    const timer = setTimeout(() => finish(new Error("กล้องไม่มีภาพใหม่ กรุณาเริ่มใหม่")), 2000);
+    cancelFrameWait = cancel;
+    callbackId = video.requestVideoFrameCallback(() => finish());
+  });
+}
 
 async function api(path, options) {
   const controller = new AbortController();
@@ -25,6 +42,7 @@ async function api(path, options) {
 function stop(message = "หยุดส่งภาพแล้ว") {
   generation++;
   pending?.abort();
+  cancelFrameWait?.();
   if (session) {
     void fetch("/phone-camera/session", { method: "DELETE", headers: { Authorization: `Bearer ${session.token}` }, keepalive: true }).catch(() => {});
     session = null;
@@ -38,7 +56,9 @@ function stop(message = "หยุดส่งภาพแล้ว") {
 async function publish(current, serverTime, clockStart) {
   let sequence = 0;
   while (current === generation) {
-    if (!video.videoWidth || video.readyState < 2) { await new Promise(resolve => setTimeout(resolve, 100)); continue; }
+    await nextVideoFrame();
+    if (current !== generation) return;
+    if (!video.videoWidth || video.readyState < 2 || media.getVideoTracks()[0].muted) throw new Error("กล้องถูกพัก กรุณาเริ่มใหม่");
     const scale = Math.min(1, 960 / video.videoWidth, 720 / video.videoHeight);
     canvas.width = Math.round(video.videoWidth * scale);
     canvas.height = Math.round(video.videoHeight * scale);
@@ -60,6 +80,7 @@ async function publish(current, serverTime, clockStart) {
 form.addEventListener("submit", async event => {
   event.preventDefault();
   if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) { status.textContent = "ต้องเปิดผ่าน HTTPS ที่เชื่อถือได้ก่อนจึงใช้กล้องได้"; return; }
+  if (!video.requestVideoFrameCallback) { status.textContent = "เบราว์เซอร์นี้ไม่รองรับการยืนยันภาพใหม่ กรุณาอัปเดต Safari"; return; }
   const current = ++generation;
   startButton.disabled = true; stopButton.disabled = false; codeInput.disabled = true;
   status.textContent = "กำลังขอใช้กล้อง…";
@@ -68,6 +89,7 @@ form.addEventListener("submit", async event => {
     if (current !== generation) { stream.getTracks().forEach(track => track.stop()); return; }
     media = stream;
     stream.getVideoTracks()[0].addEventListener("ended", () => { if (current === generation) stop("กล้องหยุดทำงาน กรุณาเริ่มใหม่"); });
+    stream.getVideoTracks()[0].addEventListener("mute", () => { if (current === generation) stop("กล้องถูกพัก กรุณาเริ่มใหม่"); });
     video.srcObject = stream;
     await video.play();
     if (current !== generation) return;
@@ -78,10 +100,10 @@ form.addEventListener("submit", async event => {
     }
     session = paired;
     const clockStart = performance.now();
-    codeInput.value = "";
     await publish(current, paired.serverTime, clockStart);
   } catch (error) { if (current === generation) stop(`ส่งภาพไม่ได้: ${error.message}`); }
 });
 stopButton.addEventListener("click", () => stop());
 document.addEventListener("visibilitychange", () => { if (document.hidden) stop("หยุดส่งภาพเมื่อออกจากหน้านี้ กดเริ่มเพื่อเชื่อมต่ออีกครั้ง"); });
 window.addEventListener("pagehide", () => stop());
+video.addEventListener("pause", () => { if (media && video.paused) stop("วิดีโอถูกพัก กรุณาเริ่มใหม่"); });

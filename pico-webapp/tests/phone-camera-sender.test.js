@@ -9,7 +9,7 @@ function deferred() {
   const promise = new Promise(done => { resolve = done; });
   return { promise, resolve };
 }
-function sender() {
+function sender({ presentFrames = true } = {}) {
   const elements = new Map();
   for (const id of ["sender-form", "start", "stop", "pairing-code", "status", "preview"]) {
     const events = new Map();
@@ -19,10 +19,20 @@ function sender() {
   const documentEvents = new Map();
   const streamRequest = deferred();
   const video = elements.get("preview");
-  Object.assign(video, { play: async () => {}, videoWidth: 640, videoHeight: 480, readyState: 3 });
+  let callbackId = 0;
+  const callbacks = new Map();
+  Object.assign(video, { play: async () => {}, videoWidth: 640, videoHeight: 480, readyState: 3,
+    requestVideoFrameCallback(fn) {
+      const id = ++callbackId;
+      callbacks.set(id, fn);
+      if (presentFrames) queueMicrotask(() => { if (callbacks.has(id)) fn(); });
+      return id;
+    },
+    cancelVideoFrameCallback(id) { callbacks.delete(id); } });
   const requests = [];
   let stopped = 0;
-  const track = { stop() { stopped++; }, addEventListener() {} };
+  const trackEvents = new Map();
+  const track = { muted: false, stop() { stopped++; }, addEventListener(name, fn) { trackEvents.set(name, fn); } };
   const stream = { getTracks: () => [track], getVideoTracks: () => [track] };
   const document = { hidden: false, querySelector: selector => elements.get(selector.slice(1)),
     addEventListener: (name, fn) => documentEvents.set(name, fn),
@@ -38,7 +48,7 @@ function sender() {
       return { ok: true, json: async () => ({ token: "session-token", serverTime: 1800000000000 }) };
     }
   });
-  return { elements, document, documentEvents, requests, streamRequest, stream, uploadResponse,
+  return { elements, document, documentEvents, requests, streamRequest, stream, uploadResponse, track, trackEvents, callbacks,
     get stopped() { return stopped; },
     start: () => elements.get("sender-form").events.get("submit")({ preventDefault() {} }),
     stop: () => elements.get("stop").events.get("click")() };
@@ -72,4 +82,30 @@ test("backgrounding stops the camera and invalidates an in-flight upload", async
   assert.equal(s.requests.filter(r => r.url.endsWith("frame")).length, 1);
   assert.equal(s.requests.at(-1).options.method, "DELETE");
   assert.equal(s.elements.get("preview").srcObject, null);
+});
+
+test("a frozen video is never restamped and uploaded as a new frame", async () => {
+  const s = sender({ presentFrames: false });
+  const started = s.start();
+  s.streamRequest.resolve(s.stream);
+  for (let attempt = 0; attempt < 30 && !s.callbacks.size; attempt++) await Promise.resolve();
+  assert.equal(s.callbacks.size, 1);
+  assert.equal(s.requests.filter(r => r.url.endsWith("frame")).length, 0);
+  s.stop();
+  await started;
+  assert.equal(s.callbacks.size, 0);
+  assert.equal(s.stopped, 1);
+});
+
+test("a muted camera stops its session immediately", async () => {
+  const s = sender({ presentFrames: false });
+  const started = s.start();
+  s.streamRequest.resolve(s.stream);
+  for (let attempt = 0; attempt < 30 && !s.callbacks.size; attempt++) await Promise.resolve();
+  s.track.muted = true;
+  s.trackEvents.get("mute")();
+  await started;
+  assert.equal(s.stopped, 1);
+  assert.equal(s.requests.filter(r => r.url.endsWith("frame")).length, 0);
+  assert.equal(s.requests.at(-1).options.method, "DELETE");
 });

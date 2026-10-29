@@ -85,7 +85,10 @@ launch command with `--phone-camera` (and optional `--phone-ca <public-ca-file>`
 Transport bounds: one active publisher, at most eight MJPEG viewers, JPEG only,
 512 KiB per upload, at most 1920×1080 pixels; the sender fits within 960×720 and
 uploads one frame at a time with a 125 ms minimum gap. Camera sessions change
-on every start. Duplicate/reordered sequence numbers, replaced sessions,
+on every start. Uploads require a newly presented video frame; a muted/paused
+camera stops the sender, and two seconds without a new video frame ends it.
+The sender requires `requestVideoFrameCallback` (update Safari if unavailable).
+Duplicate/reordered sequence numbers, replaced sessions,
 future-dated or more-than-two-second-old images are rejected. `/capture` and
 health return 503 when stale; existing streams end rather than replaying a
 stale image. Timestamping uses the PC pairing clock plus the phone's monotonic

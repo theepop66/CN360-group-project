@@ -67,6 +67,8 @@ for ($attempt = 0; $attempt -lt 30; $attempt++) {
     $process.Refresh()
     if ($process.HasExited) { throw "Camera server stopped. See $stderrPath" }
     try {
+        $pairingLine = (Get-Content -LiteralPath $stdoutPath | Select-String 'Phone pairing code').Line
+        if (-not $pairingLine) { continue }
         $response = Invoke-WebRequest -Uri "http://127.0.0.1:$HttpPort/phone-camera.html" -TimeoutSec 1
         if ($response.StatusCode -eq 200) { $ready = $true; break }
     } catch { }
@@ -75,9 +77,22 @@ if (-not $ready) {
     $process.Kill()
     throw "Camera server did not become ready. See $stderrPath"
 }
+# Verify HTTPS against the generated CA without changing OS trust or disabling validation.
+$tlsCheck = @'
+const fs = require('node:fs');
+const https = require('node:https');
+const { X509Certificate } = require('node:crypto');
+const ca = new X509Certificate(fs.readFileSync(process.argv[1])).toString();
+const req = https.get('https://127.0.0.1:' + process.argv[2] + '/phone-camera.html', {ca}, res => {
+  res.resume(); res.on('end', () => { if (res.statusCode !== 200) process.exitCode = 1; });
+});
+req.setTimeout(3000, () => req.destroy(new Error('HTTPS startup timed out')));
+req.on('error', error => { console.error(error.message); process.exitCode = 1; });
+'@
+& $nodeCommand -e $tlsCheck $caPath $HttpsPort
+if ($LASTEXITCODE -ne 0) { $process.Kill(); throw 'The generated HTTPS camera endpoint did not validate.' }
 $state = @{ pid = $process.Id; server = $server; ip = $IpAddress; httpPort = $HttpPort; httpsPort = $HttpsPort; caSha256 = (Get-FileHash -LiteralPath $caPath -Algorithm SHA256).Hash }
 $state | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $privateDir 'running.json')
-$pairingLine = (Get-Content -LiteralPath $stdoutPath | Select-String 'Phone pairing code').Line
 $instructions = @"
 iPhone camera: https://${IpAddress}:$HttpsPort/phone-camera.html
 PC/Pico HUD: https://${IpAddress}:$HttpsPort/?camera=phone

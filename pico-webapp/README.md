@@ -18,8 +18,10 @@ The flat 2D browser never exposes controller buttons to page script — there th
 
 | Input | Action |
 | --- | --- |
-| Thumbstick up / right | Jog the servo +`stepDeg` (repeats while held) |
-| Thumbstick down / left | Jog the servo −`stepDeg` |
+| Left thumbstick up / down | Camera view zoom in / out (1×–4×, 0.1× steps) |
+| Left thumbstick click | Reset camera view to 1× |
+| Right thumbstick up / right | Jog the servo +`stepDeg` (repeats while held) |
+| Right thumbstick down / left | Jog the servo −`stepDeg` |
 | Right **A** (primary) | Reject now (`/verdict`) |
 | Right **B** (secondary) | Pass now (`/verdict`) |
 | **Grip** (either hand) | Sweep |
@@ -28,7 +30,100 @@ The flat 2D browser never exposes controller buttons to page script — there th
 
 The action mapping, step size, repeat cadence, and deadzone live in `controllerShortcuts` in `config.js`. The current PICO button indices are defined in `js/xr-controller.js`; open the HUD with `?xrdebug=1` to print which index each press reports if a firmware/browser update changes it. The firmware still enforces its own rules — angle jogs need Manual mode and an idle unit, reject/pass only apply while an item is in the beam — and the HUD mirrors that feedback to the VR status line or the AR panel.
 
+Zoom is a centered digital crop of the HUD camera view. Live iPhone/Pi video,
+local webcam and analyzed snapshots all use the same zoom as their detection
+boxes. The VR texture computes its crop and boxes at its own 1280×720 viewport;
+it does not stretch the 2D overlay to fit. Zoom does not alter the iPhone lens,
+AI input, saved snapshots or detection coordinates.
+
+Use the **− / zoom level / +** controls in the viewer toolbar on PC or in Pico
+2D mode; click the displayed level to reset. Pico thumbstick input requires an
+active WebXR AR/VR session over trusted HTTPS. In 2D the controller is a pointer,
+so use the toolbar buttons. Left-stick horizontal movement is ignored, and zoom
+input does not issue servo commands. Other actuator button mappings remain
+active in XR. Zoom stays selected across camera reconnects and mode switches;
+a fresh page starts at 1×. Confirm the mapping on the physical Pico before a
+demo; simulated controller tests do not establish headset acceptance.
+
 ## Run locally
+
+### iPhone camera → PC / Pico HUD
+
+The optional phone receiver serves a dedicated sender page and exposes the
+uploaded JPEGs through the HUD's existing remote camera support. On Windows
+PowerShell 7.2+, run this from the repository root with the PC's **Wi-Fi IPv4**:
+
+```powershell
+./pico-webapp/tools/start-phone-camera.ps1 -IpAddress 192.168.1.20
+```
+
+It starts a camera-only bench on HTTP 8080 / HTTPS 8443. It creates a 30-day
+development CA and IP-specific server certificate under
+`%LOCALAPPDATA%/CN360/phone-camera/<IP>/`; private keys never enter the repository.
+It does not install trust or change firewall rules. The pairing code, URLs and
+public CA SHA256 fingerprint are in `connection.txt` in that private directory.
+The local CA signing key is discarded after issuing the server certificate.
+Keep the generated server private key private and remove the trusted CA from
+devices when testing ends. Restarting at the same IP reuses unexpired files;
+changing IP needs a new setup and trust. Expired files must be preserved/moved
+aside before regenerating and trusting the replacement CA.
+
+1. Connect iPhone, PC and Pico to the same network. Allow Node on the Windows
+   Private network if prompted. Guest/campus Wi-Fi may isolate devices; if so,
+   use a private shared network with device-to-device access.
+2. On iPhone open `http://<PC-IP>:8080/phone-camera-ca.cer`, install the downloaded
+   CA in **Settings → General → VPN & Device Management**, then enable it in
+   **General → About → Certificate Trust Settings**. Compare its fingerprint
+   with the PC file before trusting it. This is development-only local trust.
+3. In Safari open `https://<PC-IP>:8443/phone-camera.html`, enter the PC pairing
+   code, tap Start and allow camera access. The rear camera is preferred. Keep
+   this page visible; hiding it stops capture. Stop the old sender or wait ten
+   seconds before pairing a replacement. The code is never stored in browser
+   storage or in a URL.
+4. On the PC open `http://localhost:8080/?camera=phone`. On Pico open
+   `http://<PC-IP>:8080/?camera=phone` for 2D, or the HTTPS equivalent after
+   trusting the CA in its browser for XR. Physical Pico/XR acceptance is separate.
+
+The phone shortcut temporarily selects same-origin stream/health URLs and takes
+precedence over saved camera settings. Other saved connections, including n8n
+and relay URLs, are unchanged. A relay connection warning is expected if only
+the camera server is running; live camera display does not require AI or relay.
+
+For n8n pull ingestion, use `piBaseUrl: "http://host.docker.internal:8080"`
+when n8n runs in Docker Desktop on this PC, or `http://<PC-IP>:8080` from another
+host. `/capture` returns the exact accepted JPEG and all five existing frame
+identity headers; `/health` is also available. Use the existing local runtime
+configuration/deployment procedure; starting the camera does **not** modify or
+activate n8n workflows, start the model or establish a physical controller.
+The camera-only launcher sends `/esp/*` to an unused loopback port, so it cannot
+operate the actual servo. For an already configured HUD server, use its normal
+launch command with `--phone-camera` (and optional `--phone-ca <public-ca-file>`).
+
+Transport bounds: one active publisher, at most eight MJPEG viewers, JPEG only,
+512 KiB per upload, at most 1920×1080 pixels; the sender fits within 960×720 and
+uploads one frame at a time with a 125 ms minimum gap. Camera sessions change
+on every start. Uploads require a newly presented video frame; a muted/paused
+camera stops the sender, and two seconds without a new video frame ends it.
+The sender requires `requestVideoFrameCallback` (update Safari if unavailable).
+Duplicate/reordered sequence numbers, replaced sessions,
+future-dated or more-than-two-second-old images are rejected. `/capture` and
+health return 503 when stale; existing streams end rather than replaying a
+stale image. Timestamping uses the PC pairing clock plus the phone's monotonic
+clock, anchored conservatively when the pairing response arrives. It estimates
+capture time; physical sensor-to-camera latency still requires measurement.
+Frames and viewer buffers are memory-only; no snapshots are saved by this
+receiver. Authorized n8n inspection can separately persist its captured image.
+
+Stop the owned camera server with:
+
+```powershell
+./pico-webapp/tools/stop-phone-camera.ps1 -IpAddress 192.168.1.20
+```
+
+This adds an alternative live camera for #23. It does not by itself complete
+Pi deployment, prompt/inference integration, AI accuracy, physical timing or
+system acceptance. Verify a live iPhone image, camera stop/reconnect and the
+matching inspected snapshot on the physical PC/Pico before claiming those.
 
 Start the detection relay first with `npm start --prefix detection-relay` from
 the repository root. `npm run serve` in this folder proxies the default

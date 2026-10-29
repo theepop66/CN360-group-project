@@ -16,6 +16,7 @@ import { stat } from "node:fs/promises";
 import { networkInterfaces } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createPhoneCamera } from "./phone-camera.mjs";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_ROOT = path.resolve(SCRIPT_DIR, "..");
@@ -60,10 +61,12 @@ function parseArgs(argv) {
     ["--key", "key"],
     ["--control-unit", "controlUnit"],
     ["--relay-origin", "relayOrigin"],
+    ["--phone-ca", "phoneCa"],
     ["--root", "root"]
   ]);
 
   for (let index = 0; index < argv.length; index += 1) {
+    if (argv[index] === "--phone-camera") { options.phoneCamera = true; continue; }
     const [flag, inlineValue] = argv[index].split("=", 2);
     const name = names.get(flag);
     if (!name) throw new Error(`Unknown argument: ${argv[index]}`);
@@ -181,9 +184,14 @@ function proxyToControlUnit(req, res, target, pathname, search) {
   req.pipe(proxyReq);
 }
 
-export function createHandler({ root, controlUnit }) {
+export function createHandler({ root, controlUnit, phoneCamera, phoneCaBytes }) {
   return (req, res) => {
     const url = new URL(req.url ?? "/", "http://localhost");
+    if (url.pathname === "/phone-camera-ca.cer" && phoneCaBytes && req.method === "GET") {
+      res.writeHead(200, { "Content-Type": "application/x-x509-ca-cert", "Content-Disposition": "attachment; filename=cn360-phone-camera-ca.cer", "Cache-Control": "no-store" });
+      return res.end(phoneCaBytes);
+    }
+    if (phoneCamera?.handle(req, res, url.pathname)) return;
     if (url.pathname === "/esp" || url.pathname.startsWith("/esp/")) {
       return proxyToControlUnit(req, res, controlUnit, url.pathname, url.search);
     }
@@ -266,6 +274,8 @@ function listen(server, port, label) {
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
+  if (options.phoneCamera) options.phoneCamera = createPhoneCamera();
+  if (options.phoneCa) options.phoneCaBytes = readFileSync(options.phoneCa);
   const handler = createHandler(options);
   const addresses = lanAddresses();
   const started = [];
@@ -299,6 +309,11 @@ async function main() {
   console.log(`[hud] WebSocket /detections -> ${options.relayOrigin}/detections`);
   for (const line of started) console.log(`[hud] ${line}`);
   console.log("[hud] open the PICO at the HTTPS address, e.g. https://<pc-ip>:8443/?xrdebug=1");
+  if (options.phoneCamera) {
+    console.log("[hud] iPhone: open HTTPS /phone-camera.html; PC/Pico HUD: /?camera=phone");
+    console.log(`[hud] Phone pairing code (enter only on the iPhone): ${options.phoneCamera.pairingCode}`);
+    console.log("[hud] n8n pull capture: HTTP /capture (same five frame-identity headers as Pi)");
+  }
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

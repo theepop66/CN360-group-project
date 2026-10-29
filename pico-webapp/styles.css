@@ -152,6 +152,8 @@ h2 {
   object-fit: cover;
   object-position: center;
   background: #030807;
+  transform: scale(var(--camera-zoom, 1));
+  transform-origin: center;
 }
 
 #detection-overlay {
@@ -200,6 +202,7 @@ h2 {
   bottom: 14px;
   left: 14px;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
@@ -219,8 +222,20 @@ h2 {
   gap: 8px;
 }
 
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.zoom-controls .icon-button {
+  min-width: 40px;
+  padding: 6px 10px;
+}
+
 .mode-switcher {
   display: flex;
+  flex-wrap: wrap;
   gap: 3px;
   padding: 3px;
   border: 1px solid var(--line);
@@ -567,6 +582,10 @@ html.xr-ar-active .video-stage {
   background: rgba(3, 8, 7, 0.5);
 }
 
+html.xr-ar-active #fullscreen-button {
+  display: none;
+}
+
 html.xr-ar-active .control-grid {
   position: fixed;
   left: 50%;
@@ -624,6 +643,49 @@ footer {
 }
 
 @media (max-width: 480px) {
+  .viewer-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .toolbar-actions {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 6px;
+  }
+
+  .zoom-controls {
+    grid-column: 1;
+    grid-row: 1;
+    justify-content: center;
+  }
+
+  .zoom-controls .icon-button,
+  #fullscreen-button {
+    min-height: 32px;
+    min-width: 32px;
+    padding: 4px 6px;
+    font-size: 0.72rem;
+  }
+
+  #fullscreen-button {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .mode-switcher {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .mode-button {
+    min-width: 0;
+    padding: 4px 3px;
+    font-size: 0.65rem;
+  }
+
   .app-shell {
     padding-right: 10px;
     padding-left: 10px;

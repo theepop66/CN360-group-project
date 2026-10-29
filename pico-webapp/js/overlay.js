@@ -1,3 +1,5 @@
+import { clampZoom } from "./zoom.js";
+
 const PASS_STATUSES = new Set(["accepted", "clear", "ok", "pass", "passed"]);
 
 function asFiniteNumber(value) {
@@ -28,7 +30,7 @@ function readBox(candidate) {
   return [null, null, null, null];
 }
 
-function getFittedImageRect(container, source, fit) {
+function getFittedImageRect(container, source, fit, zoom = 1) {
   if (container.width <= 0 || container.height <= 0 || source.width <= 0 || source.height <= 0) {
     return { x: 0, y: 0, width: 0, height: 0 };
   }
@@ -39,8 +41,8 @@ function getFittedImageRect(container, source, fit) {
   const scaledHeight = source.height * scale;
   // Contained images should never extend beyond the container. Cover images
   // deliberately can, because object-fit crops the overflow at the edges.
-  const width = fit === "cover" ? scaledWidth : Math.min(container.width, scaledWidth);
-  const height = fit === "cover" ? scaledHeight : Math.min(container.height, scaledHeight);
+  const width = (fit === "cover" ? scaledWidth : Math.min(container.width, scaledWidth)) * clampZoom(zoom);
+  const height = (fit === "cover" ? scaledHeight : Math.min(container.height, scaledHeight)) * clampZoom(zoom);
 
   return {
     x: (container.width - width) / 2,
@@ -54,12 +56,12 @@ export function getContainedImageRect(container, source) {
   return getFittedImageRect(container, source, "contain");
 }
 
-export function getCoveredImageRect(container, source) {
-  return getFittedImageRect(container, source, "cover");
+export function getCoveredImageRect(container, source, zoom = 1) {
+  return getFittedImageRect(container, source, "cover", zoom);
 }
 
-export function mapBoxToDisplay(box, source, container, fit = "contain") {
-  const imageRect = getFittedImageRect(container, source, fit);
+export function mapBoxToDisplay(box, source, container, fit = "contain", zoom = 1) {
+  const imageRect = getFittedImageRect(container, source, fit, zoom);
   const sourceWidth = box.normalized ? 1 : source.width;
   const sourceHeight = box.normalized ? 1 : source.height;
 

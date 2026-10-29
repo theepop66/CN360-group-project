@@ -25,7 +25,7 @@ export function requestedCameraZoom(report, action) {
   const range = validateCameraZoom(report);
   if (!range.supported) throw new Error("camera_zoom_not_supported");
   if (!["in", "out", "reset"].includes(action)) throw new Error("invalid_zoom_action");
-  const desired = action === "reset" ? 1 : range.value + (action === "in" ? 1 : -1) * Math.max(0.1, range.step);
+  const desired = action === "reset" ? 1 : range.value + (action === "in" ? 1 : -1) * (range.step || 0.1);
   const grid = range.step ? range.min + Math.round((desired - range.min) / range.step) * range.step : desired;
   return Number(Math.max(range.min, Math.min(range.max, grid)).toFixed(8));
 }

@@ -44,6 +44,8 @@ test("a hung camera operation has a bounded timeout", async () => {
 });
 
 test("commands follow device range/step, including below 1x and above 4x", () => {
+  assert.equal(requestedCameraZoom({ ...report, step: 0.01 }, "in"), 1.01);
+  assert.equal(requestedCameraZoom({ ...report, step: 0.05 }, "out"), 0.95);
   assert.equal(requestedCameraZoom({ ...report, value: 4 }, "in"), 4.1);
   assert.equal(requestedCameraZoom({ ...report, value: 0.5 }, "out"), 0.5);
   assert.equal(requestedCameraZoom({ ...report, value: 10 }, "in"), 10);

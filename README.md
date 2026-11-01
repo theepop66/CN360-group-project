@@ -93,6 +93,9 @@ See [`n8n/README.md`](./n8n/README.md) for import instructions, placeholders and
 | **1** | Concept Paper | [📄 Concept Paper](https://drive.google.com/file/d/1IjBoO7uXjnm1u_8YWbMDVTaaAnag4DLB/view?usp=sharing) · [📊 Slides](https://drive.google.com/file/d/1H9cFgqOz8-Zfk-Ge3Tp7ApVg4Z3ssXk0/view?usp=sharing) | 10/8/2026 |
 | **2** | Progress report | [📊 Slides](https://drive.google.com/file/d/1-ZjyCF88wG0FfLqqc9nYgaaWYSksHTM0/view?usp=sharing)  | 23/8/2026 |
 | **3** | Progress report 2 | - | - |
+| **4** | Progress report 3 | [📊 Slides](https://canva.link/20q62wippspnf5c) | - |
+| **5** | Progress report 4 | [📊 Slides](https://canva.link/lnwc67bio9i9n3j) | 26/10/69 |
+| **6** | Progress report 5 | [📊 Slides](https://canva.link/77dzm3v1boi370s) | - |
 
 ---
 

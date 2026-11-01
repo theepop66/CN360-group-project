@@ -6,7 +6,7 @@ import { sendPrompt } from "./prompt.js";
 import { parseCameraMessage } from "./camera-message.js";
 import { VIEW_MODES, isImmersiveArSupported, isImmersiveVrSupported } from "./xr-modes.js";
 import { startArPassthrough } from "./ar-passthrough.js";
-import { startVrCinema } from "./vr-cinema.js?v=2";
+import { startVrCinema } from "./vr-cinema.js?v=3";
 import { installXrEmulatorIfRequested } from "./dev-xr-emulator.js";
 import { setMode, setServoAngle, runSweep, sendVerdict } from "./servo.js";
 import {
@@ -142,9 +142,30 @@ function loadControllerShortcuts(source = {}) {
   };
 }
 
+// Last status pills, replayed into the VR scene when it starts (VR has no DOM).
+const lastStatus = { camera: null, socket: null };
+
 function setStatus(element, text, state = "idle") {
   element.textContent = text;
   element.className = `status status--${state}`;
+
+  const kind = element === elements.streamStatus
+    ? "camera"
+    : element === elements.socketStatus ? "socket" : null;
+  if (kind) {
+    lastStatus[kind] = { text, state };
+    activeXrController?.setStatusText?.(kind, text, state);
+  }
+}
+
+// Push the current HUD state into a freshly started VR scene.
+function syncXrHud() {
+  if (!activeXrController) return;
+  activeXrController.setSummaryText?.(elements.summary.textContent);
+  activeXrController.setServoStatusText?.(elements.servoFeedback.textContent);
+  for (const [kind, status] of Object.entries(lastStatus)) {
+    if (status) activeXrController.setStatusText?.(kind, status.text, status.state);
+  }
 }
 
 function populateSettings() {
@@ -794,17 +815,69 @@ function compositeVrFrame() {
   const media = activeMediaElement();
   const mediaDimensions = activeMediaDimensions();
   const viewport = { width: VR_CANVAS_WIDTH, height: VR_CANVAS_HEIGHT };
-  context.fillStyle = "#030807";
-  context.fillRect(0, 0, VR_CANVAS_WIDTH, VR_CANVAS_HEIGHT);
 
   if (mediaDimensions.width > 0 && mediaDimensions.height > 0 && !media.classList.contains("video-feed--hidden")) {
+    context.fillStyle = "#e3edfb";
+    context.fillRect(0, 0, VR_CANVAS_WIDTH, VR_CANVAS_HEIGHT);
     const destRect = getCoveredImageRect(
       viewport,
       mediaDimensions
     );
     context.drawImage(media, destRect.x, destRect.y, destRect.width, destRect.height);
     drawDetectionBoxes(context, viewport, mediaDimensions);
+  } else {
+    drawVrPlaceholder(context);
   }
+}
+
+// Light-blue "waiting for camera" card shown on the VR screen until a frame
+// is available (mirrors the dashed camera placeholder of the 2D/AR HUD).
+function vrRoundRect(context, x, y, w, h, r) {
+  context.moveTo(x + r, y);
+  context.arcTo(x + w, y, x + w, y + h, r);
+  context.arcTo(x + w, y + h, x, y + h, r);
+  context.arcTo(x, y + h, x, y, r);
+  context.arcTo(x, y, x + w, y, r);
+  context.closePath();
+}
+
+function drawVrPlaceholder(context) {
+  context.fillStyle = "#e3edfb";
+  context.fillRect(0, 0, VR_CANVAS_WIDTH, VR_CANVAS_HEIGHT);
+
+  context.save();
+  context.setLineDash([14, 10]);
+  context.lineWidth = 3;
+  context.strokeStyle = "rgba(60, 100, 165, 0.5)";
+  context.beginPath();
+  vrRoundRect(context, 28, 28, VR_CANVAS_WIDTH - 56, VR_CANVAS_HEIGHT - 56, 28);
+  context.stroke();
+  context.restore();
+
+  // camera glyph
+  const cx = VR_CANVAS_WIDTH / 2;
+  const cy = VR_CANVAS_HEIGHT / 2 - 70;
+  context.save();
+  context.strokeStyle = "#1c3a6b";
+  context.lineWidth = 9;
+  context.lineJoin = "round";
+  context.beginPath();
+  vrRoundRect(context, cx - 80, cy - 46, 160, 110, 16);
+  context.stroke();
+  context.beginPath();
+  context.arc(cx, cy + 9, 30, 0, Math.PI * 2);
+  context.stroke();
+  context.restore();
+
+  context.textAlign = "center";
+  context.fillStyle = "#14284b";
+  context.font = "700 44px system-ui, sans-serif";
+  context.fillText("Waiting for camera", cx, cy + 150);
+  context.fillStyle = "#3d5a85";
+  context.font = "500 27px system-ui, sans-serif";
+  const message = elements.placeholderMessage.textContent || "Link a camera to start live inspection";
+  context.fillText(message.length > 70 ? `${message.slice(0, 69)}…` : message, cx, cy + 200);
+  context.textAlign = "start";
 }
 
 function isPhoneCameraSource() {
@@ -929,6 +1002,7 @@ async function enterViewMode(targetMode) {
         onEnd: () => { void enterViewMode(VIEW_MODES.FLAT); }
       });
       startVrRenderLoop();
+      syncXrHud();
       activeControllerShortcuts = startControllerShortcuts(activeXrController.session);
       currentViewMode = VIEW_MODES.VR;
       setModeButtonsState(VIEW_MODES.VR);

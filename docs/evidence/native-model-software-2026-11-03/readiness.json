@@ -1,0 +1,96 @@
+{
+  "assessedAt": "2026-11-03T09:09:17.414Z",
+  "criteria": {
+    "approvedOn": "2026-11-03",
+    "approval": "Project owner agreed in chat before the scored run",
+    "scope": "Frozen existing labelled image/target sample set only; no production-accuracy or physical-sorting claim",
+    "imageMaxSide": 448,
+    "diagnosticRepetitions": 3,
+    "productionRepetitions": 1,
+    "productionCaseIds": [
+      "bottle__good__000-1",
+      "bottle__broken_large__000-1",
+      "capsule__crack__000-1"
+    ],
+    "maxMissedDefects": 0,
+    "maxFalseRejects": 0,
+    "maxErrors": 0,
+    "modelServiceBudgetMs": 1100,
+    "modelBudgetMs": 1200,
+    "verdictWindowMs": 3000,
+    "dashboardVisibilityMs": 5000,
+    "healthIntervalMs": 10000,
+    "coverageThreshold": 0.005,
+    "promptPolicy": "Use the existing manifest targets unchanged; do not tune on the acceptance run",
+    "notes": "The curated sample set was previously examined, not an independent held-out set. Failures are retained, and long diagnostic allowances cannot pass the production timing gate."
+  },
+  "quality": {
+    "attempts": 45,
+    "evaluated": 45,
+    "errors": 0,
+    "good": 21,
+    "defective": 24,
+    "missedDefects": 6,
+    "falseRejects": 21,
+    "caseAttempts": {
+      "bottle__good__000-1": 3,
+      "bottle__broken_large__000-1": 3,
+      "bottle__broken_small__000-1": 3,
+      "metal_nut__good__000-1": 3,
+      "metal_nut__good__000-2": 3,
+      "metal_nut__scratch__000-1": 3,
+      "metal_nut__bent__000-1": 3,
+      "hazelnut__good__000-1": 3,
+      "hazelnut__good__000-2": 3,
+      "hazelnut__crack__000-1": 3,
+      "hazelnut__hole__000-1": 3,
+      "capsule__good__000-1": 3,
+      "capsule__good__000-2": 3,
+      "capsule__crack__000-1": 3,
+      "capsule__squeeze__000-1": 3
+    },
+    "correctPasses": 0,
+    "correctRejects": 18,
+    "forcedRejects": 0,
+    "evaluationCoverage": 1,
+    "missedDefectRate": 0.25,
+    "falseRejectRate": 1,
+    "successfulEvaluationAccuracy": 0.4
+  },
+  "diagnosticTiming": {
+    "count": 45,
+    "p50Ms": 1044.6748000000007,
+    "p95Ms": 1652.094000000001,
+    "maxMs": 1737.2619999999988
+  },
+  "productionTiming": {
+    "model": {
+      "count": 3,
+      "p50Ms": 1166,
+      "p95Ms": 1206,
+      "maxMs": 1206
+    },
+    "response": {
+      "count": 3,
+      "p50Ms": 1590.708200000001,
+      "p95Ms": 1648.5715000000018,
+      "maxMs": 1648.5715000000018
+    },
+    "visibility": {
+      "count": 3,
+      "p50Ms": 1769.5987000000005,
+      "p95Ms": 1824.2070000000022,
+      "maxMs": 1824.2070000000022
+    }
+  },
+  "diagnosticSamples": 45,
+  "productionSamples": 3,
+  "gates": {
+    "quality": "failed",
+    "productionTiming": "failed",
+    "consistency": "passed"
+  },
+  "readyForPhysicalIntegration": false,
+  "physicalSortingAccepted": false,
+  "note": "Frozen sample-set assessment only; diagnostic predictions cannot approve production deadlines or physical sorting."
+}

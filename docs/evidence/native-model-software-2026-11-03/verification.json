@@ -1,0 +1,21 @@
+{
+  "node": {
+    "detectionRelay": 22,
+    "n8n": 227,
+    "picoMyApp": 33,
+    "picoWebapp": 59,
+    "thingsboard": 6
+  },
+  "python": {
+    "passed": 12,
+    "skipped": 1,
+    "mypy": "passed (7 source files)",
+    "nativeSkipNote": "Opt-in synthetic native API regression omitted; genuine native evaluation recorded separately with 45 predictions and 3 production inspections"
+  },
+  "controller": {
+    "failures": 0,
+    "checks": 135
+  },
+  "consistencyCases": 10,
+  "consistencyPassed": true
+}

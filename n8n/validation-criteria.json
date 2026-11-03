@@ -1,0 +1,20 @@
+{
+  "approvedOn": "2026-11-03",
+  "approval": "Project owner agreed in chat before the scored run",
+  "scope": "Frozen existing labelled image/target sample set only; no production-accuracy or physical-sorting claim",
+  "imageMaxSide": 448,
+  "diagnosticRepetitions": 3,
+  "productionRepetitions": 1,
+  "productionCaseIds": ["bottle__good__000-1", "bottle__broken_large__000-1", "capsule__crack__000-1"],
+  "maxMissedDefects": 0,
+  "maxFalseRejects": 0,
+  "maxErrors": 0,
+  "modelServiceBudgetMs": 1100,
+  "modelBudgetMs": 1200,
+  "verdictWindowMs": 3000,
+  "dashboardVisibilityMs": 5000,
+  "healthIntervalMs": 10000,
+  "coverageThreshold": 0.005,
+  "promptPolicy": "Use the existing manifest targets unchanged; do not tune on the acceptance run",
+  "notes": "The curated sample set was previously examined, not an independent held-out set. Failures are retained, and long diagnostic allowances cannot pass the production timing gate."
+}

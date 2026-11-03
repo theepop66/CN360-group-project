@@ -57,6 +57,16 @@ export function configureWorkflows(config, supabaseKey) {
       return value;
     };
     const configured = replace(workflow);
+    const monitoring = configured.nodes.find(node => node.name === "publish-monitoring");
+    if (monitoring && config.telemetryBaseUrl) {
+      const url = new URL(config.telemetryBaseUrl);
+      if (!["http:", "https:"].includes(url.protocol) || url.hostname === "0.0.0.0" || url.username || url.password || url.search || url.hash || url.pathname !== "/") {
+        throw new Error("Set a usable origin for telemetryBaseUrl");
+      }
+      monitoring.disabled = false;
+      monitoring.parameters.url = url.origin + "/events";
+      monitoring.parameters.jsonBody = monitoring.parameters.jsonBody.replace("monitoringProfile: 'inspection'", () => "monitoringProfile: " + JSON.stringify(config.monitoringProfile ?? "inspection"));
+    }
     if (useStoredCredential) {
       for (const node of configured.nodes) {
         const headers = node.parameters.headerParameters?.parameters;

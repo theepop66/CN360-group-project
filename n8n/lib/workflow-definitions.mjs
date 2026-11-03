@@ -34,7 +34,7 @@ export const PLACEHOLDERS = Object.freeze({
 // n8n Code nodes cannot import from the filesystem, so the tested modules are
 // inlined verbatim. The workflow tests fail if this stops matching the sources.
 export function sharedLogicSource() {
-  const sources = ["inspection-logic.mjs", "inspection-records.mjs", "item-control.mjs"].map(
+  const sources = ["inspection-logic.mjs", "inspection-records.mjs", "item-control.mjs", "inspection-policy.mjs"].map(
     (name) => readFileSync(join(LIB, name), "utf8").replace(/\r\n/g, "\n")
   );
 
@@ -186,14 +186,18 @@ const configured = typeof $vars !== 'undefined' && $vars.COVERAGE_THRESHOLD !== 
   ? $vars.COVERAGE_THRESHOLD
   : '${PLACEHOLDERS.coverageThreshold}';
 const threshold = resolveCoverageThreshold(configured);
-const decision = buildInspectionDecision({
+const inspectionPolicy = null; // configured inspection policy
+const selectedRule = policyRule(inspectionPolicy, resolved.instruction, frameContext);
+const modelDecision = buildInspectionDecision({
   outcome: classifyModelOutcome($input.first().json),
   frameContext,
   instruction: resolved.instruction,
-  threshold: threshold.value,
+  threshold: selectedRule?.threshold ?? threshold.value,
   budget,
   frameCaptureFailed: capture.error !== undefined && capture.error !== null
 });
+const decision = applyInspectionPolicy(modelDecision, { policy: inspectionPolicy, instruction: resolved.instruction,
+  frameContext, modelPromptMissing: resolved.modelPromptMissing });
 return [{ json: {
   ...resolved,
   frameContext,
@@ -357,6 +361,10 @@ return [{ json: { logRow: buildSystemLogRow({
     promptVerified: decision.promptVerified,
     promptUsed: decision.promptUsed,
     promptMismatch: decision.promptMismatch,
+    reviewRequired: decision.reviewRequired ?? false,
+    reviewReason: decision.reviewReason ?? null,
+    modelSuggestion: decision.modelVerdict ?? null,
+    policyId: decision.policyId ?? null,
     verdictBudget: base.budget ?? null,
     esp32Accepted: base.esp32?.esp32Accepted ?? null,
     esp32Status: base.esp32?.esp32Status ?? null,
@@ -521,7 +529,7 @@ return [{ json: { ...$input.first().json, snapshotObjectName: capturedItem.json.
           url: "http://host.docker.internal:8106/events",
           sendBody: true,
           specifyBody: "json",
-          jsonBody: "={{ JSON.stringify({ ...$('capture-esp32-response').first().json, executionId: String($execution.id), workflowId: String($workflow.id), monitoringProfile: 'inspection' }) }}",
+          jsonBody: "={{ JSON.stringify({ ...$('capture-esp32-response').first().json, executionId: String($execution.id), workflowId: String($workflow.id), monitoringProfile: 'inspection', reviewFrameBaseUrl: null }) }}",
           options: { timeout: 1000 }
         }),
         disabled: true,

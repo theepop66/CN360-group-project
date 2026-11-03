@@ -14,7 +14,7 @@ export function inspectionEvent(input) {
     : JSON.stringify(["observation", input.workflowId ?? "cn360-inspection", input.executionId, input.requestedAt]);
   const evaluated = ["defect_detected", "no_defect_detected"].includes(decision.reason);
   const failures = [];
-  if (!evaluated) failures.push(decision.reason ?? "unknown_inspection_failure");
+  if (!evaluated && decision.reason !== "manual_review_required") failures.push(decision.reason ?? "unknown_inspection_failure");
   if (decision.promptMismatch) failures.push("prompt_mismatch");
   if (input.modelPromptMissing) failures.push("model_prompt_missing");
   if (itemContext && esp32.controlOutcome !== "accepted") failures.push("control_" + (esp32.controlOutcome ?? "delivery_unknown"));
@@ -28,6 +28,12 @@ export function inspectionEvent(input) {
     inspection_target: String(input.inspectionTarget ?? ""),
     verdict: decision.verdict,
     verdict_reason: String(decision.reason ?? "unknown"),
+    review_required: decision.reviewRequired === true,
+    review_reason: String(decision.reviewReason ?? "none"),
+    model_suggestion: String(decision.modelVerdict ?? (evaluated ? decision.verdict : "unavailable")),
+    policy_id: String(decision.policyId ?? "unqualified"),
+    review_snapshot_url: decision.reviewRequired && input.reviewFrameBaseUrl && frameContext.sessionId && frameContext.sequence !== undefined
+      ? new URL(encodeURIComponent(frameContext.sessionId) + "/" + encodeURIComponent(frameContext.sequence) + ".jpg", input.reviewFrameBaseUrl).href : "",
     processing_ms: ts - started,
     coverage_available: coverageAvailable,
     coverage_threshold_available: Number.isFinite(decision.coverageThreshold),
@@ -45,6 +51,9 @@ export function inspectionEvent(input) {
     item_id: itemContext?.item_id ?? "",
     camera_session: String(frameContext.sessionId ?? ""),
     frame_sequence: frameContext.sequence ?? -1,
+    frame_width: frameContext.width ?? 0,
+    frame_height: frameContext.height ?? 0,
+    review_detections_json: decision.reviewRequired ? JSON.stringify(decision.detections ?? []) : "[]",
     control_outcome: esp32.controlOutcome ?? "not_requested",
     physical_sorting_confirmed: false,
     profile: String(input.monitoringProfile ?? "inspection"),

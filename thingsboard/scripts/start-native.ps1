@@ -1,4 +1,4 @@
-param([string]$LocateAnythingPath = 'D:\CN360\locate-anything.cpp', [switch]$Offline)
+param([string]$LocateAnythingPath = 'D:\CN360\locate-anything.cpp', [switch]$Offline, [string]$ExperimentRun)
 $ErrorActionPreference = 'Stop'
 $cn360Root = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 $cn360Node = (Get-Command node).Source
@@ -6,7 +6,10 @@ $cn360Running = docker ps --filter 'name=^/cn360-software-n8n$' --format '{{.Nam
 if ($LASTEXITCODE -ne 0) { throw 'Start Docker Desktop before starting the native software profile.' }
 if ($cn360Running) { throw 'Stop the existing software profile before selecting the native profile.' }
 $cn360Config = Join-Path $cn360Root 'thingsboard/software-native.local.json'
-& $cn360Node (Join-Path $PSScriptRoot 'configure-native.mjs') --source $LocateAnythingPath $(if ($Offline) { '--offline' })
+$cn360Configure = @((Join-Path $PSScriptRoot 'configure-native.mjs'), '--source', $LocateAnythingPath)
+if ($Offline) { $cn360Configure += '--offline' }
+if ($ExperimentRun) { $cn360Configure += @('--experiment', $ExperimentRun) }
+& $cn360Node @cn360Configure
 if ($LASTEXITCODE -ne 0) { throw 'Native software configuration failed.' }
 $cn360BridgeRecord = Join-Path $cn360Root 'thingsboard/.runtime/bridge-process.json'
 if (Test-Path -LiteralPath $cn360BridgeRecord) {

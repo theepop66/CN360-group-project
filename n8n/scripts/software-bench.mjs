@@ -4,6 +4,8 @@ import { resolve, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
+import { createReadStream } from "node:fs";
 import { setTimeout as delay } from "node:timers/promises";
 import { command } from "../lib/inspection-test-runtime.mjs";
 import { configureWorkflows } from "../configure.mjs";
@@ -36,8 +38,17 @@ if (running.trim()) throw new Error("The software n8n profile is already running
 const imageMaxSide = settings.imageMaxSide ?? 0;
 if (!Number.isInteger(imageMaxSide) || imageMaxSide < 0 || imageMaxSide > 4096) throw new Error("imageMaxSide must be an integer from 0 to 4096");
 await command(settings.python, [join(root, "n8n/scripts/prepare-inspection-images.py"), "--assets", join(root, "test-assets/product-defects"), "--output", output, "--max-side", String(imageMaxSide)]);
-const pictures = JSON.parse(readFileSync(join(output, "cases.json"), "utf8"));
-const photo = pictures.find(p => p.id === (settings.initialPictureId ?? "bottle__good__000-1"));
+let pictures = JSON.parse(readFileSync(join(output, "cases.json"), "utf8"));
+if (modelProfile === "native" && settings.experimentRun) {
+  const experiment = resolve(settings.experimentRun);
+  pictures = JSON.parse(readFileSync(join(experiment, "bench-cases.json"), "utf8")).map(picture => {
+    const file = resolve(experiment, picture.file);
+    if (!file.startsWith(experiment + (process.platform === "win32" ? "\\" : "/"))) throw new Error("Experiment image escapes its run directory");
+    if (createHash("sha256").update(readFileSync(file)).digest("hex") !== picture.sha256) throw new Error("Experiment input checksum mismatch");
+    return { ...picture, file };
+  });
+}
+const photo = pictures.find(p => p.id === (settings.initialPictureId ?? (settings.experimentRun ? pictures[0]?.id : "bottle__good__000-1")));
 if (!photo) throw new Error("The selected initial picture is not in the prepared validation set");
 const runtimePath = join(root, "n8n/runtime.local.json");
 const runtime = existsSync(runtimePath) ? JSON.parse(readFileSync(runtimePath, "utf8")) : offlineAudit ? {
@@ -56,6 +67,22 @@ Object.assign(runtime, { modelBaseUrl: `http://host.docker.internal:${modelProfi
 if (settings.telemetryBaseUrl) {
   runtime.telemetryBaseUrl = settings.telemetryBaseUrl;
   runtime.monitoringProfile = "software-" + modelProfile + (offlineAudit ? "-offline" : "");
+}
+if (modelProfile === "native") {
+  const policyPath = settings.inspectionPolicyFile ?? (settings.experimentRun ? join(settings.experimentRun, "policy.json") : join(root, "n8n/inspection-policy.json"));
+  runtime.inspectionPolicy = JSON.parse(readFileSync(policyPath, "utf8"));
+  if (runtime.inspectionPolicy.model) {
+    const hashFile = async path => { const hash = createHash("sha256"); for await (const bytes of createReadStream(path)) hash.update(bytes); return hash.digest("hex"); };
+    const frozenModel = runtime.inspectionPolicy.model;
+    if (frozenModel.modelSha256 !== await hashFile(settings.modelPath) || frozenModel.librarySha256 !== await hashFile(settings.modelLibrary) ||
+        frozenModel.backend !== settings.modelDevice || frozenModel.mode !== "hybrid" || frozenModel.threads !== 6 || frozenModel.imageMaxSide !== imageMaxSide) {
+      throw new Error("The inspection policy does not match this native model/runtime");
+    }
+  } else if (runtime.inspectionPolicy.rules?.some(rule => rule.automaticApproval)) throw new Error("Automatic approval requires a frozen native model identity");
+  runtime.reviewFrameBaseUrl = "http://127.0.0.1:8104/review-frames/";
+} else {
+  delete runtime.inspectionPolicy;
+  delete runtime.reviewFrameBaseUrl;
 }
 const flows = configureWorkflows(runtime);
 for (const [file, flow] of Object.entries(flows)) {
@@ -91,6 +118,7 @@ try {
   relay = createRelay({ heartbeatMs: 1000 }); await relay.listen(8081, "0.0.0.0");
   bench = await startSoftwareBench({ controller: startControllerAdapter(join(root, "n8n/.runtime/controller-adapter/controller_adapter.exe")),
     picture: { ...photo, bytes: readFileSync(photo.file) }, hudDirectory: join(root, "pico-webapp"), modelProfile, offlineAudit,
+    reviewDirectory: join(output, "review-frames"),
     pictures: modelProfile === "native" ? pictures.map(p => ({ ...p, bytes: readFileSync(p.file) })) : [],
     configureModel: scenario => controlledModel.select({ id: "software-bench", target: parseInspectionTarget(controlledModel.modelPrompt) ?? "visible surface defect",
       coverage: 0, boxes: scenario === "reject" ? [[180, 180, 450, 450]] : undefined,

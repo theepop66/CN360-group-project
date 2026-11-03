@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-03",
+  "n8n": {"passed": 242, "failed": 0},
+  "thingsboard": {"passed": 8, "failed": 0},
+  "picoWebapp": {"passed": 59, "failed": 0},
+  "picoApplication": {"passed": 33, "failed": 0, "distribution": "Updated app.js and overlay.js copied from tested source"},
+  "detectionRelay": {"passed": 22, "failed": 0},
+  "modelService": {"passed": 15, "failed": 0, "skipped": 1, "skipReason": "Existing opt-in synthetic native ABI test; genuine model evaluation recorded separately"},
+  "pythonTypecheck": {"passed": true, "sourceFiles": 8},
+  "runtime": {"developmentPredictions": 64, "heldoutSelectedPredictions": 96, "heldoutBaselinePredictions": 32, "cliParityProbes": 3, "reviewWorkflowScenarios": 9},
+  "notes": ["Native GPU contexts ran sequentially", "Production qualification was withheld because all eight conditions failed held-out quality", "No model weights, external source checkout or physical hardware changed"]
+}

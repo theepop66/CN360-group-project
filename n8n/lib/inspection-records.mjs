@@ -187,6 +187,8 @@ export function buildHudPayload({ decision, frameContext, snapshotUrl } = {}) {
     coordinateSpace: HUD_COORDINATE_SPACE,
     status: verdict,
     reason: decision.reason ?? null,
+    ...(decision.reviewRequired !== undefined ? { reviewRequired: decision.reviewRequired,
+      reviewReason: decision.reviewReason, modelSuggestion: decision.modelVerdict, policyId: decision.policyId } : {}),
     timestamp: frameContext?.capturedAt ?? null,
     frame: {
       // The HUD's parser reads frame.id first and uses it to order and

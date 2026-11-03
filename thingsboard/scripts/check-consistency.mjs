@@ -46,7 +46,7 @@ try {
   const origin = "http://host.docker.internal:8112";
   runtime = await startTestN8n({ output: temporary, fixturePort: 8112, port: 5684, credentialFile, supabaseCredentialId: credentialId,
     runtimeConfig: { ...config.auditConfig, modelBaseUrl: origin, piBaseUrl: origin, esp32BaseUrl: origin, relayBaseUrl: "http://host.docker.internal:8081",
-      telemetryBaseUrl: "http://host.docker.internal:8106", monitoringProfile: "software-controlled-fault-injection" } });
+      telemetryBaseUrl: "http://host.docker.internal:8106", monitoringProfile: "software-controlled-fault-injection", inspectionPolicy: undefined } });
   writeFileSync(credentialFile, "[]");
   for (const [name, options, expected] of cases) {
     const row = { name, expected, discrepancies: [] }; report.cases.push(row);

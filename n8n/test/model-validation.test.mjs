@@ -46,4 +46,11 @@ test("cross-service evidence distinguishes an error fallback and refuses mismatc
   assert.ok(compareInspectionEvidence(expected, wrong).length >= 2);
   const threshold = structuredClone(evidence); threshold.telemetry.coverage_threshold = 0.9; threshold.inspection.coverage_threshold = 0.9;
   assert.ok(compareInspectionEvidence(expected, threshold).length >= 2);
+  const measured = structuredClone(expected); measured.decision.coverage = 0.009999999999999998;
+  const rounded = structuredClone(evidence);
+  rounded.telemetry.coverage_available = true; rounded.telemetry.defect_coverage = "0.01";
+  rounded.inspection.defect_coverage = 0.01;
+  assert.deepEqual(compareInspectionEvidence(measured, rounded), []);
+  rounded.inspection.defect_coverage = 0.011;
+  assert.ok(compareInspectionEvidence(measured, rounded).some(failure => failure.startsWith("Recorded coverage")));
 });

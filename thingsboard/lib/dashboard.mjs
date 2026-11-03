@@ -15,6 +15,7 @@ export const summaryHtml = `<section class="cn360">
 </div>
 <div class="details"><div><small>Inspection target</small><p data-ref="inspection_target">—</p></div><div><small>Latest failure</small><p data-ref="failure_reason">—</p></div><div><small>Controller response</small><p data-ref="control_outcome">—</p></div><div><small>Last inspection</small><p data-ref="inspection_at">—</p></div></div>
 <p data-ref="validation" class="muted" hidden></p>
+<p data-ref="review_state" class="muted"></p><p class="muted"><a href="http://127.0.0.1:8104/reviews" target="_blank" rel="noopener">Open local human review queue</a></p>
 <footer><span data-ref="health">Waiting for health checks</span><span data-ref="queue">—</span><span>Controller acceptance does not confirm physical sorting.</span></footer>
 </section>`;
 
@@ -32,6 +33,9 @@ self.onInit = function() {
     if(v.processing_ms !== undefined) put('processing_ms', Number(v.processing_ms).toLocaleString() + ' ms');
     if(v.reject_rate_percent !== undefined) put('reject_rate_percent', Number(v.reject_rate_percent).toFixed(1) + '%');
     if(v.inspection_at) put('inspection_at', new Date(v.inspection_at).toLocaleString());
+    var reviewRequired = v.review_required === true || v.review_required === 'true';
+    put('review_state', reviewRequired ? 'Human review required · Model suggestion: ' + (v.model_suggestion || 'unavailable') + ' · Controller verdict: reject · ' + (v.review_count || 0) + ' total items routed to review' : '');
+    if(reviewRequired) put('verdict','Review required');
     var age = v.bridge_heartbeat ? Date.now() - Number(v.bridge_heartbeat) : Infinity;
     var fresh = age < 25000;
     put('freshness', fresh ? 'Monitoring connected' : 'STALE · monitoring disconnected');
@@ -43,7 +47,7 @@ self.onInit = function() {
     if(validation && v.validation_status) {
       validation.hidden = false;
       validation.style.color = v.validation_status === 'passed' ? '#176441' : '#a83225';
-      validation.textContent = 'Latest sample-set validation: ' + String(v.validation_status).toUpperCase() + ' · missed defects: ' + v.validation_missed_defects + ' · false rejects: ' + v.validation_false_rejects + ' · quality: ' + v.validation_quality_gate + ' · production timing: ' + v.validation_timing_gate + ' · consistency: ' + v.validation_consistency_gate + ' · input integrity: ' + (v.validation_integrity_gate || 'unverified') + ' · failure handling: ' + (v.validation_fallback_gate || 'unverified') + ' · monitoring: ' + (v.validation_monitoring_gate || 'unverified') + ' · recovery: ' + (v.validation_recovery_gate || 'unverified');
+      validation.textContent = 'Latest sample-set validation: ' + String(v.validation_status).toUpperCase() + ' · missed defects: ' + v.validation_missed_defects + ' · false rejects: ' + v.validation_false_rejects + ' · quality: ' + v.validation_quality_gate + ' · production timing: ' + v.validation_timing_gate + ' · consistency: ' + v.validation_consistency_gate + ' · input integrity: ' + (v.validation_integrity_gate || 'unverified') + ' · failure handling: ' + (v.validation_fallback_gate || 'unverified') + ' · monitoring: ' + (v.validation_monitoring_gate || 'unverified') + ' · recovery: ' + (v.validation_recovery_gate || 'unverified') + (v.validation_condition_count !== undefined ? ' · automatic conditions: ' + v.validation_automatic_conditions + '/' + v.validation_condition_count : '');
     }
     var names = ['model','capture','relay','n8n'];
     var labels = {model:'Vision model',capture:'Image source',relay:'HUD connection',n8n:'Inspection workflow'};
@@ -66,7 +70,8 @@ export const summaryKeys = ["verdict", "verdict_reason", "defect_coverage_displa
   "pass_count", "reject_count", "reject_rate_percent", "inspection_target", "failure_reason", "control_outcome", "inspection_at", "profile",
   "bridge_heartbeat", "pending_events", "model_healthy", "capture_healthy", "relay_healthy", "n8n_healthy", "validation_status",
   "validation_missed_defects", "validation_false_rejects", "validation_quality_gate", "validation_timing_gate", "validation_consistency_gate",
-  "validation_integrity_gate", "validation_fallback_gate", "validation_monitoring_gate", "validation_recovery_gate"];
+  "validation_integrity_gate", "validation_fallback_gate", "validation_monitoring_gate", "validation_recovery_gate",
+  "review_required", "review_reason", "model_suggestion", "review_count", "validation_condition_count", "validation_automatic_conditions"];
 
 export function summaryWidgetType() {
   return { fqn: "cn360_supervisor", name: "CN360 supervisor", deprecated: false,

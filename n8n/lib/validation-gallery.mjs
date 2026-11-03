@@ -1,6 +1,6 @@
 const escapeHtml = value => String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 
-export function validationGallery({ summary, pictures, samples }) {
+export function validationGallery({ summary, pictures, samples, scopeDescription, coverageDescription }) {
   const gateLabels = { quality: "Quality", productionTiming: "Production timing", consistency: "Cross-service consistency", inputIntegrity: "Input integrity",
     failureFallback: "Failure handling", monitoring: "Monitoring", monitoringRecovery: "Outage recovery" };
   const gates = Object.entries(summary.gates).map(([key, value]) => `${gateLabels[key] ?? key}: ${escapeHtml(value)}`).join(" · ");
@@ -13,7 +13,7 @@ export function validationGallery({ summary, pictures, samples }) {
       return `<rect x="${x1}" y="${y1}" width="${x2 - x1}" height="${y2 - y1}" fill="none" stroke="#e24a3b" stroke-width="3"/>`;
     }).join("");
     return `<article><div class="card-title"><h2>${escapeHtml(picture.id)}</h2><span class="${correct ? "good" : "bad"}">${correct ? "Correct" : "Mismatch"}</span></div>
-<p>${escapeHtml(picture.target)}</p><svg viewBox="0 0 ${picture.width} ${picture.height}" role="img" aria-label="Native prediction boxes for ${escapeHtml(picture.id)}"><image href="${picture.dataUri}" width="${picture.width}" height="${picture.height}"/>${boxes}</svg>
+<p>${escapeHtml(picture.target)}</p>${Number.isFinite(picture.threshold) ? `<small>Locked threshold: ${(picture.threshold * 100).toFixed(4)}% · ${escapeHtml(picture.profile ?? "")}</small>` : ""}<svg viewBox="0 0 ${picture.width} ${picture.height}" role="img" aria-label="Native prediction boxes for ${escapeHtml(picture.id)}"><image href="${picture.dataUri}" width="${picture.width}" height="${picture.height}"/>${boxes}</svg>
 <dl><div><dt>Expected</dt><dd>${escapeHtml(first?.expected ?? "unverified")}</dd></div><div><dt>Actual</dt><dd>${escapeHtml(first?.actual ?? "unverified")}</dd></div><div><dt>Coverage</dt><dd>${Number.isFinite(first?.coverage) ? (first.coverage * 100).toFixed(3) + "%" : "Unavailable"}</dd></div></dl>
 <small>Repeated outcomes: ${rows.map(row => escapeHtml(row.actual)).join(", ")}. Red boxes are actual native predictions.</small></article>`;
   }).join("\n");
@@ -23,6 +23,6 @@ export function validationGallery({ summary, pictures, samples }) {
 <p class="banner"><strong>${summary.readyForPhysicalIntegration ? "Sample-level gates passed" : "Not ready for physical integration"}.</strong> ${gates}.</p>
 <div class="metrics"><div class="metric">Native diagnostic predictions<strong>${summary.quality.evaluated}/${summary.quality.attempts}</strong>${pictures.length} image/target pairs, ${summary.criteria.diagnosticRepetitions} repetitions each</div><div class="metric">False rejects<strong>${summary.quality.falseRejects}/${summary.quality.good}</strong>Good sample attempts incorrectly rejected</div><div class="metric">Missed defects<strong>${summary.quality.missedDefects}/${summary.quality.defective}</strong>Defective sample attempts incorrectly passed</div></div>
 <p><strong>Measurement-only gallery.</strong> Predictions below used a 120-second diagnostic allowance. Production budgets remain 1100 ms inside the model service, 1200 ms for n8n's model call and a 3000 ms controller Verdict Window. The diagnostic allowance cannot approve production timing.</p>
-<p class="muted">Coverage threshold: 0.5% of frame area. No confidence filtering. All valid boxes are shown. This curated sample set is not an independent held-out set and does not establish general production accuracy.</p>
+<p class="muted">${escapeHtml(coverageDescription ?? "Coverage threshold: 0.5% of frame area. No confidence filtering. All valid boxes are shown.")} ${escapeHtml(scopeDescription ?? "This curated sample set is not an independent held-out set and does not establish general production accuracy.")}</p>
 <section class="cards">${cards}</section><footer>Images: MVTec AD, Bergmann et al., CVPR 2019 / IJCV 2021. Licensed CC BY-NC-SA 4.0. Model outputs and raw measurements accompany this report.</footer></main></html>`;
 }

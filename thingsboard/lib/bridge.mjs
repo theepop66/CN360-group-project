@@ -47,7 +47,8 @@ export function createBridge({ store, origin, deviceToken, probes = {}, fetchImp
     if (req.method === "GET" && req.url === "/health") {
       reply(200, { status: "ok", ...store.status(), lastDeliveryAt, lastHealthDeliveryAt, deliveryError, devices: health, healthIntervalMs }); return;
     }
-    if (req.method !== "POST" || req.url !== "/events") { reply(404, { error: "not_found" }); return; }
+    if (req.method === "GET" && req.url === "/reviews") { reply(200, { pending: store.reviews(), reviewed: store.reviews("reviewed") }); return; }
+    if (req.method !== "POST" || !["/events", "/reviews"].includes(req.url)) { reply(404, { error: "not_found" }); return; }
     try {
       const chunks = []; let size = 0;
       for await (const chunk of req) {
@@ -55,7 +56,13 @@ export function createBridge({ store, origin, deviceToken, probes = {}, fetchImp
         if (size > 128 * 1024) { reply(413, { error: "event_too_large" }); return; }
         chunks.push(chunk);
       }
-      const event = inspectionEvent(JSON.parse(Buffer.concat(chunks).toString()));
+      const input = JSON.parse(Buffer.concat(chunks).toString());
+      if (req.url === "/reviews") {
+        try { reply(200, store.completeReview(input.eventId, input)); }
+        catch (error) { reply(400, { error: error.message }); }
+        return;
+      }
+      const event = inspectionEvent(input);
       const saved = store.enqueue(event);
       reply(202, { status: "stored", eventId: event.id, ...saved });
       void drain();

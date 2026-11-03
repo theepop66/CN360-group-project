@@ -1,6 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { disableCloudAuditForDemo, startSoftwareBench } from "../lib/software-bench.mjs";
 import { configureWorkflows } from "../configure.mjs";
@@ -12,6 +14,19 @@ function transport() {
   return { reset: async () => ({ admission_ready: true }), step: async () => ({ admission_ready: true }),
     verdict: async body => ({ httpStatus: 200, body }), close: async () => {} };
 }
+
+test("review snapshots retain the captured bytes and preparation identity after picture changes", async t => {
+  const directory = mkdtempSync(join(tmpdir(), "cn360-review-frame-"));
+  const alternative = { id: "next", target: "hole", bytes: Buffer.from("different frame"), width: 100, height: 100, inspectionProfile: "next/full" };
+  const bench = await startSoftwareBench({ controller: transport(), picture: { ...picture, inspectionProfile: "original/full" },
+    pictures: [alternative], reviewDirectory: directory, hudDirectory, port: 0, fetchImpl: async () => Response.json({ status: "updated" }) });
+  t.after(async () => { await bench.close(); rmSync(directory, { recursive: true, force: true }); });
+  const captured = await fetch(bench.origin + "/capture"); await captured.arrayBuffer();
+  assert.equal(captured.headers.get("x-inspection-profile"), "original/full");
+  const url = bench.origin + "/review-frames/" + captured.headers.get("x-camera-session") + "/" + captured.headers.get("x-frame-sequence") + ".jpg";
+  await fetch(bench.origin + "/bench/picture", { method: "POST", body: JSON.stringify({ id: "next" }) });
+  assert.deepEqual(Buffer.from(await (await fetch(url)).arrayBuffer()), bytes);
+});
 
 test("software capture preserves picture bytes and advances frame identity", async t => {
   const bench = await startSoftwareBench({ controller: transport(), picture, hudDirectory, port: 0 });

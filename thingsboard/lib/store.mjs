@@ -10,7 +10,9 @@ export class EventStore {
       CREATE TABLE IF NOT EXISTS events (
         id TEXT PRIMARY KEY, ts INTEGER UNIQUE NOT NULL, payload TEXT NOT NULL,
         delivered INTEGER NOT NULL DEFAULT 0);
-      CREATE TABLE IF NOT EXISTS counters (name TEXT PRIMARY KEY, value INTEGER NOT NULL);`);
+      CREATE TABLE IF NOT EXISTS counters (name TEXT PRIMARY KEY, value INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS reviews (event_id TEXT PRIMARY KEY, created_at INTEGER NOT NULL, payload TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending', reviewer TEXT, disposition TEXT, note TEXT, reviewed_at INTEGER);`);
   }
   counter(name) { return this.db.prepare("SELECT value FROM counters WHERE name=?").get(name)?.value ?? 0; }
   increment(name) {
@@ -24,6 +26,10 @@ export class EventStore {
       this.increment("inspection_count");
       this.increment(event.values.verdict === "pass" ? "pass_count" : "reject_count");
       if (event.values.inspection_failed) this.increment("failure_count");
+      if (event.values.review_required) {
+        this.increment("review_count");
+        this.db.prepare("INSERT INTO reviews(event_id,created_at,payload) VALUES (?,?,?)").run(event.id, event.ts, JSON.stringify(event.values));
+      }
       if (event.values.item_bound) this.increment("item_inspection_count");
       else this.increment("observation_count");
       const counters = Object.fromEntries(this.db.prepare("SELECT * FROM counters").all().map(row => [row.name, row.value]));
@@ -37,10 +43,24 @@ export class EventStore {
   }
   pending(limit = 100) { return this.db.prepare("SELECT id,payload FROM events WHERE delivered=0 ORDER BY ts LIMIT ?").all(limit); }
   delivered(id) { this.db.prepare("UPDATE events SET delivered=1 WHERE id=?").run(id); }
+  reviews(status = "pending") {
+    return this.db.prepare("SELECT * FROM reviews WHERE status=? ORDER BY created_at DESC LIMIT 500").all(status).map(row => ({
+      eventId: row.event_id, createdAt: row.created_at, status: row.status, values: JSON.parse(row.payload),
+      reviewer: row.reviewer, disposition: row.disposition, note: row.note, reviewedAt: row.reviewed_at }));
+  }
+  completeReview(eventId, { reviewer, disposition, note = "" } = {}) {
+    if (typeof reviewer !== "string" || !reviewer.trim() || reviewer.length > 80 || !["acceptable", "defective", "unsure"].includes(disposition) ||
+        typeof note !== "string" || note.length > 400) throw new Error("Invalid human review");
+    const updated = this.db.prepare("UPDATE reviews SET status='reviewed',reviewer=?,disposition=?,note=?,reviewed_at=? WHERE event_id=? AND status='pending'")
+      .run(reviewer.trim(), disposition, note, Date.now(), eventId);
+    if (updated.changes !== 1) throw new Error("Review missing or already completed");
+    return { eventId, status: "reviewed", disposition, controllerVerdictChanged: false };
+  }
   status() {
     const row = this.db.prepare("SELECT COUNT(*) AS stored, SUM(CASE WHEN delivered=0 THEN 1 ELSE 0 END) AS pending FROM events").get();
     return { stored: row.stored, pending: row.pending ?? 0, inspectionCount: this.counter("inspection_count"),
-      passCount: this.counter("pass_count"), rejectCount: this.counter("reject_count"), failureCount: this.counter("failure_count") };
+      passCount: this.counter("pass_count"), rejectCount: this.counter("reject_count"), failureCount: this.counter("failure_count"),
+      reviewCount: this.counter("review_count"), reviewPending: this.db.prepare("SELECT COUNT(*) AS count FROM reviews WHERE status='pending'").get().count };
   }
   close() { this.db.close(); }
 }

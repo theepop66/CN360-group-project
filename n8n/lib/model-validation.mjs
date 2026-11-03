@@ -63,6 +63,11 @@ export function assessReadiness({ quality, production, consistencyPassed, integr
 export function compareInspectionEvidence(expected, evidence) {
   const failures = [];
   const equal = (label, actual, wanted) => { if (String(actual) !== String(wanted)) failures.push(`${label}: expected ${wanted}, received ${actual}`); };
+  const measurementEqual = (label, actual, wanted) => {
+    if (typeof wanted === "number" && actual !== null && actual !== undefined && actual !== "" &&
+        Number.isFinite(Number(actual)) && Math.abs(Number(actual) - wanted) <= 1e-12) return;
+    equal(label, actual, wanted);
+  };
   const { frame, item, decision, control } = expected;
   const { telemetry, inspection, action, hud } = evidence;
   for (const [name, actual] of [["ThingsBoard", telemetry], ["Inspection Result", inspection]]) {
@@ -78,18 +83,18 @@ export function compareInspectionEvidence(expected, evidence) {
     equal("ThingsBoard control", telemetry.control_outcome, control.controlOutcome);
     const thresholdAvailable = Number.isFinite(decision.coverageThreshold);
     equal("ThingsBoard threshold availability", telemetry.coverage_threshold_available, thresholdAvailable);
-    if (thresholdAvailable) equal("ThingsBoard threshold", Number(telemetry.coverage_threshold), decision.coverageThreshold);
+    if (thresholdAvailable) measurementEqual("ThingsBoard threshold", telemetry.coverage_threshold, decision.coverageThreshold);
     const promptAvailable = typeof decision.promptVerified === "boolean";
     equal("ThingsBoard prompt availability", telemetry.prompt_verification_available, promptAvailable);
     if (promptAvailable) equal("ThingsBoard prompt verification", telemetry.prompt_verified, decision.promptVerified);
     if (decision.coverage === null) {
       equal("ThingsBoard unavailable coverage", telemetry.coverage_available, false);
       equal("ThingsBoard coverage display", telemetry.defect_coverage_display, "Unavailable");
-    } else equal("ThingsBoard coverage", Number(telemetry.defect_coverage), decision.coverage);
+    } else measurementEqual("ThingsBoard coverage", telemetry.defect_coverage, decision.coverage);
   }
   if (inspection) {
-    equal("Recorded coverage", inspection.defect_coverage, decision.coverage);
-    equal("Recorded threshold", inspection.coverage_threshold, decision.coverageThreshold);
+    measurementEqual("Recorded coverage", inspection.defect_coverage, decision.coverage);
+    measurementEqual("Recorded threshold", inspection.coverage_threshold, decision.coverageThreshold);
     equal("Recorded width", inspection.frame_width, frame.width);
     equal("Recorded height", inspection.frame_height, frame.height);
     if (decision.promptVerified !== undefined) equal("Recorded prompt verification", inspection.prompt_verified, decision.promptVerified);

@@ -1,5 +1,6 @@
 import { createServer } from "node:http";
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { reviewPage } from "./review-page.mjs";
 import { randomUUID } from "node:crypto";
 import { resolve, sep, extname } from "node:path";
 import { performance } from "node:perf_hooks";
@@ -26,7 +27,8 @@ export function disableCloudAuditForDemo(flow, supabaseOrigin) {
 export async function startSoftwareBench({ controller, picture, hudDirectory,
   port = 8104, n8nOrigin = "http://127.0.0.1:5680", publicOrigin,
   relayWebSocket = "ws://127.0.0.1:8081/detections", modelProfile = "controlled", offlineAudit = false, pictures = [],
-  modelHealthUrl = `http://127.0.0.1:${modelProfile === "native" ? 8000 : 8105}/health`, configureModel, fetchImpl = fetch }) {
+  modelHealthUrl = `http://127.0.0.1:${modelProfile === "native" ? 8000 : 8105}/health`, configureModel, fetchImpl = fetch,
+  reviewDirectory, reviewOrigin = "http://127.0.0.1:8106" }) {
   if (!["controlled", "native"].includes(modelProfile)) throw new Error("Unknown software model profile");
   const modelLabel = modelProfile === "controlled" ? "controlled model responses" : "native model";
   if (!Buffer.isBuffer(picture.bytes) || !picture.bytes.length ||
@@ -68,6 +70,21 @@ export async function startSoftwareBench({ controller, picture, hudDirectory,
     try {
       const url = new URL(req.url, visibleOrigin);
       if (req.method === "OPTIONS") { reply(204, "", "text/plain"); return; }
+      if (req.method === "GET" && url.pathname === "/reviews") { reply(200, reviewPage, "text/html"); return; }
+      if (["GET", "POST"].includes(req.method) && url.pathname === "/review-api") {
+        let body;
+        if (req.method === "POST") {
+          const chunks = []; let size = 0;
+          for await (const chunk of req) { size += chunk.length; if (size > 4096) { reply(413, { error: "review_too_large" }); return; } chunks.push(chunk); }
+          body = Buffer.concat(chunks).toString();
+        }
+        const response = await fetchImpl(reviewOrigin + "/reviews", { method: req.method, ...(body ? { body, headers: { "content-type": "application/json" } } : {}), signal: AbortSignal.timeout(3000) });
+        reply(response.status, await response.json()); return;
+      }
+      const retained = /^\/review-frames\/([A-Za-z0-9_-]{1,64})\/(\d+)\.jpg$/.exec(url.pathname);
+      if (req.method === "GET" && retained && reviewDirectory) {
+        reply(200, await readFile(resolve(reviewDirectory, retained[1] + "-" + retained[2] + ".jpg")), "image/jpeg"); return;
+      }
       if (req.method === "GET" && url.pathname === "/bench/pictures") {
         reply(200, { selected: picture.id ?? null, pictures: publicPictures }); return;
       }
@@ -80,10 +97,15 @@ export async function startSoftwareBench({ controller, picture, hudDirectory,
       }
       if (req.method === "GET" && ["/capture", "/frame.jpg"].includes(url.pathname)) {
         if (url.pathname === "/capture") sequence++;
+        if (url.pathname === "/capture" && reviewDirectory) {
+          await mkdir(reviewDirectory, { recursive: true });
+          await writeFile(resolve(reviewDirectory, cameraSession + "-" + sequence + ".jpg"), picture.bytes, { flag: "wx" });
+        }
         res.writeHead(200, { "content-type": "image/jpeg", "cache-control": "no-store",
           "access-control-allow-origin": "*", "X-Camera-Session": cameraSession,
           "X-Frame-Sequence": String(sequence), "X-Captured-At": new Date().toISOString(),
-          "X-Frame-Width": String(picture.width), "X-Frame-Height": String(picture.height) });
+          "X-Frame-Width": String(picture.width), "X-Frame-Height": String(picture.height),
+          ...(picture.inspectionProfile ? { "X-Inspection-Profile": picture.inspectionProfile } : {}) });
         res.end(picture.bytes); return;
       }
       if (req.method === "GET" && url.pathname === "/health") {
@@ -119,7 +141,7 @@ export async function startSoftwareBench({ controller, picture, hudDirectory,
 ${offlineAudit ? '<p><strong>Offline demonstration:</strong> cloud audit calls are disabled. Monitoring results are retained locally. This does not verify Supabase delivery.</p>' : ''}
 ${modelProfile === "controlled" ? '<label>Test response <select id="scenario"><option value="reject">Reject example</option><option value="pass">Pass example</option><option value="error">Model error</option><option value="timeout">Model timeout</option></select></label>' : ''}
 ${publicPictures.length ? '<p><label>Labelled image and inspection target <select id="picture"></select></label></p>' : ''}
-<p><a href="/hud/" target="_blank">Open inspection display</a></p><button id="inspect">Inspect a test item</button>
+<p><a href="/hud/" target="_blank">Open inspection display</a> · <a href="/reviews">Open human review queue</a></p><button id="inspect">Inspect a test item</button>
 <pre id="result">Ready</pre><script>const pictureSelect=document.querySelector('#picture');const choices=${JSON.stringify(publicPictures).replaceAll("<", "\\u003c")};if(pictureSelect)choices.forEach(c=>pictureSelect.add(new Option(c.id+' · '+c.target,c.id)));document.querySelector('#inspect').onclick=async()=>{const b=document.querySelector('#inspect');b.disabled=true;try{if(pictureSelect){const selected=await fetch('/bench/picture',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:pictureSelect.value})});if(!selected.ok)throw new Error(JSON.stringify(await selected.json()));}const scenario=document.querySelector('#scenario');if(scenario)await fetch('/bench/model',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({scenario:scenario.value})});const r=await fetch('/bench/item',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});document.querySelector('#result').textContent=JSON.stringify(await r.json(),null,2);}catch(e){document.querySelector('#result').textContent=e.message;}finally{b.disabled=false;}};</script>`, "text/html"); return;
       }
       if (req.method !== "POST" || !["/verdict", "/bench/item", "/bench/admit", "/bench/model", "/bench/picture", "/prompt"].includes(url.pathname)) {

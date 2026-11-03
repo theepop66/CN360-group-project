@@ -92,6 +92,7 @@ export async function startInspectionFixture({ port = 0, upstream = null, verdic
           "x-frame-width": String(context.frame.width), "x-frame-height": String(context.frame.height)
         };
         if (context.invalidHeaders) delete headers["x-frame-width"];
+        if (context.inspectionProfile) headers["x-inspection-profile"] = context.inspectionProfile;
         const captured = { snapshotObjectName: buildSnapshotObjectName({ sessionId: session, sequence }), sha256: hash(bytes) };
         context.framesByExecution ??= new Map();
         context.framesByExecution.set(req.headers["x-cn360-test-execution"] ?? "direct", captured);

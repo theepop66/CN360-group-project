@@ -43,7 +43,7 @@ self.onInit = function() {
     if(validation && v.validation_status) {
       validation.hidden = false;
       validation.style.color = v.validation_status === 'passed' ? '#176441' : '#a83225';
-      validation.textContent = 'Latest sample-set validation: ' + String(v.validation_status).toUpperCase() + ' · missed defects: ' + v.validation_missed_defects + ' · false rejects: ' + v.validation_false_rejects + ' · quality: ' + v.validation_quality_gate + ' · production timing: ' + v.validation_timing_gate + ' · consistency: ' + v.validation_consistency_gate;
+      validation.textContent = 'Latest sample-set validation: ' + String(v.validation_status).toUpperCase() + ' · missed defects: ' + v.validation_missed_defects + ' · false rejects: ' + v.validation_false_rejects + ' · quality: ' + v.validation_quality_gate + ' · production timing: ' + v.validation_timing_gate + ' · consistency: ' + v.validation_consistency_gate + ' · input integrity: ' + (v.validation_integrity_gate || 'unverified') + ' · failure handling: ' + (v.validation_fallback_gate || 'unverified') + ' · monitoring: ' + (v.validation_monitoring_gate || 'unverified') + ' · recovery: ' + (v.validation_recovery_gate || 'unverified');
     }
     var names = ['model','capture','relay','n8n'];
     var labels = {model:'Vision model',capture:'Image source',relay:'HUD connection',n8n:'Inspection workflow'};
@@ -65,7 +65,8 @@ self.onDestroy = function() { clearInterval(self.timer); };
 export const summaryKeys = ["verdict", "verdict_reason", "defect_coverage_display", "processing_ms", "failure_count", "inspection_count",
   "pass_count", "reject_count", "reject_rate_percent", "inspection_target", "failure_reason", "control_outcome", "inspection_at", "profile",
   "bridge_heartbeat", "pending_events", "model_healthy", "capture_healthy", "relay_healthy", "n8n_healthy", "validation_status",
-  "validation_missed_defects", "validation_false_rejects", "validation_quality_gate", "validation_timing_gate", "validation_consistency_gate"];
+  "validation_missed_defects", "validation_false_rejects", "validation_quality_gate", "validation_timing_gate", "validation_consistency_gate",
+  "validation_integrity_gate", "validation_fallback_gate", "validation_monitoring_gate", "validation_recovery_gate"];
 
 export function summaryWidgetType() {
   return { fqn: "cn360_supervisor", name: "CN360 supervisor", deprecated: false,

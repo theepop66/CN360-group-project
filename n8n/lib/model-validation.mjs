@@ -36,16 +36,23 @@ export function timingSummary(values) {
   return { count: sorted.length, p50Ms: percentile(0.5), p95Ms: percentile(0.95), maxMs: sorted.at(-1) ?? null };
 }
 
-export function assessReadiness({ quality, production, consistencyPassed }, criteria) {
+export function assessReadiness({ quality, production, consistencyPassed, integrityVerified, fallbackVerified, recoveryVerified, healthPollingVerified }, criteria) {
   const qualityFailed = quality.missedDefects > criteria.maxMissedDefects || quality.falseRejects > criteria.maxFalseRejects || quality.errors > criteria.maxErrors;
-  const timingFailed = production.some(row => row.result === "error" || !Number.isFinite(row.modelMs) || row.modelMs > criteria.modelBudgetMs ||
+  const timingFailed = production.some(row => !["pass", "reject"].includes(row.result) || !Number.isFinite(row.modelMs) || row.modelMs > criteria.modelBudgetMs ||
     !Number.isFinite(row.receiptMs) || row.receiptMs >= criteria.verdictWindowMs || row.controlOutcome !== "accepted");
   const missingQualityCases = (criteria.diagnosticCaseIds ?? []).some(id => (quality.caseAttempts?.[id] ?? 0) < criteria.diagnosticRepetitions);
   const missingProductionCases = (criteria.productionCaseIds ?? []).some(id => !production.some(row => row.caseId === id));
+  const state = value => value === true ? "passed" : value === false ? "failed" : "unverified";
+  const visibilityFailed = production.some(row => Number.isFinite(row.visibleAfterMs) && row.visibleAfterMs > criteria.dashboardVisibilityMs);
+  const visibilityMissing = production.length === 0 || production.some(row => !Number.isFinite(row.visibleAfterMs));
   const gates = {
     quality: qualityFailed ? "failed" : quality.attempts < criteria.minimumDiagnosticAttempts || missingQualityCases ? "unverified" : "passed",
     productionTiming: timingFailed ? "failed" : production.length < criteria.minimumProductionAttempts || missingProductionCases ? "unverified" : "passed",
-    consistency: consistencyPassed === true ? "passed" : consistencyPassed === false ? "failed" : "unverified"
+    consistency: state(consistencyPassed),
+    inputIntegrity: state(integrityVerified),
+    failureFallback: state(fallbackVerified),
+    monitoring: visibilityFailed || healthPollingVerified === false ? "failed" : visibilityMissing || healthPollingVerified !== true ? "unverified" : "passed",
+    monitoringRecovery: state(recoveryVerified)
   };
   return { gates, readyForPhysicalIntegration: Object.values(gates).every(status => status === "passed"),
     physicalSortingAccepted: false, note: "Frozen sample-set assessment only; diagnostic predictions cannot approve production deadlines or physical sorting." };
@@ -69,6 +76,12 @@ export function compareInspectionEvidence(expected, evidence) {
   if (telemetry) {
     equal("ThingsBoard reason", telemetry.verdict_reason, decision.reason);
     equal("ThingsBoard control", telemetry.control_outcome, control.controlOutcome);
+    const thresholdAvailable = Number.isFinite(decision.coverageThreshold);
+    equal("ThingsBoard threshold availability", telemetry.coverage_threshold_available, thresholdAvailable);
+    if (thresholdAvailable) equal("ThingsBoard threshold", Number(telemetry.coverage_threshold), decision.coverageThreshold);
+    const promptAvailable = typeof decision.promptVerified === "boolean";
+    equal("ThingsBoard prompt availability", telemetry.prompt_verification_available, promptAvailable);
+    if (promptAvailable) equal("ThingsBoard prompt verification", telemetry.prompt_verified, decision.promptVerified);
     if (decision.coverage === null) {
       equal("ThingsBoard unavailable coverage", telemetry.coverage_available, false);
       equal("ThingsBoard coverage display", telemetry.defect_coverage_display, "Unavailable");
@@ -76,6 +89,7 @@ export function compareInspectionEvidence(expected, evidence) {
   }
   if (inspection) {
     equal("Recorded coverage", inspection.defect_coverage, decision.coverage);
+    equal("Recorded threshold", inspection.coverage_threshold, decision.coverageThreshold);
     equal("Recorded width", inspection.frame_width, frame.width);
     equal("Recorded height", inspection.frame_height, frame.height);
     if (decision.promptVerified !== undefined) equal("Recorded prompt verification", inspection.prompt_verified, decision.promptVerified);

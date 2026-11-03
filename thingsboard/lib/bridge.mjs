@@ -4,7 +4,7 @@ import { inspectionEvent } from "./events.mjs";
 export function createBridge({ store, origin, deviceToken, probes = {}, fetchImpl = fetch,
   publishIntervalMs = 1000, healthIntervalMs = 10000, requestTimeoutMs = 2000, clock = Date.now }) {
   let draining; let polling; let timer; let healthTimer; let lastDeliveryAt = null; let deliveryError = null;
-  let health = {}; let stopped = false;
+  let health = {}; let stopped = false; let lastHealthDeliveryAt = null;
   const endpoint = new URL(`/api/v1/${encodeURIComponent(deviceToken)}/telemetry`, origin).href;
   async function publish(payload) {
     const response = await fetchImpl(endpoint, { method: "POST", headers: { "content-type": "application/json" },
@@ -37,7 +37,7 @@ export function createBridge({ store, origin, deviceToken, probes = {}, fetchImp
       const values = { bridge_heartbeat: clock(), pending_events: store.status().pending,
         ...Object.fromEntries(results.map(([name, ok]) => [`${name}_healthy`, ok])),
         system_healthy: results.length > 0 && results.every(([, ok]) => ok) };
-      try { await publish({ ts: clock(), values }); }
+      try { await publish({ ts: clock(), values }); lastHealthDeliveryAt = clock(); }
       catch { deliveryError = "ThingsBoard unavailable; monitoring records retained locally"; }
     })().finally(() => { polling = null; });
     return polling;
@@ -45,7 +45,7 @@ export function createBridge({ store, origin, deviceToken, probes = {}, fetchImp
   const server = createServer(async (req, res) => {
     const reply = (status, body) => { res.writeHead(status, { "content-type": "application/json", "cache-control": "no-store" }); res.end(JSON.stringify(body)); };
     if (req.method === "GET" && req.url === "/health") {
-      reply(200, { status: "ok", ...store.status(), lastDeliveryAt, deliveryError, devices: health }); return;
+      reply(200, { status: "ok", ...store.status(), lastDeliveryAt, lastHealthDeliveryAt, deliveryError, devices: health, healthIntervalMs }); return;
     }
     if (req.method !== "POST" || req.url !== "/events") { reply(404, { error: "not_found" }); return; }
     try {

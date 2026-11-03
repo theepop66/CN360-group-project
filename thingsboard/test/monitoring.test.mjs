@@ -27,6 +27,15 @@ test("model failure stays a reject with missing coverage, and controls cannot im
   assert.equal(paired.values.item_bound, true);
 });
 
+test("verification availability prevents a prior prompt or threshold from masquerading as current", () => {
+  const known = inspectionEvent(sample({ decision: { verdict: "pass", reason: "no_defect_detected", coverage: 0, coverageThreshold: 0.005, promptVerified: true } }));
+  assert.equal(known.values.prompt_verification_available, true); assert.equal(known.values.prompt_verified, true);
+  assert.equal(known.values.coverage_threshold_available, true);
+  const failed = inspectionEvent(sample({ decision: { verdict: "reject", reason: "frame_capture_failed", coverage: null, coverageThreshold: null, promptVerified: null } }));
+  assert.equal(failed.values.prompt_verification_available, false); assert.equal("prompt_verified" in failed.values, false);
+  assert.equal(failed.values.coverage_threshold_available, false); assert.equal("coverage_threshold" in failed.values, false);
+});
+
 test("journal deduplicates physical identity across restarts and retains session distinctions", () => {
   const directory = mkdtempSync(join(tmpdir(), "cn360-telemetry-"));
   const path = join(directory, "events.sqlite");

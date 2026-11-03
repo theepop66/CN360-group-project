@@ -36,12 +36,14 @@ test("repeating one easy case cannot satisfy a frozen multi-case acceptance set"
 });
 test("cross-service evidence distinguishes an error fallback and refuses mismatched identity or geometry", () => {
   const expected = { frame: { sessionId: "camera", sequence: 2, width: 100, height: 100 }, item: { controller_session: "boot", item_id: "7" },
-    decision: { verdict: "reject", reason: "model_timeout", coverage: null, boxCount: 0 }, response: { status: "error", result: "error" }, control: { controlOutcome: "accepted" } };
-  const evidence = { telemetry: { verdict: "reject", verdict_reason: "model_timeout", coverage_available: false, defect_coverage_display: "Unavailable", camera_session: "camera", frame_sequence: 2, controller_session: "boot", item_id: "7", control_outcome: "accepted" },
-    inspection: { verdict: "reject", defect_coverage: null, camera_session: "camera", frame_sequence: 2, frame_width: 100, frame_height: 100, controller_session: "boot", item_id: "7" },
+    decision: { verdict: "reject", reason: "model_timeout", coverage: null, coverageThreshold: 0.005, promptVerified: null, boxCount: 0 }, response: { status: "error", result: "error" }, control: { controlOutcome: "accepted" } };
+  const evidence = { telemetry: { verdict: "reject", verdict_reason: "model_timeout", coverage_available: false, defect_coverage_display: "Unavailable", camera_session: "camera", frame_sequence: 2, controller_session: "boot", item_id: "7", control_outcome: "accepted", coverage_threshold_available: true, coverage_threshold: 0.005, prompt_verification_available: false },
+    inspection: { verdict: "reject", defect_coverage: null, coverage_threshold: 0.005, prompt_verified: null, camera_session: "camera", frame_sequence: 2, frame_width: 100, frame_height: 100, controller_session: "boot", item_id: "7" },
     action: { control_outcome: "accepted", controller_session: "boot", item_id: "7", ack_controller_session: "boot", ack_item_id: "7" },
     hud: buildHudPayload({ decision: expected.decision, frameContext: expected.frame }) };
   assert.deepEqual(compareInspectionEvidence(expected, evidence), []);
   const wrong = structuredClone(evidence); wrong.telemetry.item_id = "8"; wrong.hud.frame.width = 50;
   assert.ok(compareInspectionEvidence(expected, wrong).length >= 2);
+  const threshold = structuredClone(evidence); threshold.telemetry.coverage_threshold = 0.9; threshold.inspection.coverage_threshold = 0.9;
+  assert.ok(compareInspectionEvidence(expected, threshold).length >= 2);
 });

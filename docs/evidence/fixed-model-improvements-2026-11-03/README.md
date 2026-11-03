@@ -92,6 +92,7 @@ Open [saved-image inspection](http://127.0.0.1:8104/),
 - [CLI parity](parity.json), [qualification](production-qualification.json)
 - [Runtime policy](policy.json), [summary](summary.json)
 - [Real workflow review checks](review-integration.json), [verification](verification.json)
+- [Native review and restart checks](native-review.json), [review queue screenshot](review-queue.png)
 - [Independent review](review.md)
 
 The review integration evidence uses real n8n, the actual C++ controller core
@@ -99,6 +100,15 @@ on the PC, actual cloud audit, relay/HUD and ThingsBoard. Model/capture results
 and qualification flags in those scenarios are controlled fixtures, clearly
 excluded from native quality and qualification. Synthetic records acknowledged
 by the test say "Automated integration check", never a human product assessment.
+
+Two additional operational checks used the actual bounded native workflow.
+The good-bottle check timed out (n8n model node 1218 ms, response 1686 ms);
+the damaged-bottle check completed (model node 1009 ms, response 1352 ms) and
+returned review with a reject suggestion. Both used controller reject, agreed
+across consumers, and retained the exact selected image bytes in the review
+queue. Both pending reviews and their pictures survived a monitoring-service
+restart. These are additional operational checks, excluded from frozen
+development and held-out quality counts.
 
 Prepared JPEGs and masks are retained here with checksums. Original development
 PNGs remain in `test-assets/product-defects`; new originals can be retrieved

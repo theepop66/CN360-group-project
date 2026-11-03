@@ -1,0 +1,19 @@
+{
+  "date": "2026-11-03",
+  "base": "2b0791b",
+  "account": "theepop66",
+  "scope": "Apply this chat's five ThingsBoard, native validation and guarded-review commits onto current main while retaining its newer frontend and runtime work",
+  "conflictResolution": "Retained current main's newline normalization, included inspection-policy in shared source, and rebuilt generated n8n workflows",
+  "checks": {
+    "n8n": {"passed": 254, "failed": 0},
+    "thingsboard": {"passed": 8, "failed": 0},
+    "picoWebapp": {"passed": 91, "failed": 0},
+    "picoApplication": {"passed": 33, "failed": 0},
+    "detectionRelay": {"passed": 26, "failed": 0},
+    "modelService": {"passed": 15, "failed": 0, "skipped": 1},
+    "pythonTypecheck": {"passed": true, "sourceFiles": 8},
+    "generatedWorkflows": "Fresh build matches committed files",
+    "whitespace": "git diff --check passed"
+  },
+  "runtimeEvidence": "Earlier native measurements retained; this merge does not alter the failed quality gates or authorize physical integration"
+}

@@ -458,3 +458,12 @@ unchanged. The controlled suite includes a 550 ms upload regression case.
 See the [live evidence](../docs/evidence/supabase-runtime-2026-10-27/README.md)
 for both initial failures and subsequent results. Real relay/Pico integration
 and device configuration remain pending for #17/#25.
+
+## Optional ThingsBoard monitoring
+
+The inspection workflow can send its completed decision and controller receipt
+to the local monitoring journal after responding to the webhook. Enable it with
+the optional `telemetryBaseUrl` runtime setting. The committed template leaves
+monitoring disabled. See [ThingsBoard integration](../thingsboard/README.md) for
+configuration, the offline saved-image demonstration, replay guarantees and
+software acceptance evidence.

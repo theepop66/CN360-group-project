@@ -1,23 +1,27 @@
-import { readFileSync, writeFileSync, mkdirSync, openSync, closeSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, mkdirSync, openSync, closeSync } from "node:fs";
 import { homedir } from "node:os";
 import { resolve, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
+import { createReadStream } from "node:fs";
 import { setTimeout as delay } from "node:timers/promises";
 import { command } from "../lib/inspection-test-runtime.mjs";
 import { configureWorkflows } from "../configure.mjs";
 import { WORKFLOW_FILES } from "../lib/workflow-definitions.mjs";
 import { startControllerAdapter } from "../lib/controller-test-adapter.mjs";
-import { startSoftwareBench } from "../lib/software-bench.mjs";
+import { disableCloudAuditForDemo, startSoftwareBench } from "../lib/software-bench.mjs";
 import { createRelay } from "../../detection-relay/lib/relay.mjs";
 import { startInspectionFixture } from "../lib/static-inspection.mjs";
 import { parseInspectionTarget } from "../lib/inspection-records.mjs";
+import { assertNativePortAvailable, nativeEnvironment, waitForNativeModel } from "../lib/native-profile.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const { values } = parseArgs({ options: { config: { type: "string", default: join(root, "n8n/software-bench.local.json") } } });
 const settings = JSON.parse(readFileSync(values.config, "utf8"));
 const modelProfile = settings.modelProfile ?? "controlled";
+const offlineAudit = settings.offline === true;
 if (!["controlled", "native"].includes(modelProfile)) throw new Error("modelProfile must be controlled or native");
 const healthInterval = settings.healthIntervalSeconds ?? 15;
 if (!Number.isInteger(healthInterval) || healthInterval < 5 || healthInterval > 3600) throw new Error("healthIntervalSeconds must be 5..3600");
@@ -27,23 +31,65 @@ const credentialFile = join(privateDirectory, "credentials.json");
 const container = "cn360-software-n8n";
 const volume = "cn360_software_n8n_data";
 const ids = { [WORKFLOW_FILES.inspectionLoop]: "rBfAR3HgczhHFlui", [WORKFLOW_FILES.promptCapture]: "lUa1bJRHZuC1BWBe", [WORKFLOW_FILES.healthWatchdog]: "i01sMLn8WgW6EtZq" };
-const key = [...new Set(readFileSync(settings.keyFile, "utf8").match(/sb_secret_[A-Za-z0-9_-]+|eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g) ?? [])];
+const key = offlineAudit ? ["offline-demo-no-cloud-credential"] : [...new Set(readFileSync(settings.keyFile, "utf8").match(/sb_secret_[A-Za-z0-9_-]+|eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g) ?? [])];
 if (key.length !== 1) throw new Error("The key file must contain one backend credential");
 const running = await command("docker", ["ps", "--filter", `name=^/${container}$`, "--format", "{{.Names}}"]);
 if (running.trim()) throw new Error("The software n8n profile is already running; stop that profile before restarting it");
-await command(settings.python, [join(root, "n8n/scripts/prepare-inspection-images.py"), "--assets", join(root, "test-assets/product-defects"), "--output", output]);
-const pictures = JSON.parse(readFileSync(join(output, "cases.json"), "utf8"));
-const photo = pictures.find(p => p.id === "bottle__good__000-1");
-const runtime = JSON.parse(readFileSync(join(root, "n8n/runtime.local.json"), "utf8"));
-const schemaResponse = await fetch(runtime.supabaseBaseUrl + "/rest/v1/", { headers: { apikey: key[0] }, signal: AbortSignal.timeout(15000) });
-if (!schemaResponse.ok || !(await schemaResponse.json()).paths?.["/rpc/cn360_record_inspection"]) {
-  throw new Error("Apply n8n/sql/002-idempotent-inspections.sql in Supabase before starting this updated profile");
+const imageMaxSide = settings.imageMaxSide ?? 0;
+if (!Number.isInteger(imageMaxSide) || imageMaxSide < 0 || imageMaxSide > 4096) throw new Error("imageMaxSide must be an integer from 0 to 4096");
+await command(settings.python, [join(root, "n8n/scripts/prepare-inspection-images.py"), "--assets", join(root, "test-assets/product-defects"), "--output", output, "--max-side", String(imageMaxSide)]);
+let pictures = JSON.parse(readFileSync(join(output, "cases.json"), "utf8"));
+if (modelProfile === "native" && settings.experimentRun) {
+  const experiment = resolve(settings.experimentRun);
+  pictures = JSON.parse(readFileSync(join(experiment, "bench-cases.json"), "utf8")).map(picture => {
+    const file = resolve(experiment, picture.file);
+    if (!file.startsWith(experiment + (process.platform === "win32" ? "\\" : "/"))) throw new Error("Experiment image escapes its run directory");
+    if (createHash("sha256").update(readFileSync(file)).digest("hex") !== picture.sha256) throw new Error("Experiment input checksum mismatch");
+    return { ...picture, file };
+  });
+}
+const photo = pictures.find(p => p.id === (settings.initialPictureId ?? (settings.experimentRun ? pictures[0]?.id : "bottle__good__000-1")));
+if (!photo) throw new Error("The selected initial picture is not in the prepared validation set");
+const runtimePath = join(root, "n8n/runtime.local.json");
+const runtime = existsSync(runtimePath) ? JSON.parse(readFileSync(runtimePath, "utf8")) : offlineAudit ? {
+  supabaseBaseUrl: "http://offline.invalid", supabaseCredentialId: "cn360-offline-unused", supabaseCredentialName: "Offline demo (unused)",
+  snapshotBucket: "offline-demo", coverageThreshold: 0.005, modelTimeoutMs: 1200
+} : (() => { throw new Error("Configure n8n/runtime.local.json first"); })();
+if (offlineAudit) Object.assign(runtime, { supabaseBaseUrl: "http://offline.invalid", supabaseCredentialId: "cn360-offline-unused", supabaseCredentialName: "Offline demo (unused)" });
+if (!offlineAudit) {
+  const schemaResponse = await fetch(runtime.supabaseBaseUrl + "/rest/v1/", { headers: { apikey: key[0] }, signal: AbortSignal.timeout(15000) });
+  if (!schemaResponse.ok || !(await schemaResponse.json()).paths?.["/rpc/cn360_record_inspection"]) {
+    throw new Error("Apply n8n/sql/002-idempotent-inspections.sql in Supabase before starting this updated profile");
+  }
 }
 Object.assign(runtime, { modelBaseUrl: `http://host.docker.internal:${modelProfile === "controlled" ? 8105 : 8000}`, piBaseUrl: "http://host.docker.internal:8104",
   esp32BaseUrl: "http://host.docker.internal:8104", relayBaseUrl: "http://host.docker.internal:8081" });
+if (settings.telemetryBaseUrl) {
+  runtime.telemetryBaseUrl = settings.telemetryBaseUrl;
+  runtime.monitoringProfile = "software-" + modelProfile + (offlineAudit ? "-offline" : "");
+}
+if (modelProfile === "native") {
+  const policyPath = settings.inspectionPolicyFile ?? (settings.experimentRun ? join(settings.experimentRun, "policy.json") : join(root, "n8n/inspection-policy.json"));
+  runtime.inspectionPolicy = JSON.parse(readFileSync(policyPath, "utf8"));
+  if (runtime.inspectionPolicy.model) {
+    const hashFile = async path => { const hash = createHash("sha256"); for await (const bytes of createReadStream(path)) hash.update(bytes); return hash.digest("hex"); };
+    const frozenModel = runtime.inspectionPolicy.model;
+    if (frozenModel.modelSha256 !== await hashFile(settings.modelPath) || frozenModel.librarySha256 !== await hashFile(settings.modelLibrary) ||
+        frozenModel.backend !== settings.modelDevice || frozenModel.mode !== "hybrid" || frozenModel.threads !== 6 || frozenModel.imageMaxSide !== imageMaxSide) {
+      throw new Error("The inspection policy does not match this native model/runtime");
+    }
+  } else if (runtime.inspectionPolicy.rules?.some(rule => rule.automaticApproval)) throw new Error("Automatic approval requires a frozen native model identity");
+  runtime.reviewFrameBaseUrl = "http://127.0.0.1:8104/review-frames/";
+} else {
+  delete runtime.inspectionPolicy;
+  delete runtime.reviewFrameBaseUrl;
+}
 const flows = configureWorkflows(runtime);
 for (const [file, flow] of Object.entries(flows)) {
   flow.id = ids[file];
+  // Offline demonstrations keep the production graph but explicitly disable
+  // cloud audit calls. Monitoring still has its durable local delivery journal.
+  if (offlineAudit) disableCloudAuditForDemo(flow, runtime.supabaseBaseUrl);
   // Ambient sorting is opt-in for this software profile; the webhook and health
   // workflows stay active without generating endless test rows or GPU requests.
   if (file === WORKFLOW_FILES.inspectionLoop) flow.nodes.find(n => n.name === "trigger-schedule").disabled = !settings.ambient;
@@ -71,7 +117,9 @@ process.once("SIGTERM", () => { void stop().then(() => process.exit()); });
 try {
   relay = createRelay({ heartbeatMs: 1000 }); await relay.listen(8081, "0.0.0.0");
   bench = await startSoftwareBench({ controller: startControllerAdapter(join(root, "n8n/.runtime/controller-adapter/controller_adapter.exe")),
-    picture: { bytes: readFileSync(photo.file), width: photo.width, height: photo.height }, hudDirectory: join(root, "pico-webapp"), modelProfile,
+    picture: { ...photo, bytes: readFileSync(photo.file) }, hudDirectory: join(root, "pico-webapp"), modelProfile, offlineAudit,
+    reviewDirectory: join(output, "review-frames"),
+    pictures: modelProfile === "native" ? pictures.map(p => ({ ...p, bytes: readFileSync(p.file) })) : [],
     configureModel: scenario => controlledModel.select({ id: "software-bench", target: parseInspectionTarget(controlledModel.modelPrompt) ?? "visible surface defect",
       coverage: 0, boxes: scenario === "reject" ? [[180, 180, 450, 450]] : undefined,
       modelError: scenario === "error", modelDelayMs: scenario === "timeout" ? 1500 : 0, modelOffline: scenario === "offline",
@@ -81,14 +129,15 @@ try {
     controlledModel.select({ id: "software-bench", target: "visible surface defect", boxes: [[180, 180, 450, 450]],
       frame: { bytes: readFileSync(photo.file), width: photo.width, height: photo.height, mimeType: "image/jpeg" } });
   } else {
+  await assertNativePortAvailable(8000);
   const modelLog = openSync(join(output, "model.log"), "a");
   model = spawn(settings.python, ["-m", "cn360_model"], { cwd: join(root, "model-service"), windowsHide: true,
-    env: { ...process.env, PYTHONPATH: join(root, "model-service"), CN360_MODEL_LIBRARY: settings.modelLibrary,
-      CN360_MODEL_PATH: settings.modelPath, CN360_MODEL_WARMUP_IMAGE: photo.file, CN360_MODEL_WARMUP_TIMEOUT: "120",
-      CN360_MODEL_REQUEST_TIMEOUT: "1.1", CN360_MODEL_PORT: "8000", CN360_MODEL_THREADS: "6",
-      CN360_MODEL_MODE: "hybrid", LA_DEVICE: settings.modelDevice ?? "cpu", CUDA_PATH: settings.cudaPath }, stdio: ["ignore", modelLog, modelLog] });
+    env: { ...nativeEnvironment(settings, photo.file), PYTHONPATH: join(root, "model-service") }, stdio: ["ignore", modelLog, modelLog] });
   model.on("error", error => console.error("Model process:", error.message));
   closeSync(modelLog);
+  console.log("Waiting for native LocateAnything initialization and warm-up...");
+  const nativeHealth = await waitForNativeModel("http://127.0.0.1:8000", settings.modelDevice, { child: model });
+  console.log("Native LocateAnything ready on " + nativeHealth.backend + "; warm-up " + nativeHealth.warmup_ms.toFixed(0) + " ms.");
   }
   await command("docker", ["volume", "create", volume]);
   // The dedicated volume can contain an old copied workflow. Never activate
@@ -118,9 +167,9 @@ try {
     await delay(500);
   }
   if (!ready) throw new Error("Software n8n did not become ready");
-  writeFileSync(join(root, "n8n/runtime.local.json"), JSON.stringify(runtime, null, 2) + "\n");
+  if (!offlineAudit) writeFileSync(runtimePath, JSON.stringify(runtime, null, 2) + "\n");
   writeFileSync(join(output, "running.json"), JSON.stringify({ pid: process.pid, modelPid: model?.pid, modelProfile, container,
-    profile: "test-pictures-pc-controller", hardware: false, n8n: "http://localhost:5680", bench: bench.origin,
+    profile: "test-pictures-pc-controller", hardware: false, offlineAudit, imageMaxSide, n8n: "http://localhost:5680", bench: bench.origin,
     hud: bench.origin + "/hud/", controllerSession: bench.controllerSession, startedAt: new Date().toISOString() }, null, 2) + "\n");
   console.log("Software test ready: " + bench.origin + "/ — n8n http://localhost:5680. Model profile: " + modelProfile + ". No physical hardware.");
 } catch (error) { await stop(); throw error; }

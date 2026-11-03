@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "enabled": true,
+  "scope": "Native saved-image software inspection: unqualified conditions require human review; controller reject fallback",
+  "rules": []
+}

@@ -1,0 +1,296 @@
+{
+  "comparedAt": "2026-11-03T14:13:54.890Z",
+  "scope": "Installed upstream C++ CLI versus checked resident adapter, identical q8/hybrid/input/prompt. Not NVIDIA Python parity.",
+  "probes": [
+    {
+      "caseId": "bottle-broken-large/bottle__good__000",
+      "inputSha256": "9bc1ffdadedc9e6639449cb647c24233118e7d52df303b89cf7e19bca799c68d",
+      "instruction": "Locate all the instances that matches the following description: broken glass on the bottle rim.",
+      "actual": [
+        {
+          "label": "broken glass on the bottle rim",
+          "box": [
+            58.2399979,
+            219.520004,
+            74.3679962,
+            268.35199
+          ]
+        },
+        {
+          "label": "broken glass on the bottle rim",
+          "box": [
+            66.3040009,
+            164.863998,
+            78.8479996,
+            215.488007
+          ]
+        },
+        {
+          "label": "broken glass on the bottle rim",
+          "box": [
+            74.3679962,
+            280.895996,
+            98.1119995,
+            320.768005
+          ]
+        },
+        {
+          "label": "broken glass on the bottle rim",
+          "box": [
+            94.5279999,
+            120.511993,
+            120.511993,
+            136.639999
+          ]
+        },
+        {
+          "label": "broken glass on the bottle rim",
+          "box": [
+            96.3199997,
+            345.856018,
+            149.184006,
+            362.880005
+          ]
+        },
+        {
+          "label": "broken glass on the bottle rim",
+          "box": [
+            142.016006,
+            67.647995,
+            186.368011,
+            94.5279999
+          ]
+        },
+        {
+          "label": "broken glass on the bottle rim",
+          "box": [
+            149.184006,
+            379.007996,
+            242.368011,
+            388.863983
+          ]
+        },
+        {
+          "label": "broken glass on the bottle rim",
+          "box": [
+            192.639999,
+            66.3040009,
+            239.680008,
+            80.1920013
+          ]
+        },
+        {
+          "label": "broken glass on the bottle rim",
+          "box": [
+            244.160004,
+            74.3679962,
+            320.768005,
+            109.760002
+          ]
+        },
+        {
+          "label": "broken glass on the bottle rim",
+          "box": [
+            268.35199,
+            358.847992,
+            339.584015,
+            374.976013
+          ]
+        },
+        {
+          "label": "broken glass on the bottle rim",
+          "box": [
+            339.584015,
+            135.744003,
+            370.496002,
+            169.792007
+          ]
+        },
+        {
+          "label": "broken glass on the bottle rim",
+          "box": [
+            348.544006,
+            287.167999,
+            379.007996,
+            315.391998
+          ]
+        },
+        {
+          "label": "broken glass on the bottle rim",
+          "box": [
+            362.880005,
+            164.863998,
+            379.007996,
+            206.528
+          ]
+        }
+      ],
+      "reference": [
+        {
+          "label": "broken glass on the bottle rim",
+          "box": [
+            58.24,
+            219.52,
+            74.37,
+            268.35
+          ]
+        },
+        {
+          "label": "broken glass on the bottle rim",
+          "box": [
+            66.3,
+            164.86,
+            78.85,
+            215.49
+          ]
+        },
+        {
+          "label": "broken glass on the bottle rim",
+          "box": [
+            74.37,
+            280.9,
+            98.11,
+            320.77
+          ]
+        },
+        {
+          "label": "broken glass on the bottle rim",
+          "box": [
+            94.53,
+            120.51,
+            120.51,
+            136.64
+          ]
+        },
+        {
+          "label": "broken glass on the bottle rim",
+          "box": [
+            96.32,
+            345.86,
+            149.18,
+            362.88
+          ]
+        },
+        {
+          "label": "broken glass on the bottle rim",
+          "box": [
+            142.02,
+            67.65,
+            186.37,
+            94.53
+          ]
+        },
+        {
+          "label": "broken glass on the bottle rim",
+          "box": [
+            149.18,
+            379.01,
+            242.37,
+            388.86
+          ]
+        },
+        {
+          "label": "broken glass on the bottle rim",
+          "box": [
+            192.64,
+            66.3,
+            239.68,
+            80.19
+          ]
+        },
+        {
+          "label": "broken glass on the bottle rim",
+          "box": [
+            244.16,
+            74.37,
+            320.77,
+            109.76
+          ]
+        },
+        {
+          "label": "broken glass on the bottle rim",
+          "box": [
+            268.35,
+            358.85,
+            339.58,
+            374.98
+          ]
+        },
+        {
+          "label": "broken glass on the bottle rim",
+          "box": [
+            339.58,
+            135.74,
+            370.5,
+            169.79
+          ]
+        },
+        {
+          "label": "broken glass on the bottle rim",
+          "box": [
+            348.54,
+            287.17,
+            379.01,
+            315.39
+          ]
+        },
+        {
+          "label": "broken glass on the bottle rim",
+          "box": [
+            362.88,
+            164.86,
+            379.01,
+            206.53
+          ]
+        }
+      ],
+      "passed": true,
+      "tolerancePixels": 0.02,
+      "actualCount": 13,
+      "referenceCount": 13
+    },
+    {
+      "caseId": "hazelnut-hole/hazelnut__hole__000",
+      "inputSha256": "18cc025ae97113760b2fcc1e8f82c65281a825fc237edbf25fc9e7cdc5708986",
+      "instruction": "Locate all the instances that matches the following description: hole in the hazelnut shell.",
+      "actual": [
+        {
+          "label": "hole in the hazelnut shell",
+          "box": [
+            232.511993,
+            172.928009,
+            263.872009,
+            199.360001
+          ]
+        }
+      ],
+      "reference": [
+        {
+          "label": "hole in the hazelnut shell",
+          "box": [
+            232.51,
+            172.93,
+            263.87,
+            199.36
+          ]
+        }
+      ],
+      "passed": true,
+      "tolerancePixels": 0.02,
+      "actualCount": 1,
+      "referenceCount": 1
+    },
+    {
+      "caseId": "capsule-crack/capsule__crack__000",
+      "inputSha256": "f31b58f0bfe669ee7fc4f22432e31876e14af84a44826e360c973437b105b093",
+      "instruction": "Locate all the instances that matches the following description: crack in the capsule.",
+      "actual": [],
+      "reference": [],
+      "passed": true,
+      "tolerancePixels": 0.02,
+      "actualCount": 0,
+      "referenceCount": 0
+    }
+  ],
+  "passed": true
+}

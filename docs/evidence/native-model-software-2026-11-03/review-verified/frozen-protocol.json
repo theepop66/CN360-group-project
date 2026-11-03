@@ -1,0 +1,207 @@
+{
+  "frozenAt": "2026-11-03T09:31:32.215Z",
+  "criteria": {
+    "approvedOn": "2026-11-03",
+    "approval": "Project owner agreed in chat before the scored run",
+    "scope": "Frozen existing labelled image/target sample set only; no production-accuracy or physical-sorting claim",
+    "imageMaxSide": 448,
+    "diagnosticRepetitions": 3,
+    "productionRepetitions": 1,
+    "productionCaseIds": [
+      "bottle__good__000-1",
+      "bottle__broken_large__000-1",
+      "capsule__crack__000-1"
+    ],
+    "maxMissedDefects": 0,
+    "maxFalseRejects": 0,
+    "maxErrors": 0,
+    "modelServiceBudgetMs": 1100,
+    "modelBudgetMs": 1200,
+    "verdictWindowMs": 3000,
+    "dashboardVisibilityMs": 5000,
+    "healthIntervalMs": 10000,
+    "coverageThreshold": 0.005,
+    "promptPolicy": "Use the existing manifest targets unchanged; do not tune on the acceptance run",
+    "notes": "The curated sample set was previously examined, not an independent held-out set. Failures are retained, and long diagnostic allowances cannot pass the production timing gate."
+  },
+  "cases": [
+    {
+      "id": "bottle__good__000-1",
+      "target": "broken glass on the bottle rim",
+      "hasDefect": false,
+      "width": 448,
+      "height": 448,
+      "sourceFile": "bottle__good__000.png",
+      "originalSha256": "9e7bfe658efe9b6db2607a96405b4ac6880936eaf93b89c85bcd311122ceb57b",
+      "servedSha256": "9bc1ffdadedc9e6639449cb647c24233118e7d52df303b89cf7e19bca799c68d",
+      "servedFile": "inputs/media/bottle__good__000.jpg"
+    },
+    {
+      "id": "bottle__broken_large__000-1",
+      "target": "broken glass on the bottle rim",
+      "hasDefect": true,
+      "width": 448,
+      "height": 448,
+      "sourceFile": "bottle__broken_large__000.png",
+      "originalSha256": "11a691a06a33dd78c5fcab6a822caa48c0d72f27f660e19f5abd9b5aa392b0eb",
+      "servedSha256": "203585e5e3e3b69c95fcbdf4a3dc1c809393e04aae2a140f669cb7bc85e8cead",
+      "servedFile": "inputs/media/bottle__broken_large__000.jpg"
+    },
+    {
+      "id": "bottle__broken_small__000-1",
+      "target": "broken glass on the bottle rim",
+      "hasDefect": true,
+      "width": 448,
+      "height": 448,
+      "sourceFile": "bottle__broken_small__000.png",
+      "originalSha256": "05b96e1102fba8cc19bf60e17d33a0830247df2bbba56cae3df100336392941e",
+      "servedSha256": "96b69942f144b6894685c6dbea70219b49058d129637fc1d9280b62bdb58182c",
+      "servedFile": "inputs/media/bottle__broken_small__000.jpg"
+    },
+    {
+      "id": "metal_nut__good__000-1",
+      "target": "scratch on the metal nut",
+      "hasDefect": false,
+      "width": 448,
+      "height": 448,
+      "sourceFile": "metal_nut__good__000.png",
+      "originalSha256": "d7ca543f04733fb91ac02e18d0fbf06dcff554a1b1ad754173c42d10bb026bb6",
+      "servedSha256": "a7d9da263fbe3344cd3c11360784db286c00f13ad48f05f55197cbaa019e1c54",
+      "servedFile": "inputs/media/metal_nut__good__000.jpg"
+    },
+    {
+      "id": "metal_nut__good__000-2",
+      "target": "bent edge of the metal nut",
+      "hasDefect": false,
+      "width": 448,
+      "height": 448,
+      "sourceFile": "metal_nut__good__000.png",
+      "originalSha256": "d7ca543f04733fb91ac02e18d0fbf06dcff554a1b1ad754173c42d10bb026bb6",
+      "servedSha256": "a7d9da263fbe3344cd3c11360784db286c00f13ad48f05f55197cbaa019e1c54",
+      "servedFile": "inputs/media/metal_nut__good__000.jpg"
+    },
+    {
+      "id": "metal_nut__scratch__000-1",
+      "target": "scratch on the metal nut",
+      "hasDefect": true,
+      "width": 448,
+      "height": 448,
+      "sourceFile": "metal_nut__scratch__000.png",
+      "originalSha256": "1e5637c3409d05709eae62c7254f38900afa296902b1626e5902a5a2a4095f3d",
+      "servedSha256": "0af2792af973b4c6fa022a061d76c875a537a1af5a2cb61a7601f80ee4267030",
+      "servedFile": "inputs/media/metal_nut__scratch__000.jpg"
+    },
+    {
+      "id": "metal_nut__bent__000-1",
+      "target": "bent edge of the metal nut",
+      "hasDefect": true,
+      "width": 448,
+      "height": 448,
+      "sourceFile": "metal_nut__bent__000.png",
+      "originalSha256": "602cceb099d5aa10a416f31cd6370ef9d8c810118f4ada9dbc9c28e91a889e0b",
+      "servedSha256": "366bec9bd5b5eaac98f33d6422af1e72223dc36fbb260683e1112800858d5ebf",
+      "servedFile": "inputs/media/metal_nut__bent__000.jpg"
+    },
+    {
+      "id": "hazelnut__good__000-1",
+      "target": "crack in the hazelnut shell",
+      "hasDefect": false,
+      "width": 448,
+      "height": 448,
+      "sourceFile": "hazelnut__good__000.png",
+      "originalSha256": "32034b75a2dca53cff86c4833e00a25cd65939859820e96ce9b980359cb08955",
+      "servedSha256": "0dbf168ffd92b69001d4969f3b5d8d48b0969fdcee23a8f5addbb461d93e0685",
+      "servedFile": "inputs/media/hazelnut__good__000.jpg"
+    },
+    {
+      "id": "hazelnut__good__000-2",
+      "target": "hole in the hazelnut shell",
+      "hasDefect": false,
+      "width": 448,
+      "height": 448,
+      "sourceFile": "hazelnut__good__000.png",
+      "originalSha256": "32034b75a2dca53cff86c4833e00a25cd65939859820e96ce9b980359cb08955",
+      "servedSha256": "0dbf168ffd92b69001d4969f3b5d8d48b0969fdcee23a8f5addbb461d93e0685",
+      "servedFile": "inputs/media/hazelnut__good__000.jpg"
+    },
+    {
+      "id": "hazelnut__crack__000-1",
+      "target": "crack in the hazelnut shell",
+      "hasDefect": true,
+      "width": 448,
+      "height": 448,
+      "sourceFile": "hazelnut__crack__000.png",
+      "originalSha256": "e26b54282b6b11286760905ca2880af594561b606dfa0643859d6ee6027cf8c2",
+      "servedSha256": "525cbdfb8c271f7cb7f9964ff6eab32708fa73e792967a76f3a5083a000ec29b",
+      "servedFile": "inputs/media/hazelnut__crack__000.jpg"
+    },
+    {
+      "id": "hazelnut__hole__000-1",
+      "target": "hole in the hazelnut shell",
+      "hasDefect": true,
+      "width": 448,
+      "height": 448,
+      "sourceFile": "hazelnut__hole__000.png",
+      "originalSha256": "b9a1a102db263079fec8bc9836f182253dced9ca178957b7e9bef05cba3312c2",
+      "servedSha256": "18cc025ae97113760b2fcc1e8f82c65281a825fc237edbf25fc9e7cdc5708986",
+      "servedFile": "inputs/media/hazelnut__hole__000.jpg"
+    },
+    {
+      "id": "capsule__good__000-1",
+      "target": "crack in the capsule",
+      "hasDefect": false,
+      "width": 448,
+      "height": 448,
+      "sourceFile": "capsule__good__000.png",
+      "originalSha256": "86366d544a0182b04fdeacb62c9b23af8c72af24d35eaafeb8c210f603174728",
+      "servedSha256": "1c5168880adcd026f71a7de36578fe971397306a3320ea800e1ba5c2ef49f5c1",
+      "servedFile": "inputs/media/capsule__good__000.jpg"
+    },
+    {
+      "id": "capsule__good__000-2",
+      "target": "dented area on the capsule",
+      "hasDefect": false,
+      "width": 448,
+      "height": 448,
+      "sourceFile": "capsule__good__000.png",
+      "originalSha256": "86366d544a0182b04fdeacb62c9b23af8c72af24d35eaafeb8c210f603174728",
+      "servedSha256": "1c5168880adcd026f71a7de36578fe971397306a3320ea800e1ba5c2ef49f5c1",
+      "servedFile": "inputs/media/capsule__good__000.jpg"
+    },
+    {
+      "id": "capsule__crack__000-1",
+      "target": "crack in the capsule",
+      "hasDefect": true,
+      "width": 448,
+      "height": 448,
+      "sourceFile": "capsule__crack__000.png",
+      "originalSha256": "6462a533da731a19e4df05fc1815719b94603aee341a2ac620add75ec2334ef4",
+      "servedSha256": "f31b58f0bfe669ee7fc4f22432e31876e14af84a44826e360c973437b105b093",
+      "servedFile": "inputs/media/capsule__crack__000.jpg"
+    },
+    {
+      "id": "capsule__squeeze__000-1",
+      "target": "dented area on the capsule",
+      "hasDefect": true,
+      "width": 448,
+      "height": 448,
+      "sourceFile": "capsule__squeeze__000.png",
+      "originalSha256": "28e839bfc1dcc9c8c811d0f3817fb7c1184147883f5fefbb7b6fef787e69dc9a",
+      "servedSha256": "b9b5fe3a1edd299e9d00ce7f6ec4eb26dba54b390e97ef4d1875f0d8f5eeb4d0",
+      "servedFile": "inputs/media/capsule__squeeze__000.jpg"
+    }
+  ],
+  "diagnosticSamples": 45,
+  "productionCaseIds": [
+    "bottle__good__000-1",
+    "bottle__broken_large__000-1",
+    "capsule__crack__000-1"
+  ],
+  "nativeSourceRevision": "77376ab332de918220f7a7e391542eefb5407c9f",
+  "modelSha256": "0909d8a1aba584b482d501baae032611d1559878be1b7f6606ba516687c5380d",
+  "librarySha256": "c7170d830fb0c1f8c6c224643b4050678b3740c9b46cec4032d19f1d8cb5663c",
+  "requestedBackend": "CUDA0",
+  "mode": "hybrid",
+  "threads": 6,
+  "scope": "Real LocateAnything, real n8n, actual C++ controller core on PC, actual Supabase/relay/ThingsBoard. Saved images; no physical sorting."
+}

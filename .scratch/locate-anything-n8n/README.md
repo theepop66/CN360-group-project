@@ -70,3 +70,26 @@ Ticket จาก [สเปก](../../docs/specs/local-model-n8n-defect-output.m
 
 
 Ticket 07 implementation evidence: [26 October report](../../docs/evidence/item-verdict-deadline-2026-10-26/README.md). Controller timeout/item protection and integrated picture tests are implemented; all nine direct production predictions still timed out after warm-up. Automatic admission stays disabled pending physical reject/retention validation.
+
+## Native model validation follow-up — 3 November 2026
+
+The project owner approved local tickets 08–11 and invoked implementation with
+D:\CN360\locate-anything.cpp. These tickets are implemented as software
+integration, measurement and assessment work. The quality and production timing
+gates failed; physical operation remains unverified and was not activated.
+Existing parent issues and tickets 01–07 are unchanged.
+
+| Ticket | Status | Blocked by |
+| --- | --- | --- |
+| [08 — Native monitored Inspection](issues/08-native-model-monitored-inspection.md) | implemented, native path verified | None |
+| [09 — Labelled quality and timing](issues/09-labelled-model-quality-and-timing.md) | implemented, quality/timing failed acceptance | 08 |
+| [10 — Cross-service/failure consistency](issues/10-cross-system-results-and-failures.md) | implemented, controlled consistency passed | 08 |
+| [11 — Agreed gates and readiness](issues/11-approved-software-acceptance-gates.md) | implemented, readiness withheld | 09, 10 |
+
+The owner approved zero missed defects and false rejects on the frozen sample
+set with unchanged deadlines. The 45 diagnostic predictions had 21 false
+rejects and 6 misses. Two of three production-budget inspections timed out.
+Ten controlled integration/failure scenarios passed. The sample set was
+previously examined and does not establish general production accuracy.
+See the [spec](../../docs/specs/native-model-software-validation.md) and
+[assessment/evidence](../../docs/evidence/native-model-software-2026-11-03/README.md).

@@ -40,6 +40,10 @@ const REASON_DEFECT = "defect_detected";
 
 // A forced reject is an operational error, not a successful inspection.
 export function buildInspectionResponse(decision) {
+  if (decision?.reason === "manual_review_required" && decision.reviewRequired === true) {
+    return { status: "review_required", result: "review", reason: decision.reviewReason,
+      modelSuggestion: decision.modelVerdict, policyId: decision.policyId, controlVerdict: "reject" };
+  }
   const evaluated = decision &&
     [REASON_DEFECT, REASON_NO_DEFECT].includes(decision.reason) &&
     [VERDICT.PASS, VERDICT.REJECT].includes(decision.verdict);
@@ -121,7 +125,9 @@ export function decideVerdict(coverage, threshold) {
 }
 
 export function parseFrameContext(headers) {
+  const inspectionProfile = readTrimmed(readHeader(headers, "x-inspection-profile"));
   return {
+    ...(inspectionProfile ? { inspectionProfile } : {}),
     sessionId: readTrimmed(readHeader(headers, FRAME_HEADERS.sessionId)),
     sequence: asFiniteNumber(readHeader(headers, FRAME_HEADERS.sequence)),
     capturedAt: readTrimmed(readHeader(headers, FRAME_HEADERS.capturedAt)),

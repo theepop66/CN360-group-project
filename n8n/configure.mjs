@@ -7,6 +7,10 @@ import { resolveVerdictBudget, resolveCoverageThreshold } from "./lib/inspection
 const here = dirname(fileURLToPath(import.meta.url));
 
 export function configureWorkflows(config, supabaseKey) {
+  if (config.inspectionPolicy !== undefined && (config.inspectionPolicy?.version !== 1 ||
+      config.inspectionPolicy.enabled !== true || !Array.isArray(config.inspectionPolicy.rules))) {
+    throw new Error("inspectionPolicy must be an enabled version 1 guarded policy");
+  }
   const useStoredCredential = config.supabaseCredentialId !== undefined;
   if (useStoredCredential && (typeof config.supabaseCredentialId !== "string" ||
       !/^[A-Za-z0-9_-]+$/.test(config.supabaseCredentialId) || config.supabaseCredentialId.includes("REPLACE_"))) {
@@ -57,6 +61,27 @@ export function configureWorkflows(config, supabaseKey) {
       return value;
     };
     const configured = replace(workflow);
+    if (config.inspectionPolicy) {
+      const decisionNode = configured.nodes.find(node => node.name === "decide-inspection");
+      if (decisionNode) decisionNode.parameters.jsCode = decisionNode.parameters.jsCode.replace(
+        "const inspectionPolicy = null; // configured inspection policy",
+        () => "const inspectionPolicy = " + JSON.stringify(config.inspectionPolicy) + "; // configured inspection policy");
+    }
+    const monitoring = configured.nodes.find(node => node.name === "publish-monitoring");
+    if (monitoring && config.telemetryBaseUrl) {
+      const url = new URL(config.telemetryBaseUrl);
+      if (!["http:", "https:"].includes(url.protocol) || url.hostname === "0.0.0.0" || url.username || url.password || url.search || url.hash || url.pathname !== "/") {
+        throw new Error("Set a usable origin for telemetryBaseUrl");
+      }
+      monitoring.disabled = false;
+      monitoring.parameters.url = url.origin + "/events";
+      monitoring.parameters.jsonBody = monitoring.parameters.jsonBody.replace("monitoringProfile: 'inspection'", () => "monitoringProfile: " + JSON.stringify(config.monitoringProfile ?? "inspection"));
+      if (config.reviewFrameBaseUrl) {
+        const reviewUrl = new URL(config.reviewFrameBaseUrl);
+        if (!["http:", "https:"].includes(reviewUrl.protocol) || reviewUrl.username || reviewUrl.password) throw new Error("Invalid review frame origin");
+        monitoring.parameters.jsonBody = monitoring.parameters.jsonBody.replace("reviewFrameBaseUrl: null", () => "reviewFrameBaseUrl: " + JSON.stringify(reviewUrl.href));
+      }
+    }
     if (useStoredCredential) {
       for (const node of configured.nodes) {
         const headers = node.parameters.headerParameters?.parameters;

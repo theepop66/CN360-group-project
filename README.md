@@ -46,6 +46,14 @@ Traditional AI-based QC systems require retraining whenever the target defect ch
 
 ## 🧩 Core Modules
 
+### ThingsBoard monitoring
+
+The local supervisor dashboard displays inspection verdicts, defect coverage,
+processing time, counts, service health and operational alarms. A durable local
+journal replays monitoring records after ThingsBoard outages. See
+[`thingsboard/README.md`](./thingsboard/README.md) for startup, the saved-image
+offline demonstration, integration settings and verification evidence.
+
 ### n8n Workflow Orchestration
 
 The orchestration layer is implemented in [`n8n/`](./n8n) as three importable workflows:

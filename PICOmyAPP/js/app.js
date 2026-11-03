@@ -311,7 +311,7 @@ function connectWebSocket() {
       latestResult = parsed;
       const count = parsed.detections.length;
       const eventTime = parsed.timestamp ? new Date(parsed.timestamp) : new Date();
-      elements.summary.textContent = count === 0
+      elements.summary.textContent = parsed.reviewRequired ? "Human review required · controller reject · model suggestion: " + (parsed.modelSuggestion ?? "unavailable") : count === 0
         ? "AI reports no detections"
         : `${count} detection${count === 1 ? "" : "s"} · ${eventTime.toLocaleTimeString()}`;
       setStatus(elements.socketStatus, "AI data: receiving", "ok");

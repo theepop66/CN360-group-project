@@ -24,6 +24,7 @@ import {
   resolveVerdictBudget
 } from "../lib/inspection-logic.mjs";
 import { MODEL_INSTRUCTION_TEMPLATE } from "../lib/inspection-records.mjs";
+import { configureWorkflows } from "../configure.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const WORKFLOW_DIR = join(HERE, "..", "workflows");
@@ -137,6 +138,22 @@ const FRAME_CONTEXT = {
   width: 640,
   height: 480
 };
+
+test("configured policy applies its threshold and review guard in the actual Code node", () => {
+  const instruction = "Locate all the instances that matches the following description: hole.";
+  const config = { modelBaseUrl: "http://model", piBaseUrl: "http://capture", esp32BaseUrl: "http://controller", relayBaseUrl: "http://relay",
+    supabaseBaseUrl: "http://audit", snapshotBucket: "test", coverageThreshold: 0.005, modelTimeoutMs: 1200,
+    inspectionPolicy: { version: 1, enabled: true, rules: [{ id: "hole", instruction, preparationProfile: "hole/full", threshold: 0.003,
+      width: 640, height: 480, automaticApproval: false }] } };
+  const flow = configureWorkflows(config, "test-key")[WORKFLOW_FILES.inspectionLoop];
+  const result = runCode(flow, "decide-inspection", { items: [{ json: { status: "success", prompt_used: instruction,
+    detections: [{ label: "hole", box: [0, 0, 64, 20] }] } }], nodes: {
+    "read-frame-context": { frameContext: { ...FRAME_CONTEXT, inspectionProfile: "hole/full" } },
+    "resolve-instruction": { instruction, modelPromptMissing: false }, "verify-verdict-budget": { budget: { fits: true } }, "capture-frame": {}
+  } })[0].json.decision;
+  assert.equal(result.coverageThreshold, 0.003); assert.equal(result.modelVerdict, "reject");
+  assert.equal(result.reviewRequired, true); assert.equal(result.verdict, "reject");
+});
 
 const DECISION_PASS = {
   verdict: "pass",

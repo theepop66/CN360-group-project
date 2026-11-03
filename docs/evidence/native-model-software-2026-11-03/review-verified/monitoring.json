@@ -1,0 +1,7 @@
+{
+  "assessedAt": "2026-11-03T09:39:30.159Z",
+  "configuredHealthIntervalMs": 10000,
+  "observedHeartbeatIntervalMs": 10002,
+  "scope": "Actual bridge heartbeat delivery; idle publisher with no inspection submissions during this observation",
+  "passed": true
+}

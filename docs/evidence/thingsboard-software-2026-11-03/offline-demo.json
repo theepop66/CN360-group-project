@@ -1,0 +1,58 @@
+{
+  "profile": "software-controlled-offline",
+  "inspectionResponse": {
+    "status": "success",
+    "result": "reject",
+    "item": {
+      "controller_session": "pc-72339ba4-f6e8-4bae-9ba2-57b7764b290e",
+      "item_id": "2",
+      "verdict_window_ms": 3000
+    },
+    "control": {
+      "esp32Accepted": true,
+      "esp32Status": "accepted",
+      "esp32HttpStatus": 200,
+      "esp32Error": null,
+      "controllerSession": "pc-72339ba4-f6e8-4bae-9ba2-57b7764b290e",
+      "itemId": "2",
+      "acknowledgedControllerSession": "pc-72339ba4-f6e8-4bae-9ba2-57b7764b290e",
+      "acknowledgedItemId": "2",
+      "controlOutcome": "accepted",
+      "controlReason": "accepted"
+    }
+  },
+  "verdict": "reject",
+  "defectCoverage": "9.000%",
+  "processingMs": 195,
+  "failureReason": "none",
+  "visibleAfterMs": 615,
+  "hudPayload": {
+    "type": "detections",
+    "coordinateSpace": "pixel",
+    "status": "reject",
+    "reason": "defect_detected",
+    "timestamp": "2026-11-03T08:09:56.811Z",
+    "frame": {
+      "id": "cdec2de3-2315-4ab4-aca6-e2ab7170f8c1:7",
+      "sessionId": "cdec2de3-2315-4ab4-aca6-e2ab7170f8c1",
+      "sequence": 7,
+      "width": 900,
+      "height": 900
+    },
+    "snapshotUrl": null,
+    "detections": [
+      {
+        "label": "defect",
+        "box": [
+          180,
+          180,
+          450,
+          450
+        ],
+        "status": "reject"
+      }
+    ]
+  },
+  "activeCloudCallCount": 0,
+  "onlineRuntimePreserved": true
+}

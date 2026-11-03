@@ -1,0 +1,27 @@
+{
+  "node": {
+    "detectionRelay": 22,
+    "n8n": 230,
+    "picoMyApp": 33,
+    "picoWebapp": 59,
+    "thingsboard": 7
+  },
+  "python": {
+    "passed": 12,
+    "skipped": 1,
+    "mypy": "passed (7 source files)",
+    "nativeSkipNote": "Opt-in synthetic native API regression omitted; genuine native evaluation recorded separately with 45 predictions and 3 production inspections"
+  },
+  "controller": {
+    "failures": 0,
+    "checks": 135
+  },
+  "consistencyCases": 10,
+  "consistencyPassed": true,
+  "review": {
+    "standardsUnresolved": 0,
+    "specUnresolved": 0,
+    "fixCommit": "deb61e2"
+  },
+  "finalRuntimeEvidence": "review-verified"
+}

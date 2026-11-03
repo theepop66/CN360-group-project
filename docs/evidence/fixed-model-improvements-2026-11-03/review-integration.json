@@ -1,0 +1,5432 @@
+{
+  "startedAt": "2026-11-03T14:26:09.390Z",
+  "scope": "Real n8n, PC controller core, cloud, relay and ThingsBoard; controlled model/capture responses and synthetic qualification flags exercise policy branches only. Excluded from native quality and qualification.",
+  "cases": [
+    {
+      "name": "unqualified-no-box",
+      "expected": "review",
+      "response": {
+        "status": "review_required",
+        "result": "review",
+        "reason": "condition_not_qualified",
+        "modelSuggestion": "pass",
+        "policyId": "fixture-unqualified",
+        "controlVerdict": "reject",
+        "item": {
+          "controller_session": "review-0c42f650-8365-4be2-ad02-064a025521e3",
+          "item_id": "1",
+          "verdict_window_ms": 3000
+        },
+        "control": {
+          "esp32Accepted": true,
+          "esp32Status": "accepted",
+          "esp32HttpStatus": 200,
+          "esp32Error": null,
+          "controllerSession": "review-0c42f650-8365-4be2-ad02-064a025521e3",
+          "itemId": "1",
+          "acknowledgedControllerSession": "review-0c42f650-8365-4be2-ad02-064a025521e3",
+          "acknowledgedItemId": "1",
+          "controlOutcome": "accepted",
+          "controlReason": "accepted"
+        }
+      },
+      "responseMs": 536.3017999999975,
+      "completion": {
+        "testCaseId": "review-89f79a26-d38e-428d-9366-74390630f092",
+        "executionId": "1",
+        "decision": {
+          "verdict": "reject",
+          "reason": "manual_review_required",
+          "coverage": 0,
+          "coverageThreshold": 0.003,
+          "boxCount": 0,
+          "detections": [],
+          "promptVerified": true,
+          "promptUsed": "Locate all the instances that matches the following description: controlled software review test defect.",
+          "promptMismatch": false,
+          "modelVerdict": "pass",
+          "modelReason": "no_defect_detected",
+          "policyId": "fixture-unqualified",
+          "reviewRequired": true,
+          "reviewReason": "condition_not_qualified"
+        },
+        "frame": {
+          "inspectionProfile": "test/unqualified",
+          "sessionId": "fc36ede2-514b-4817-b810-9b9cb721136e",
+          "sequence": 1,
+          "capturedAt": "2026-11-03T14:26:28.650Z",
+          "width": 448,
+          "height": 448
+        },
+        "control": {
+          "esp32Accepted": true,
+          "esp32Status": "accepted",
+          "esp32HttpStatus": 200,
+          "esp32Error": null,
+          "controllerSession": "review-0c42f650-8365-4be2-ad02-064a025521e3",
+          "itemId": "1",
+          "acknowledgedControllerSession": "review-0c42f650-8365-4be2-ad02-064a025521e3",
+          "acknowledgedItemId": "1",
+          "controlOutcome": "accepted",
+          "controlReason": "accepted"
+        },
+        "response": {
+          "status": "review_required",
+          "result": "review",
+          "reason": "condition_not_qualified",
+          "modelSuggestion": "pass",
+          "policyId": "fixture-unqualified",
+          "controlVerdict": "reject",
+          "item": {
+            "controller_session": "review-0c42f650-8365-4be2-ad02-064a025521e3",
+            "item_id": "1",
+            "verdict_window_ms": 3000
+          },
+          "control": {
+            "esp32Accepted": true,
+            "esp32Status": "accepted",
+            "esp32HttpStatus": 200,
+            "esp32Error": null,
+            "controllerSession": "review-0c42f650-8365-4be2-ad02-064a025521e3",
+            "itemId": "1",
+            "acknowledgedControllerSession": "review-0c42f650-8365-4be2-ad02-064a025521e3",
+            "acknowledgedItemId": "1",
+            "controlOutcome": "accepted",
+            "controlReason": "accepted"
+          }
+        },
+        "duplicate": false
+      },
+      "telemetry": {
+        "bridge_heartbeat": "1793715980869",
+        "pending_events": "0",
+        "model_healthy": "false",
+        "capture_healthy": "false",
+        "relay_healthy": "true",
+        "n8n_healthy": "false",
+        "system_healthy": "false",
+        "event_id": "[\"item\",\"review-0c42f650-8365-4be2-ad02-064a025521e3\",\"1\"]",
+        "inspection_at": "2026-11-03T14:26:28.739Z",
+        "inspection_target": "controlled software review test defect",
+        "verdict": "reject",
+        "verdict_reason": "manual_review_required",
+        "processing_ms": "290",
+        "coverage_available": "true",
+        "defect_coverage_display": "0.000%",
+        "defect_coverage": "0",
+        "defect_coverage_percent": "0",
+        "coverage_threshold": "0.003",
+        "box_count": "0",
+        "inspection_failed": "false",
+        "failure_reason": "none",
+        "item_bound": "true",
+        "controller_session": "review-0c42f650-8365-4be2-ad02-064a025521e3",
+        "item_id": "1",
+        "camera_session": "fc36ede2-514b-4817-b810-9b9cb721136e",
+        "frame_sequence": "1",
+        "control_outcome": "accepted",
+        "physical_sorting_confirmed": "false",
+        "profile": "software-controlled-review-tests",
+        "source": "item_detected",
+        "inspection_count": "77",
+        "pass_count": "23",
+        "observation_count": "21",
+        "reject_rate_percent": "70.12987012987013",
+        "reject_count": "54",
+        "failure_count": "39",
+        "item_inspection_count": "56",
+        "validation_status": "failed",
+        "validation_missed_defects": "6",
+        "validation_false_rejects": "21",
+        "validation_errors": "0",
+        "validation_samples": "45",
+        "validation_quality_gate": "failed",
+        "validation_timing_gate": "failed",
+        "validation_consistency_gate": "passed",
+        "validation_assessed_at": "2026-11-03T09:39:30.319Z",
+        "coverage_threshold_available": "true",
+        "prompt_verification_available": "true",
+        "prompt_mismatch": "false",
+        "prompt_verified": "true",
+        "validation_integrity_gate": "passed",
+        "validation_fallback_gate": "passed",
+        "validation_monitoring_gate": "passed",
+        "validation_recovery_gate": "passed",
+        "review_required": "true",
+        "review_reason": "condition_not_qualified",
+        "model_suggestion": "pass",
+        "policy_id": "fixture-unqualified",
+        "review_snapshot_url": "",
+        "frame_width": "448",
+        "frame_height": "448",
+        "review_detections_json": "[]",
+        "review_count": "11"
+      },
+      "executionDetails": [
+        {
+          "id": 1,
+          "status": "success",
+          "lastNode": "done",
+          "error": null,
+          "nodes": [
+            {
+              "name": "trigger-item-detected",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "begin-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "valid-item-context",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "verify-verdict-budget",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "fetch-current-prompt",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "resolve-instruction",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "capture-frame",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "read-frame-context",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "detect-defects",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "decide-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "to-control-action",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "duplicate-guard",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "physical-item",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "post-verdict",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "capture-esp32-response",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-inspection-response",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "respond-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "publish-monitoring",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "restore-after-monitoring",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "duplicate-or-new",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "restore-snapshot",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "snapshot-available",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "upload-snapshot",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": {
+                    "message": "The connection was aborted, perhaps the server is offline"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "build-snapshot-url",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-inspection-record",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "insert-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-control-action",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "insert-control-action",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "inspection-record-is-new",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-hud-broadcast",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "broadcast-hud",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-outcome-log",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "log-outcome",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "done",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "discrepancies": [],
+      "controller": {
+        "accepted": false,
+        "status": "ignored",
+        "reason": "no_active_item",
+        "controller_session": "",
+        "item_id": "",
+        "active_item": {
+          "controller_session": "review-0c42f650-8365-4be2-ad02-064a025521e3",
+          "item_id": "1",
+          "verdict_window_ms": 3000
+        },
+        "state": "rejecting",
+        "pass_count": 0,
+        "reject_count": 1,
+        "resolution_reason": "verdict",
+        "admission_ready": false,
+        "actions": []
+      },
+      "reviewRecord": {
+        "eventId": "[\"item\",\"review-0c42f650-8365-4be2-ad02-064a025521e3\",\"1\"]",
+        "status": "reviewed",
+        "disposition": "unsure",
+        "controllerVerdictChanged": false
+      },
+      "inspection": {
+        "id": 95,
+        "created_at": "2026-11-03T14:26:32.657022+00:00",
+        "prompt": null,
+        "defect_type": null,
+        "confidence": null,
+        "result": null,
+        "bbox": null,
+        "image_url": null,
+        "inspection_at": "2026-11-03T14:26:28.739+00:00",
+        "inspection_target": "controlled software review test defect",
+        "model_instruction": "Locate all the instances that matches the following description: controlled software review test defect.",
+        "camera_session": "fc36ede2-514b-4817-b810-9b9cb721136e",
+        "frame_sequence": 1,
+        "frame_width": 448,
+        "frame_height": 448,
+        "box_count": 0,
+        "defect_coverage": 0,
+        "coverage_threshold": 0.003,
+        "verdict": "reject",
+        "prompt_verified": true,
+        "frame_url": null,
+        "controller_session": "review-0c42f650-8365-4be2-ad02-064a025521e3",
+        "item_id": "1"
+      },
+      "action": {
+        "id": 122,
+        "created_at": "2026-11-03T14:26:33.630159+00:00",
+        "inspection_id": 95,
+        "action": "reject",
+        "device": null,
+        "status": null,
+        "response_messege": null,
+        "esp32_accepted": true,
+        "esp32_status": "accepted",
+        "esp32_http_status": 200,
+        "esp32_error": null,
+        "requested_at": "2026-11-03T14:26:28.739+00:00",
+        "controller_session": "review-0c42f650-8365-4be2-ad02-064a025521e3",
+        "item_id": "1",
+        "control_outcome": "accepted",
+        "control_reason": "accepted",
+        "ack_controller_session": "review-0c42f650-8365-4be2-ad02-064a025521e3",
+        "ack_item_id": "1"
+      },
+      "hud": {
+        "type": "detections",
+        "coordinateSpace": "pixel",
+        "status": "reject",
+        "reason": "manual_review_required",
+        "reviewRequired": true,
+        "reviewReason": "condition_not_qualified",
+        "modelSuggestion": "pass",
+        "policyId": "fixture-unqualified",
+        "timestamp": "2026-11-03T14:26:28.650Z",
+        "frame": {
+          "id": "fc36ede2-514b-4817-b810-9b9cb721136e:1",
+          "sessionId": "fc36ede2-514b-4817-b810-9b9cb721136e",
+          "sequence": 1,
+          "width": 448,
+          "height": 448
+        },
+        "snapshotUrl": null,
+        "detections": []
+      },
+      "passed": true
+    },
+    {
+      "name": "unqualified-defect",
+      "expected": "review",
+      "response": {
+        "status": "review_required",
+        "result": "review",
+        "reason": "condition_not_qualified",
+        "modelSuggestion": "reject",
+        "policyId": "fixture-unqualified",
+        "controlVerdict": "reject",
+        "item": {
+          "controller_session": "review-50edf36b-6d22-40a3-a519-655de79f5249",
+          "item_id": "1",
+          "verdict_window_ms": 3000
+        },
+        "control": {
+          "esp32Accepted": true,
+          "esp32Status": "accepted",
+          "esp32HttpStatus": 200,
+          "esp32Error": null,
+          "controllerSession": "review-50edf36b-6d22-40a3-a519-655de79f5249",
+          "itemId": "1",
+          "acknowledgedControllerSession": "review-50edf36b-6d22-40a3-a519-655de79f5249",
+          "acknowledgedItemId": "1",
+          "controlOutcome": "accepted",
+          "controlReason": "accepted"
+        }
+      },
+      "responseMs": 324.2898000000023,
+      "completion": {
+        "testCaseId": "review-ade34435-fff3-43f6-8683-7fd2369916ff",
+        "executionId": "2",
+        "decision": {
+          "verdict": "reject",
+          "reason": "manual_review_required",
+          "coverage": 0.009999999999999998,
+          "coverageThreshold": 0.003,
+          "boxCount": 1,
+          "detections": [
+            {
+              "label": "defect",
+              "box": [
+                0,
+                0,
+                448,
+                4.4799999999999995
+              ]
+            }
+          ],
+          "promptVerified": true,
+          "promptUsed": "Locate all the instances that matches the following description: controlled software review test defect.",
+          "promptMismatch": false,
+          "modelVerdict": "reject",
+          "modelReason": "defect_detected",
+          "policyId": "fixture-unqualified",
+          "reviewRequired": true,
+          "reviewReason": "condition_not_qualified"
+        },
+        "frame": {
+          "inspectionProfile": "test/unqualified",
+          "sessionId": "fc36ede2-514b-4817-b810-9b9cb721136e",
+          "sequence": 2,
+          "capturedAt": "2026-11-03T14:26:36.837Z",
+          "width": 448,
+          "height": 448
+        },
+        "control": {
+          "esp32Accepted": true,
+          "esp32Status": "accepted",
+          "esp32HttpStatus": 200,
+          "esp32Error": null,
+          "controllerSession": "review-50edf36b-6d22-40a3-a519-655de79f5249",
+          "itemId": "1",
+          "acknowledgedControllerSession": "review-50edf36b-6d22-40a3-a519-655de79f5249",
+          "acknowledgedItemId": "1",
+          "controlOutcome": "accepted",
+          "controlReason": "accepted"
+        },
+        "response": {
+          "status": "review_required",
+          "result": "review",
+          "reason": "condition_not_qualified",
+          "modelSuggestion": "reject",
+          "policyId": "fixture-unqualified",
+          "controlVerdict": "reject",
+          "item": {
+            "controller_session": "review-50edf36b-6d22-40a3-a519-655de79f5249",
+            "item_id": "1",
+            "verdict_window_ms": 3000
+          },
+          "control": {
+            "esp32Accepted": true,
+            "esp32Status": "accepted",
+            "esp32HttpStatus": 200,
+            "esp32Error": null,
+            "controllerSession": "review-50edf36b-6d22-40a3-a519-655de79f5249",
+            "itemId": "1",
+            "acknowledgedControllerSession": "review-50edf36b-6d22-40a3-a519-655de79f5249",
+            "acknowledgedItemId": "1",
+            "controlOutcome": "accepted",
+            "controlReason": "accepted"
+          }
+        },
+        "duplicate": false
+      },
+      "telemetry": {
+        "bridge_heartbeat": "1793715990884",
+        "pending_events": "0",
+        "model_healthy": "false",
+        "capture_healthy": "false",
+        "relay_healthy": "true",
+        "n8n_healthy": "false",
+        "system_healthy": "false",
+        "event_id": "[\"item\",\"review-50edf36b-6d22-40a3-a519-655de79f5249\",\"1\"]",
+        "inspection_at": "2026-11-03T14:26:36.902Z",
+        "inspection_target": "controlled software review test defect",
+        "verdict": "reject",
+        "verdict_reason": "manual_review_required",
+        "processing_ms": "197",
+        "coverage_available": "true",
+        "defect_coverage_display": "1.000%",
+        "defect_coverage": "0.009999999999999998",
+        "defect_coverage_percent": "0.9999999999999999",
+        "coverage_threshold": "0.003",
+        "box_count": "1",
+        "inspection_failed": "false",
+        "failure_reason": "none",
+        "item_bound": "true",
+        "controller_session": "review-50edf36b-6d22-40a3-a519-655de79f5249",
+        "item_id": "1",
+        "camera_session": "fc36ede2-514b-4817-b810-9b9cb721136e",
+        "frame_sequence": "2",
+        "control_outcome": "accepted",
+        "physical_sorting_confirmed": "false",
+        "profile": "software-controlled-review-tests",
+        "source": "item_detected",
+        "inspection_count": "78",
+        "pass_count": "23",
+        "observation_count": "21",
+        "reject_rate_percent": "70.51282051282051",
+        "reject_count": "55",
+        "failure_count": "39",
+        "item_inspection_count": "57",
+        "validation_status": "failed",
+        "validation_missed_defects": "6",
+        "validation_false_rejects": "21",
+        "validation_errors": "0",
+        "validation_samples": "45",
+        "validation_quality_gate": "failed",
+        "validation_timing_gate": "failed",
+        "validation_consistency_gate": "passed",
+        "validation_assessed_at": "2026-11-03T09:39:30.319Z",
+        "coverage_threshold_available": "true",
+        "prompt_verification_available": "true",
+        "prompt_mismatch": "false",
+        "prompt_verified": "true",
+        "validation_integrity_gate": "passed",
+        "validation_fallback_gate": "passed",
+        "validation_monitoring_gate": "passed",
+        "validation_recovery_gate": "passed",
+        "review_required": "true",
+        "review_reason": "condition_not_qualified",
+        "model_suggestion": "reject",
+        "policy_id": "fixture-unqualified",
+        "review_snapshot_url": "",
+        "frame_width": "448",
+        "frame_height": "448",
+        "review_detections_json": "[{\"label\":\"defect\",\"box\":[0,0,448,4.4799999999999995]}]",
+        "review_count": "12"
+      },
+      "executionDetails": [
+        {
+          "id": 2,
+          "status": "success",
+          "lastNode": "done",
+          "error": null,
+          "nodes": [
+            {
+              "name": "trigger-item-detected",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "begin-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "valid-item-context",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "verify-verdict-budget",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "fetch-current-prompt",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "resolve-instruction",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "capture-frame",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "read-frame-context",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "detect-defects",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "decide-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "to-control-action",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "duplicate-guard",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "physical-item",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "post-verdict",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "capture-esp32-response",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-inspection-response",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "respond-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "publish-monitoring",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "restore-after-monitoring",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "duplicate-or-new",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "restore-snapshot",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "snapshot-available",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "upload-snapshot",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-snapshot-url",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-inspection-record",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "insert-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-control-action",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "insert-control-action",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "inspection-record-is-new",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-hud-broadcast",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "broadcast-hud",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-outcome-log",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "log-outcome",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "done",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "discrepancies": [],
+      "controller": {
+        "accepted": false,
+        "status": "ignored",
+        "reason": "no_active_item",
+        "controller_session": "",
+        "item_id": "",
+        "active_item": {
+          "controller_session": "review-50edf36b-6d22-40a3-a519-655de79f5249",
+          "item_id": "1",
+          "verdict_window_ms": 3000
+        },
+        "state": "rejecting",
+        "pass_count": 0,
+        "reject_count": 1,
+        "resolution_reason": "verdict",
+        "admission_ready": false,
+        "actions": []
+      },
+      "reviewRecord": {
+        "eventId": "[\"item\",\"review-50edf36b-6d22-40a3-a519-655de79f5249\",\"1\"]",
+        "status": "reviewed",
+        "disposition": "unsure",
+        "controllerVerdictChanged": false
+      },
+      "inspection": {
+        "id": 96,
+        "created_at": "2026-11-03T14:26:40.372375+00:00",
+        "prompt": null,
+        "defect_type": null,
+        "confidence": null,
+        "result": null,
+        "bbox": null,
+        "image_url": null,
+        "inspection_at": "2026-11-03T14:26:36.902+00:00",
+        "inspection_target": "controlled software review test defect",
+        "model_instruction": "Locate all the instances that matches the following description: controlled software review test defect.",
+        "camera_session": "fc36ede2-514b-4817-b810-9b9cb721136e",
+        "frame_sequence": 2,
+        "frame_width": 448,
+        "frame_height": 448,
+        "box_count": 1,
+        "defect_coverage": 0.01,
+        "coverage_threshold": 0.003,
+        "verdict": "reject",
+        "prompt_verified": true,
+        "frame_url": "https://zjxcxgpcbmpjinwgvejx.supabase.co/storage/v1/object/public/cn360-test-snapshots/fc36ede2-514b-4817-b810-9b9cb721136e-2.jpg",
+        "controller_session": "review-50edf36b-6d22-40a3-a519-655de79f5249",
+        "item_id": "1"
+      },
+      "action": {
+        "id": 123,
+        "created_at": "2026-11-03T14:26:41.674334+00:00",
+        "inspection_id": 96,
+        "action": "reject",
+        "device": null,
+        "status": null,
+        "response_messege": null,
+        "esp32_accepted": true,
+        "esp32_status": "accepted",
+        "esp32_http_status": 200,
+        "esp32_error": null,
+        "requested_at": "2026-11-03T14:26:36.902+00:00",
+        "controller_session": "review-50edf36b-6d22-40a3-a519-655de79f5249",
+        "item_id": "1",
+        "control_outcome": "accepted",
+        "control_reason": "accepted",
+        "ack_controller_session": "review-50edf36b-6d22-40a3-a519-655de79f5249",
+        "ack_item_id": "1"
+      },
+      "hud": {
+        "type": "detections",
+        "coordinateSpace": "pixel",
+        "status": "reject",
+        "reason": "manual_review_required",
+        "reviewRequired": true,
+        "reviewReason": "condition_not_qualified",
+        "modelSuggestion": "reject",
+        "policyId": "fixture-unqualified",
+        "timestamp": "2026-11-03T14:26:36.837Z",
+        "frame": {
+          "id": "fc36ede2-514b-4817-b810-9b9cb721136e:2",
+          "sessionId": "fc36ede2-514b-4817-b810-9b9cb721136e",
+          "sequence": 2,
+          "width": 448,
+          "height": 448
+        },
+        "snapshotUrl": "https://zjxcxgpcbmpjinwgvejx.supabase.co/storage/v1/object/public/cn360-test-snapshots/fc36ede2-514b-4817-b810-9b9cb721136e-2.jpg",
+        "detections": [
+          {
+            "label": "defect",
+            "box": [
+              0,
+              0,
+              448,
+              4.4799999999999995
+            ],
+            "status": "reject"
+          }
+        ]
+      },
+      "passed": true
+    },
+    {
+      "name": "unknown-profile",
+      "expected": "review",
+      "response": {
+        "status": "review_required",
+        "result": "review",
+        "reason": "unsupported_inspection_condition",
+        "modelSuggestion": "pass",
+        "policyId": null,
+        "controlVerdict": "reject",
+        "item": {
+          "controller_session": "review-81b6f80e-46db-450a-82cf-bb720c3fc0b0",
+          "item_id": "1",
+          "verdict_window_ms": 3000
+        },
+        "control": {
+          "esp32Accepted": true,
+          "esp32Status": "accepted",
+          "esp32HttpStatus": 200,
+          "esp32Error": null,
+          "controllerSession": "review-81b6f80e-46db-450a-82cf-bb720c3fc0b0",
+          "itemId": "1",
+          "acknowledgedControllerSession": "review-81b6f80e-46db-450a-82cf-bb720c3fc0b0",
+          "acknowledgedItemId": "1",
+          "controlOutcome": "accepted",
+          "controlReason": "accepted"
+        }
+      },
+      "responseMs": 262.00270000000455,
+      "completion": {
+        "testCaseId": "review-c2f41451-4636-4d59-8216-9325e0a9c008",
+        "executionId": "3",
+        "decision": {
+          "verdict": "reject",
+          "reason": "manual_review_required",
+          "coverage": 0,
+          "coverageThreshold": 0.005,
+          "boxCount": 0,
+          "detections": [],
+          "promptVerified": true,
+          "promptUsed": "Locate all the instances that matches the following description: controlled software review test defect.",
+          "promptMismatch": false,
+          "modelVerdict": "pass",
+          "modelReason": "no_defect_detected",
+          "policyId": null,
+          "reviewRequired": true,
+          "reviewReason": "unsupported_inspection_condition"
+        },
+        "frame": {
+          "inspectionProfile": "unknown",
+          "sessionId": "fc36ede2-514b-4817-b810-9b9cb721136e",
+          "sequence": 3,
+          "capturedAt": "2026-11-03T14:26:44.424Z",
+          "width": 448,
+          "height": 448
+        },
+        "control": {
+          "esp32Accepted": true,
+          "esp32Status": "accepted",
+          "esp32HttpStatus": 200,
+          "esp32Error": null,
+          "controllerSession": "review-81b6f80e-46db-450a-82cf-bb720c3fc0b0",
+          "itemId": "1",
+          "acknowledgedControllerSession": "review-81b6f80e-46db-450a-82cf-bb720c3fc0b0",
+          "acknowledgedItemId": "1",
+          "controlOutcome": "accepted",
+          "controlReason": "accepted"
+        },
+        "response": {
+          "status": "review_required",
+          "result": "review",
+          "reason": "unsupported_inspection_condition",
+          "modelSuggestion": "pass",
+          "policyId": null,
+          "controlVerdict": "reject",
+          "item": {
+            "controller_session": "review-81b6f80e-46db-450a-82cf-bb720c3fc0b0",
+            "item_id": "1",
+            "verdict_window_ms": 3000
+          },
+          "control": {
+            "esp32Accepted": true,
+            "esp32Status": "accepted",
+            "esp32HttpStatus": 200,
+            "esp32Error": null,
+            "controllerSession": "review-81b6f80e-46db-450a-82cf-bb720c3fc0b0",
+            "itemId": "1",
+            "acknowledgedControllerSession": "review-81b6f80e-46db-450a-82cf-bb720c3fc0b0",
+            "acknowledgedItemId": "1",
+            "controlOutcome": "accepted",
+            "controlReason": "accepted"
+          }
+        },
+        "duplicate": false
+      },
+      "telemetry": {
+        "bridge_heartbeat": "1793716000897",
+        "pending_events": "0",
+        "model_healthy": "false",
+        "capture_healthy": "false",
+        "relay_healthy": "true",
+        "n8n_healthy": "false",
+        "system_healthy": "false",
+        "event_id": "[\"item\",\"review-81b6f80e-46db-450a-82cf-bb720c3fc0b0\",\"1\"]",
+        "inspection_at": "2026-11-03T14:26:44.474Z",
+        "inspection_target": "controlled software review test defect",
+        "verdict": "reject",
+        "verdict_reason": "manual_review_required",
+        "processing_ms": "163",
+        "coverage_available": "true",
+        "defect_coverage_display": "0.000%",
+        "defect_coverage": "0",
+        "defect_coverage_percent": "0",
+        "coverage_threshold": "0.005",
+        "box_count": "0",
+        "inspection_failed": "false",
+        "failure_reason": "none",
+        "item_bound": "true",
+        "controller_session": "review-81b6f80e-46db-450a-82cf-bb720c3fc0b0",
+        "item_id": "1",
+        "camera_session": "fc36ede2-514b-4817-b810-9b9cb721136e",
+        "frame_sequence": "3",
+        "control_outcome": "accepted",
+        "physical_sorting_confirmed": "false",
+        "profile": "software-controlled-review-tests",
+        "source": "item_detected",
+        "inspection_count": "79",
+        "pass_count": "23",
+        "observation_count": "21",
+        "reject_rate_percent": "70.88607594936708",
+        "reject_count": "56",
+        "failure_count": "39",
+        "item_inspection_count": "58",
+        "validation_status": "failed",
+        "validation_missed_defects": "6",
+        "validation_false_rejects": "21",
+        "validation_errors": "0",
+        "validation_samples": "45",
+        "validation_quality_gate": "failed",
+        "validation_timing_gate": "failed",
+        "validation_consistency_gate": "passed",
+        "validation_assessed_at": "2026-11-03T09:39:30.319Z",
+        "coverage_threshold_available": "true",
+        "prompt_verification_available": "true",
+        "prompt_mismatch": "false",
+        "prompt_verified": "true",
+        "validation_integrity_gate": "passed",
+        "validation_fallback_gate": "passed",
+        "validation_monitoring_gate": "passed",
+        "validation_recovery_gate": "passed",
+        "review_required": "true",
+        "review_reason": "unsupported_inspection_condition",
+        "model_suggestion": "pass",
+        "policy_id": "unqualified",
+        "review_snapshot_url": "",
+        "frame_width": "448",
+        "frame_height": "448",
+        "review_detections_json": "[]",
+        "review_count": "13"
+      },
+      "executionDetails": [
+        {
+          "id": 3,
+          "status": "success",
+          "lastNode": "done",
+          "error": null,
+          "nodes": [
+            {
+              "name": "trigger-item-detected",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "begin-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "valid-item-context",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "verify-verdict-budget",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "fetch-current-prompt",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "resolve-instruction",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "capture-frame",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "read-frame-context",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "detect-defects",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "decide-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "to-control-action",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "duplicate-guard",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "physical-item",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "post-verdict",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "capture-esp32-response",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-inspection-response",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "respond-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "publish-monitoring",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "restore-after-monitoring",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "duplicate-or-new",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "restore-snapshot",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "snapshot-available",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "upload-snapshot",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-snapshot-url",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-inspection-record",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "insert-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-control-action",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "insert-control-action",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "inspection-record-is-new",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-hud-broadcast",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "broadcast-hud",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-outcome-log",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "log-outcome",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "done",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "discrepancies": [],
+      "controller": {
+        "accepted": false,
+        "status": "ignored",
+        "reason": "no_active_item",
+        "controller_session": "",
+        "item_id": "",
+        "active_item": {
+          "controller_session": "review-81b6f80e-46db-450a-82cf-bb720c3fc0b0",
+          "item_id": "1",
+          "verdict_window_ms": 3000
+        },
+        "state": "rejecting",
+        "pass_count": 0,
+        "reject_count": 1,
+        "resolution_reason": "verdict",
+        "admission_ready": false,
+        "actions": []
+      },
+      "reviewRecord": {
+        "eventId": "[\"item\",\"review-81b6f80e-46db-450a-82cf-bb720c3fc0b0\",\"1\"]",
+        "status": "reviewed",
+        "disposition": "unsure",
+        "controllerVerdictChanged": false
+      },
+      "inspection": {
+        "id": 97,
+        "created_at": "2026-11-03T14:26:47.384469+00:00",
+        "prompt": null,
+        "defect_type": null,
+        "confidence": null,
+        "result": null,
+        "bbox": null,
+        "image_url": null,
+        "inspection_at": "2026-11-03T14:26:44.474+00:00",
+        "inspection_target": "controlled software review test defect",
+        "model_instruction": "Locate all the instances that matches the following description: controlled software review test defect.",
+        "camera_session": "fc36ede2-514b-4817-b810-9b9cb721136e",
+        "frame_sequence": 3,
+        "frame_width": 448,
+        "frame_height": 448,
+        "box_count": 0,
+        "defect_coverage": 0,
+        "coverage_threshold": 0.005,
+        "verdict": "reject",
+        "prompt_verified": true,
+        "frame_url": "https://zjxcxgpcbmpjinwgvejx.supabase.co/storage/v1/object/public/cn360-test-snapshots/fc36ede2-514b-4817-b810-9b9cb721136e-3.jpg",
+        "controller_session": "review-81b6f80e-46db-450a-82cf-bb720c3fc0b0",
+        "item_id": "1"
+      },
+      "action": {
+        "id": 124,
+        "created_at": "2026-11-03T14:26:48.744405+00:00",
+        "inspection_id": 97,
+        "action": "reject",
+        "device": null,
+        "status": null,
+        "response_messege": null,
+        "esp32_accepted": true,
+        "esp32_status": "accepted",
+        "esp32_http_status": 200,
+        "esp32_error": null,
+        "requested_at": "2026-11-03T14:26:44.474+00:00",
+        "controller_session": "review-81b6f80e-46db-450a-82cf-bb720c3fc0b0",
+        "item_id": "1",
+        "control_outcome": "accepted",
+        "control_reason": "accepted",
+        "ack_controller_session": "review-81b6f80e-46db-450a-82cf-bb720c3fc0b0",
+        "ack_item_id": "1"
+      },
+      "hud": {
+        "type": "detections",
+        "coordinateSpace": "pixel",
+        "status": "reject",
+        "reason": "manual_review_required",
+        "reviewRequired": true,
+        "reviewReason": "unsupported_inspection_condition",
+        "modelSuggestion": "pass",
+        "policyId": null,
+        "timestamp": "2026-11-03T14:26:44.424Z",
+        "frame": {
+          "id": "fc36ede2-514b-4817-b810-9b9cb721136e:3",
+          "sessionId": "fc36ede2-514b-4817-b810-9b9cb721136e",
+          "sequence": 3,
+          "width": 448,
+          "height": 448
+        },
+        "snapshotUrl": "https://zjxcxgpcbmpjinwgvejx.supabase.co/storage/v1/object/public/cn360-test-snapshots/fc36ede2-514b-4817-b810-9b9cb721136e-3.jpg",
+        "detections": []
+      },
+      "passed": true
+    },
+    {
+      "name": "qualified-pass",
+      "expected": "pass",
+      "response": {
+        "status": "success",
+        "result": "pass",
+        "item": {
+          "controller_session": "review-45f2f26e-48d2-4997-99f7-07c8b7e7c10a",
+          "item_id": "1",
+          "verdict_window_ms": 3000
+        },
+        "control": {
+          "esp32Accepted": true,
+          "esp32Status": "accepted",
+          "esp32HttpStatus": 200,
+          "esp32Error": null,
+          "controllerSession": "review-45f2f26e-48d2-4997-99f7-07c8b7e7c10a",
+          "itemId": "1",
+          "acknowledgedControllerSession": "review-45f2f26e-48d2-4997-99f7-07c8b7e7c10a",
+          "acknowledgedItemId": "1",
+          "controlOutcome": "accepted",
+          "controlReason": "accepted"
+        }
+      },
+      "responseMs": 370.3448000000062,
+      "completion": {
+        "testCaseId": "review-78397ddf-dbbd-4c69-9bb7-dcc7dddc7c09",
+        "executionId": "4",
+        "decision": {
+          "verdict": "pass",
+          "reason": "no_defect_detected",
+          "coverage": 0,
+          "coverageThreshold": 0.003,
+          "boxCount": 0,
+          "detections": [],
+          "promptVerified": true,
+          "promptUsed": "Locate all the instances that matches the following description: controlled software review test defect.",
+          "promptMismatch": false,
+          "modelVerdict": "pass",
+          "modelReason": "no_defect_detected",
+          "policyId": "fixture-qualified",
+          "reviewRequired": false,
+          "reviewReason": null
+        },
+        "frame": {
+          "inspectionProfile": "test/qualified",
+          "sessionId": "fc36ede2-514b-4817-b810-9b9cb721136e",
+          "sequence": 4,
+          "capturedAt": "2026-11-03T14:26:52.912Z",
+          "width": 448,
+          "height": 448
+        },
+        "control": {
+          "esp32Accepted": true,
+          "esp32Status": "accepted",
+          "esp32HttpStatus": 200,
+          "esp32Error": null,
+          "controllerSession": "review-45f2f26e-48d2-4997-99f7-07c8b7e7c10a",
+          "itemId": "1",
+          "acknowledgedControllerSession": "review-45f2f26e-48d2-4997-99f7-07c8b7e7c10a",
+          "acknowledgedItemId": "1",
+          "controlOutcome": "accepted",
+          "controlReason": "accepted"
+        },
+        "response": {
+          "status": "success",
+          "result": "pass",
+          "item": {
+            "controller_session": "review-45f2f26e-48d2-4997-99f7-07c8b7e7c10a",
+            "item_id": "1",
+            "verdict_window_ms": 3000
+          },
+          "control": {
+            "esp32Accepted": true,
+            "esp32Status": "accepted",
+            "esp32HttpStatus": 200,
+            "esp32Error": null,
+            "controllerSession": "review-45f2f26e-48d2-4997-99f7-07c8b7e7c10a",
+            "itemId": "1",
+            "acknowledgedControllerSession": "review-45f2f26e-48d2-4997-99f7-07c8b7e7c10a",
+            "acknowledgedItemId": "1",
+            "controlOutcome": "accepted",
+            "controlReason": "accepted"
+          }
+        },
+        "duplicate": false
+      },
+      "telemetry": {
+        "bridge_heartbeat": "1793716010912",
+        "pending_events": "0",
+        "model_healthy": "false",
+        "capture_healthy": "false",
+        "relay_healthy": "true",
+        "n8n_healthy": "false",
+        "system_healthy": "false",
+        "event_id": "[\"item\",\"review-45f2f26e-48d2-4997-99f7-07c8b7e7c10a\",\"1\"]",
+        "inspection_at": "2026-11-03T14:26:52.984Z",
+        "inspection_target": "controlled software review test defect",
+        "verdict": "pass",
+        "verdict_reason": "no_defect_detected",
+        "processing_ms": "222",
+        "coverage_available": "true",
+        "defect_coverage_display": "0.000%",
+        "defect_coverage": "0",
+        "defect_coverage_percent": "0",
+        "coverage_threshold": "0.003",
+        "box_count": "0",
+        "inspection_failed": "false",
+        "failure_reason": "none",
+        "item_bound": "true",
+        "controller_session": "review-45f2f26e-48d2-4997-99f7-07c8b7e7c10a",
+        "item_id": "1",
+        "camera_session": "fc36ede2-514b-4817-b810-9b9cb721136e",
+        "frame_sequence": "4",
+        "control_outcome": "accepted",
+        "physical_sorting_confirmed": "false",
+        "profile": "software-controlled-review-tests",
+        "source": "item_detected",
+        "inspection_count": "80",
+        "pass_count": "24",
+        "observation_count": "21",
+        "reject_rate_percent": "70",
+        "reject_count": "56",
+        "failure_count": "39",
+        "item_inspection_count": "59",
+        "validation_status": "failed",
+        "validation_missed_defects": "6",
+        "validation_false_rejects": "21",
+        "validation_errors": "0",
+        "validation_samples": "45",
+        "validation_quality_gate": "failed",
+        "validation_timing_gate": "failed",
+        "validation_consistency_gate": "passed",
+        "validation_assessed_at": "2026-11-03T09:39:30.319Z",
+        "coverage_threshold_available": "true",
+        "prompt_verification_available": "true",
+        "prompt_mismatch": "false",
+        "prompt_verified": "true",
+        "validation_integrity_gate": "passed",
+        "validation_fallback_gate": "passed",
+        "validation_monitoring_gate": "passed",
+        "validation_recovery_gate": "passed",
+        "review_required": "false",
+        "review_reason": "none",
+        "model_suggestion": "pass",
+        "policy_id": "fixture-qualified",
+        "review_snapshot_url": "",
+        "frame_width": "448",
+        "frame_height": "448",
+        "review_detections_json": "[]",
+        "review_count": "13"
+      },
+      "executionDetails": [
+        {
+          "id": 4,
+          "status": "success",
+          "lastNode": "done",
+          "error": null,
+          "nodes": [
+            {
+              "name": "trigger-item-detected",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "begin-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "valid-item-context",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "verify-verdict-budget",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "fetch-current-prompt",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "resolve-instruction",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "capture-frame",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "read-frame-context",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "detect-defects",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "decide-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "to-control-action",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "duplicate-guard",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "physical-item",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "post-verdict",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "capture-esp32-response",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-inspection-response",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "respond-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "publish-monitoring",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "restore-after-monitoring",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "duplicate-or-new",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "restore-snapshot",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "snapshot-available",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "upload-snapshot",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-snapshot-url",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-inspection-record",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "insert-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-control-action",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "insert-control-action",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "inspection-record-is-new",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-hud-broadcast",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "broadcast-hud",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-outcome-log",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "log-outcome",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "done",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "discrepancies": [],
+      "controller": {
+        "accepted": false,
+        "status": "ignored",
+        "reason": "no_active_item",
+        "controller_session": "",
+        "item_id": "",
+        "active_item": {
+          "controller_session": "review-45f2f26e-48d2-4997-99f7-07c8b7e7c10a",
+          "item_id": "1",
+          "verdict_window_ms": 3000
+        },
+        "state": "passing",
+        "pass_count": 1,
+        "reject_count": 0,
+        "resolution_reason": "verdict",
+        "admission_ready": false,
+        "actions": []
+      },
+      "inspection": {
+        "id": 98,
+        "created_at": "2026-11-03T14:26:56.054131+00:00",
+        "prompt": null,
+        "defect_type": null,
+        "confidence": null,
+        "result": null,
+        "bbox": null,
+        "image_url": null,
+        "inspection_at": "2026-11-03T14:26:52.984+00:00",
+        "inspection_target": "controlled software review test defect",
+        "model_instruction": "Locate all the instances that matches the following description: controlled software review test defect.",
+        "camera_session": "fc36ede2-514b-4817-b810-9b9cb721136e",
+        "frame_sequence": 4,
+        "frame_width": 448,
+        "frame_height": 448,
+        "box_count": 0,
+        "defect_coverage": 0,
+        "coverage_threshold": 0.003,
+        "verdict": "pass",
+        "prompt_verified": true,
+        "frame_url": "https://zjxcxgpcbmpjinwgvejx.supabase.co/storage/v1/object/public/cn360-test-snapshots/fc36ede2-514b-4817-b810-9b9cb721136e-4.jpg",
+        "controller_session": "review-45f2f26e-48d2-4997-99f7-07c8b7e7c10a",
+        "item_id": "1"
+      },
+      "action": {
+        "id": 125,
+        "created_at": "2026-11-03T14:26:58.774545+00:00",
+        "inspection_id": 98,
+        "action": "pass",
+        "device": null,
+        "status": null,
+        "response_messege": null,
+        "esp32_accepted": true,
+        "esp32_status": "accepted",
+        "esp32_http_status": 200,
+        "esp32_error": null,
+        "requested_at": "2026-11-03T14:26:52.984+00:00",
+        "controller_session": "review-45f2f26e-48d2-4997-99f7-07c8b7e7c10a",
+        "item_id": "1",
+        "control_outcome": "accepted",
+        "control_reason": "accepted",
+        "ack_controller_session": "review-45f2f26e-48d2-4997-99f7-07c8b7e7c10a",
+        "ack_item_id": "1"
+      },
+      "hud": {
+        "type": "detections",
+        "coordinateSpace": "pixel",
+        "status": "pass",
+        "reason": "no_defect_detected",
+        "reviewRequired": false,
+        "reviewReason": null,
+        "modelSuggestion": "pass",
+        "policyId": "fixture-qualified",
+        "timestamp": "2026-11-03T14:26:52.912Z",
+        "frame": {
+          "id": "fc36ede2-514b-4817-b810-9b9cb721136e:4",
+          "sessionId": "fc36ede2-514b-4817-b810-9b9cb721136e",
+          "sequence": 4,
+          "width": 448,
+          "height": 448
+        },
+        "snapshotUrl": "https://zjxcxgpcbmpjinwgvejx.supabase.co/storage/v1/object/public/cn360-test-snapshots/fc36ede2-514b-4817-b810-9b9cb721136e-4.jpg",
+        "detections": []
+      },
+      "passed": true
+    },
+    {
+      "name": "product-threshold",
+      "expected": "reject",
+      "response": {
+        "status": "success",
+        "result": "reject",
+        "item": {
+          "controller_session": "review-8e455e28-5274-4583-b568-79b5a923d90b",
+          "item_id": "1",
+          "verdict_window_ms": 3000
+        },
+        "control": {
+          "esp32Accepted": true,
+          "esp32Status": "accepted",
+          "esp32HttpStatus": 200,
+          "esp32Error": null,
+          "controllerSession": "review-8e455e28-5274-4583-b568-79b5a923d90b",
+          "itemId": "1",
+          "acknowledgedControllerSession": "review-8e455e28-5274-4583-b568-79b5a923d90b",
+          "acknowledgedItemId": "1",
+          "controlOutcome": "accepted",
+          "controlReason": "accepted"
+        }
+      },
+      "responseMs": 315.8989999999976,
+      "completion": {
+        "testCaseId": "review-188a4b70-b1a6-442e-bfeb-7c113fd5d026",
+        "executionId": "5",
+        "decision": {
+          "verdict": "reject",
+          "reason": "defect_detected",
+          "coverage": 0.004,
+          "coverageThreshold": 0.003,
+          "boxCount": 1,
+          "detections": [
+            {
+              "label": "defect",
+              "box": [
+                0,
+                0,
+                448,
+                1.792
+              ]
+            }
+          ],
+          "promptVerified": true,
+          "promptUsed": "Locate all the instances that matches the following description: controlled software review test defect.",
+          "promptMismatch": false,
+          "modelVerdict": "reject",
+          "modelReason": "defect_detected",
+          "policyId": "fixture-qualified",
+          "reviewRequired": false,
+          "reviewReason": null
+        },
+        "frame": {
+          "inspectionProfile": "test/qualified",
+          "sessionId": "fc36ede2-514b-4817-b810-9b9cb721136e",
+          "sequence": 5,
+          "capturedAt": "2026-11-03T14:27:01.558Z",
+          "width": 448,
+          "height": 448
+        },
+        "control": {
+          "esp32Accepted": true,
+          "esp32Status": "accepted",
+          "esp32HttpStatus": 200,
+          "esp32Error": null,
+          "controllerSession": "review-8e455e28-5274-4583-b568-79b5a923d90b",
+          "itemId": "1",
+          "acknowledgedControllerSession": "review-8e455e28-5274-4583-b568-79b5a923d90b",
+          "acknowledgedItemId": "1",
+          "controlOutcome": "accepted",
+          "controlReason": "accepted"
+        },
+        "response": {
+          "status": "success",
+          "result": "reject",
+          "item": {
+            "controller_session": "review-8e455e28-5274-4583-b568-79b5a923d90b",
+            "item_id": "1",
+            "verdict_window_ms": 3000
+          },
+          "control": {
+            "esp32Accepted": true,
+            "esp32Status": "accepted",
+            "esp32HttpStatus": 200,
+            "esp32Error": null,
+            "controllerSession": "review-8e455e28-5274-4583-b568-79b5a923d90b",
+            "itemId": "1",
+            "acknowledgedControllerSession": "review-8e455e28-5274-4583-b568-79b5a923d90b",
+            "acknowledgedItemId": "1",
+            "controlOutcome": "accepted",
+            "controlReason": "accepted"
+          }
+        },
+        "duplicate": false
+      },
+      "telemetry": {
+        "bridge_heartbeat": "1793716020927",
+        "pending_events": "0",
+        "model_healthy": "false",
+        "capture_healthy": "false",
+        "relay_healthy": "true",
+        "n8n_healthy": "false",
+        "system_healthy": "false",
+        "event_id": "[\"item\",\"review-8e455e28-5274-4583-b568-79b5a923d90b\",\"1\"]",
+        "inspection_at": "2026-11-03T14:27:01.623Z",
+        "inspection_target": "controlled software review test defect",
+        "verdict": "reject",
+        "verdict_reason": "defect_detected",
+        "processing_ms": "204",
+        "coverage_available": "true",
+        "defect_coverage_display": "0.400%",
+        "defect_coverage": "0.004",
+        "defect_coverage_percent": "0.4",
+        "coverage_threshold": "0.003",
+        "box_count": "1",
+        "inspection_failed": "false",
+        "failure_reason": "none",
+        "item_bound": "true",
+        "controller_session": "review-8e455e28-5274-4583-b568-79b5a923d90b",
+        "item_id": "1",
+        "camera_session": "fc36ede2-514b-4817-b810-9b9cb721136e",
+        "frame_sequence": "5",
+        "control_outcome": "accepted",
+        "physical_sorting_confirmed": "false",
+        "profile": "software-controlled-review-tests",
+        "source": "item_detected",
+        "inspection_count": "81",
+        "pass_count": "24",
+        "observation_count": "21",
+        "reject_rate_percent": "70.37037037037037",
+        "reject_count": "57",
+        "failure_count": "39",
+        "item_inspection_count": "60",
+        "validation_status": "failed",
+        "validation_missed_defects": "6",
+        "validation_false_rejects": "21",
+        "validation_errors": "0",
+        "validation_samples": "45",
+        "validation_quality_gate": "failed",
+        "validation_timing_gate": "failed",
+        "validation_consistency_gate": "passed",
+        "validation_assessed_at": "2026-11-03T09:39:30.319Z",
+        "coverage_threshold_available": "true",
+        "prompt_verification_available": "true",
+        "prompt_mismatch": "false",
+        "prompt_verified": "true",
+        "validation_integrity_gate": "passed",
+        "validation_fallback_gate": "passed",
+        "validation_monitoring_gate": "passed",
+        "validation_recovery_gate": "passed",
+        "review_required": "false",
+        "review_reason": "none",
+        "model_suggestion": "reject",
+        "policy_id": "fixture-qualified",
+        "review_snapshot_url": "",
+        "frame_width": "448",
+        "frame_height": "448",
+        "review_detections_json": "[]",
+        "review_count": "13"
+      },
+      "executionDetails": [
+        {
+          "id": 5,
+          "status": "success",
+          "lastNode": "done",
+          "error": null,
+          "nodes": [
+            {
+              "name": "trigger-item-detected",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "begin-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "valid-item-context",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "verify-verdict-budget",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "fetch-current-prompt",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "resolve-instruction",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "capture-frame",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "read-frame-context",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "detect-defects",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "decide-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "to-control-action",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "duplicate-guard",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "physical-item",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "post-verdict",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "capture-esp32-response",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-inspection-response",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "respond-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "publish-monitoring",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "restore-after-monitoring",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "duplicate-or-new",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "restore-snapshot",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "snapshot-available",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "upload-snapshot",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-snapshot-url",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-inspection-record",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "insert-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-control-action",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "insert-control-action",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "inspection-record-is-new",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-hud-broadcast",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "broadcast-hud",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-outcome-log",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "log-outcome",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "done",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "discrepancies": [],
+      "controller": {
+        "accepted": false,
+        "status": "ignored",
+        "reason": "no_active_item",
+        "controller_session": "",
+        "item_id": "",
+        "active_item": {
+          "controller_session": "review-8e455e28-5274-4583-b568-79b5a923d90b",
+          "item_id": "1",
+          "verdict_window_ms": 3000
+        },
+        "state": "rejecting",
+        "pass_count": 0,
+        "reject_count": 1,
+        "resolution_reason": "verdict",
+        "admission_ready": false,
+        "actions": []
+      },
+      "inspection": {
+        "id": 99,
+        "created_at": "2026-11-03T14:27:03.489373+00:00",
+        "prompt": null,
+        "defect_type": null,
+        "confidence": null,
+        "result": null,
+        "bbox": null,
+        "image_url": null,
+        "inspection_at": "2026-11-03T14:27:01.623+00:00",
+        "inspection_target": "controlled software review test defect",
+        "model_instruction": "Locate all the instances that matches the following description: controlled software review test defect.",
+        "camera_session": "fc36ede2-514b-4817-b810-9b9cb721136e",
+        "frame_sequence": 5,
+        "frame_width": 448,
+        "frame_height": 448,
+        "box_count": 1,
+        "defect_coverage": 0.004,
+        "coverage_threshold": 0.003,
+        "verdict": "reject",
+        "prompt_verified": true,
+        "frame_url": "https://zjxcxgpcbmpjinwgvejx.supabase.co/storage/v1/object/public/cn360-test-snapshots/fc36ede2-514b-4817-b810-9b9cb721136e-5.jpg",
+        "controller_session": "review-8e455e28-5274-4583-b568-79b5a923d90b",
+        "item_id": "1"
+      },
+      "action": {
+        "id": 126,
+        "created_at": "2026-11-03T14:27:05.600618+00:00",
+        "inspection_id": 99,
+        "action": "reject",
+        "device": null,
+        "status": null,
+        "response_messege": null,
+        "esp32_accepted": true,
+        "esp32_status": "accepted",
+        "esp32_http_status": 200,
+        "esp32_error": null,
+        "requested_at": "2026-11-03T14:27:01.623+00:00",
+        "controller_session": "review-8e455e28-5274-4583-b568-79b5a923d90b",
+        "item_id": "1",
+        "control_outcome": "accepted",
+        "control_reason": "accepted",
+        "ack_controller_session": "review-8e455e28-5274-4583-b568-79b5a923d90b",
+        "ack_item_id": "1"
+      },
+      "hud": {
+        "type": "detections",
+        "coordinateSpace": "pixel",
+        "status": "reject",
+        "reason": "defect_detected",
+        "reviewRequired": false,
+        "reviewReason": null,
+        "modelSuggestion": "reject",
+        "policyId": "fixture-qualified",
+        "timestamp": "2026-11-03T14:27:01.558Z",
+        "frame": {
+          "id": "fc36ede2-514b-4817-b810-9b9cb721136e:5",
+          "sessionId": "fc36ede2-514b-4817-b810-9b9cb721136e",
+          "sequence": 5,
+          "width": 448,
+          "height": 448
+        },
+        "snapshotUrl": "https://zjxcxgpcbmpjinwgvejx.supabase.co/storage/v1/object/public/cn360-test-snapshots/fc36ede2-514b-4817-b810-9b9cb721136e-5.jpg",
+        "detections": [
+          {
+            "label": "defect",
+            "box": [
+              0,
+              0,
+              448,
+              1.792
+            ],
+            "status": "reject"
+          }
+        ]
+      },
+      "passed": true
+    },
+    {
+      "name": "prompt-mismatch",
+      "expected": "review",
+      "response": {
+        "status": "review_required",
+        "result": "review",
+        "reason": "prompt_not_verified",
+        "modelSuggestion": "pass",
+        "policyId": "fixture-qualified",
+        "controlVerdict": "reject",
+        "item": {
+          "controller_session": "review-b981b712-704e-4f6c-b338-955a4cfdf7ec",
+          "item_id": "1",
+          "verdict_window_ms": 3000
+        },
+        "control": {
+          "esp32Accepted": true,
+          "esp32Status": "accepted",
+          "esp32HttpStatus": 200,
+          "esp32Error": null,
+          "controllerSession": "review-b981b712-704e-4f6c-b338-955a4cfdf7ec",
+          "itemId": "1",
+          "acknowledgedControllerSession": "review-b981b712-704e-4f6c-b338-955a4cfdf7ec",
+          "acknowledgedItemId": "1",
+          "controlOutcome": "accepted",
+          "controlReason": "accepted"
+        }
+      },
+      "responseMs": 268.8862999999983,
+      "completion": {
+        "testCaseId": "review-e80a50ca-0533-4bc5-8991-7083be059204",
+        "executionId": "6",
+        "decision": {
+          "verdict": "reject",
+          "reason": "manual_review_required",
+          "coverage": 0,
+          "coverageThreshold": 0.003,
+          "boxCount": 0,
+          "detections": [],
+          "promptVerified": false,
+          "promptUsed": "different instruction",
+          "promptMismatch": true,
+          "modelVerdict": "pass",
+          "modelReason": "no_defect_detected",
+          "policyId": "fixture-qualified",
+          "reviewRequired": true,
+          "reviewReason": "prompt_not_verified"
+        },
+        "frame": {
+          "inspectionProfile": "test/qualified",
+          "sessionId": "fc36ede2-514b-4817-b810-9b9cb721136e",
+          "sequence": 6,
+          "capturedAt": "2026-11-03T14:27:07.169Z",
+          "width": 448,
+          "height": 448
+        },
+        "control": {
+          "esp32Accepted": true,
+          "esp32Status": "accepted",
+          "esp32HttpStatus": 200,
+          "esp32Error": null,
+          "controllerSession": "review-b981b712-704e-4f6c-b338-955a4cfdf7ec",
+          "itemId": "1",
+          "acknowledgedControllerSession": "review-b981b712-704e-4f6c-b338-955a4cfdf7ec",
+          "acknowledgedItemId": "1",
+          "controlOutcome": "accepted",
+          "controlReason": "accepted"
+        },
+        "response": {
+          "status": "review_required",
+          "result": "review",
+          "reason": "prompt_not_verified",
+          "modelSuggestion": "pass",
+          "policyId": "fixture-qualified",
+          "controlVerdict": "reject",
+          "item": {
+            "controller_session": "review-b981b712-704e-4f6c-b338-955a4cfdf7ec",
+            "item_id": "1",
+            "verdict_window_ms": 3000
+          },
+          "control": {
+            "esp32Accepted": true,
+            "esp32Status": "accepted",
+            "esp32HttpStatus": 200,
+            "esp32Error": null,
+            "controllerSession": "review-b981b712-704e-4f6c-b338-955a4cfdf7ec",
+            "itemId": "1",
+            "acknowledgedControllerSession": "review-b981b712-704e-4f6c-b338-955a4cfdf7ec",
+            "acknowledgedItemId": "1",
+            "controlOutcome": "accepted",
+            "controlReason": "accepted"
+          }
+        },
+        "duplicate": false
+      },
+      "telemetry": {
+        "bridge_heartbeat": "1793716020927",
+        "pending_events": "0",
+        "model_healthy": "false",
+        "capture_healthy": "false",
+        "relay_healthy": "true",
+        "n8n_healthy": "false",
+        "system_healthy": "false",
+        "event_id": "[\"item\",\"review-b981b712-704e-4f6c-b338-955a4cfdf7ec\",\"1\"]",
+        "inspection_at": "2026-11-03T14:27:07.251Z",
+        "inspection_target": "controlled software review test defect",
+        "verdict": "reject",
+        "verdict_reason": "manual_review_required",
+        "processing_ms": "195",
+        "coverage_available": "true",
+        "defect_coverage_display": "0.000%",
+        "defect_coverage": "0",
+        "defect_coverage_percent": "0",
+        "coverage_threshold": "0.003",
+        "box_count": "0",
+        "inspection_failed": "true",
+        "failure_reason": "prompt_mismatch",
+        "item_bound": "true",
+        "controller_session": "review-b981b712-704e-4f6c-b338-955a4cfdf7ec",
+        "item_id": "1",
+        "camera_session": "fc36ede2-514b-4817-b810-9b9cb721136e",
+        "frame_sequence": "6",
+        "control_outcome": "accepted",
+        "physical_sorting_confirmed": "false",
+        "profile": "software-controlled-review-tests",
+        "source": "item_detected",
+        "inspection_count": "82",
+        "pass_count": "24",
+        "observation_count": "21",
+        "reject_rate_percent": "70.73170731707317",
+        "reject_count": "58",
+        "failure_count": "40",
+        "item_inspection_count": "61",
+        "validation_status": "failed",
+        "validation_missed_defects": "6",
+        "validation_false_rejects": "21",
+        "validation_errors": "0",
+        "validation_samples": "45",
+        "validation_quality_gate": "failed",
+        "validation_timing_gate": "failed",
+        "validation_consistency_gate": "passed",
+        "validation_assessed_at": "2026-11-03T09:39:30.319Z",
+        "coverage_threshold_available": "true",
+        "prompt_verification_available": "true",
+        "prompt_mismatch": "true",
+        "prompt_verified": "false",
+        "validation_integrity_gate": "passed",
+        "validation_fallback_gate": "passed",
+        "validation_monitoring_gate": "passed",
+        "validation_recovery_gate": "passed",
+        "review_required": "true",
+        "review_reason": "prompt_not_verified",
+        "model_suggestion": "pass",
+        "policy_id": "fixture-qualified",
+        "review_snapshot_url": "",
+        "frame_width": "448",
+        "frame_height": "448",
+        "review_detections_json": "[]",
+        "review_count": "14"
+      },
+      "executionDetails": [
+        {
+          "id": 6,
+          "status": "success",
+          "lastNode": "done",
+          "error": null,
+          "nodes": [
+            {
+              "name": "trigger-item-detected",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "begin-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "valid-item-context",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "verify-verdict-budget",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "fetch-current-prompt",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "resolve-instruction",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "capture-frame",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "read-frame-context",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "detect-defects",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "decide-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "to-control-action",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "duplicate-guard",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "physical-item",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "post-verdict",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "capture-esp32-response",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-inspection-response",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "respond-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "publish-monitoring",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "restore-after-monitoring",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "duplicate-or-new",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "restore-snapshot",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "snapshot-available",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "upload-snapshot",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-snapshot-url",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-inspection-record",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "insert-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-control-action",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "insert-control-action",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "inspection-record-is-new",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-hud-broadcast",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "broadcast-hud",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-outcome-log",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "log-outcome",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "done",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "discrepancies": [],
+      "controller": {
+        "accepted": false,
+        "status": "ignored",
+        "reason": "no_active_item",
+        "controller_session": "",
+        "item_id": "",
+        "active_item": {
+          "controller_session": "review-b981b712-704e-4f6c-b338-955a4cfdf7ec",
+          "item_id": "1",
+          "verdict_window_ms": 3000
+        },
+        "state": "rejecting",
+        "pass_count": 0,
+        "reject_count": 1,
+        "resolution_reason": "verdict",
+        "admission_ready": false,
+        "actions": []
+      },
+      "reviewRecord": {
+        "eventId": "[\"item\",\"review-b981b712-704e-4f6c-b338-955a4cfdf7ec\",\"1\"]",
+        "status": "reviewed",
+        "disposition": "unsure",
+        "controllerVerdictChanged": false
+      },
+      "inspection": {
+        "id": 100,
+        "created_at": "2026-11-03T14:27:08.773571+00:00",
+        "prompt": null,
+        "defect_type": null,
+        "confidence": null,
+        "result": null,
+        "bbox": null,
+        "image_url": null,
+        "inspection_at": "2026-11-03T14:27:07.251+00:00",
+        "inspection_target": "controlled software review test defect",
+        "model_instruction": "Locate all the instances that matches the following description: controlled software review test defect.",
+        "camera_session": "fc36ede2-514b-4817-b810-9b9cb721136e",
+        "frame_sequence": 6,
+        "frame_width": 448,
+        "frame_height": 448,
+        "box_count": 0,
+        "defect_coverage": 0,
+        "coverage_threshold": 0.003,
+        "verdict": "reject",
+        "prompt_verified": false,
+        "frame_url": "https://zjxcxgpcbmpjinwgvejx.supabase.co/storage/v1/object/public/cn360-test-snapshots/fc36ede2-514b-4817-b810-9b9cb721136e-6.jpg",
+        "controller_session": "review-b981b712-704e-4f6c-b338-955a4cfdf7ec",
+        "item_id": "1"
+      },
+      "action": {
+        "id": 127,
+        "created_at": "2026-11-03T14:27:09.473645+00:00",
+        "inspection_id": 100,
+        "action": "reject",
+        "device": null,
+        "status": null,
+        "response_messege": null,
+        "esp32_accepted": true,
+        "esp32_status": "accepted",
+        "esp32_http_status": 200,
+        "esp32_error": null,
+        "requested_at": "2026-11-03T14:27:07.251+00:00",
+        "controller_session": "review-b981b712-704e-4f6c-b338-955a4cfdf7ec",
+        "item_id": "1",
+        "control_outcome": "accepted",
+        "control_reason": "accepted",
+        "ack_controller_session": "review-b981b712-704e-4f6c-b338-955a4cfdf7ec",
+        "ack_item_id": "1"
+      },
+      "hud": {
+        "type": "detections",
+        "coordinateSpace": "pixel",
+        "status": "reject",
+        "reason": "manual_review_required",
+        "reviewRequired": true,
+        "reviewReason": "prompt_not_verified",
+        "modelSuggestion": "pass",
+        "policyId": "fixture-qualified",
+        "timestamp": "2026-11-03T14:27:07.169Z",
+        "frame": {
+          "id": "fc36ede2-514b-4817-b810-9b9cb721136e:6",
+          "sessionId": "fc36ede2-514b-4817-b810-9b9cb721136e",
+          "sequence": 6,
+          "width": 448,
+          "height": 448
+        },
+        "snapshotUrl": "https://zjxcxgpcbmpjinwgvejx.supabase.co/storage/v1/object/public/cn360-test-snapshots/fc36ede2-514b-4817-b810-9b9cb721136e-6.jpg",
+        "detections": []
+      },
+      "passed": true
+    },
+    {
+      "name": "model-timeout",
+      "expected": "error",
+      "response": {
+        "status": "error",
+        "result": "error",
+        "reason": "model_timeout",
+        "item": {
+          "controller_session": "review-2312ae98-f63a-40f9-84bd-065280d3bfb2",
+          "item_id": "1",
+          "verdict_window_ms": 3000
+        },
+        "control": {
+          "esp32Accepted": true,
+          "esp32Status": "accepted",
+          "esp32HttpStatus": 200,
+          "esp32Error": null,
+          "controllerSession": "review-2312ae98-f63a-40f9-84bd-065280d3bfb2",
+          "itemId": "1",
+          "acknowledgedControllerSession": "review-2312ae98-f63a-40f9-84bd-065280d3bfb2",
+          "acknowledgedItemId": "1",
+          "controlOutcome": "accepted",
+          "controlReason": "accepted"
+        }
+      },
+      "responseMs": 1495.114200000011,
+      "completion": {
+        "testCaseId": "review-bcc6075a-0ef2-48dc-947c-f38a1e269db5",
+        "executionId": "7",
+        "decision": {
+          "verdict": "reject",
+          "reason": "model_timeout",
+          "coverage": null,
+          "coverageThreshold": 0.003,
+          "boxCount": 0,
+          "detections": [],
+          "promptVerified": null,
+          "promptUsed": null,
+          "promptMismatch": false,
+          "modelVerdict": null,
+          "modelReason": "model_timeout",
+          "policyId": "fixture-unqualified",
+          "reviewRequired": true,
+          "reviewReason": "model_timeout"
+        },
+        "frame": {
+          "inspectionProfile": "test/unqualified",
+          "sessionId": "fc36ede2-514b-4817-b810-9b9cb721136e",
+          "sequence": 7,
+          "capturedAt": "2026-11-03T14:27:16.429Z",
+          "width": 448,
+          "height": 448
+        },
+        "control": {
+          "esp32Accepted": true,
+          "esp32Status": "accepted",
+          "esp32HttpStatus": 200,
+          "esp32Error": null,
+          "controllerSession": "review-2312ae98-f63a-40f9-84bd-065280d3bfb2",
+          "itemId": "1",
+          "acknowledgedControllerSession": "review-2312ae98-f63a-40f9-84bd-065280d3bfb2",
+          "acknowledgedItemId": "1",
+          "controlOutcome": "accepted",
+          "controlReason": "accepted"
+        },
+        "response": {
+          "status": "error",
+          "result": "error",
+          "reason": "model_timeout",
+          "item": {
+            "controller_session": "review-2312ae98-f63a-40f9-84bd-065280d3bfb2",
+            "item_id": "1",
+            "verdict_window_ms": 3000
+          },
+          "control": {
+            "esp32Accepted": true,
+            "esp32Status": "accepted",
+            "esp32HttpStatus": 200,
+            "esp32Error": null,
+            "controllerSession": "review-2312ae98-f63a-40f9-84bd-065280d3bfb2",
+            "itemId": "1",
+            "acknowledgedControllerSession": "review-2312ae98-f63a-40f9-84bd-065280d3bfb2",
+            "acknowledgedItemId": "1",
+            "controlOutcome": "accepted",
+            "controlReason": "accepted"
+          }
+        },
+        "duplicate": false
+      },
+      "telemetry": {
+        "bridge_heartbeat": "1793716030941",
+        "pending_events": "0",
+        "model_healthy": "false",
+        "capture_healthy": "false",
+        "relay_healthy": "true",
+        "n8n_healthy": "false",
+        "system_healthy": "false",
+        "event_id": "[\"item\",\"review-2312ae98-f63a-40f9-84bd-065280d3bfb2\",\"1\"]",
+        "inspection_at": "2026-11-03T14:27:17.680Z",
+        "inspection_target": "controlled software review test defect",
+        "verdict": "reject",
+        "verdict_reason": "model_timeout",
+        "processing_ms": "1382",
+        "coverage_available": "false",
+        "defect_coverage_display": "Unavailable",
+        "defect_coverage": "0",
+        "defect_coverage_percent": "0",
+        "coverage_threshold": "0.003",
+        "box_count": "0",
+        "inspection_failed": "true",
+        "failure_reason": "model_timeout",
+        "item_bound": "true",
+        "controller_session": "review-2312ae98-f63a-40f9-84bd-065280d3bfb2",
+        "item_id": "1",
+        "camera_session": "fc36ede2-514b-4817-b810-9b9cb721136e",
+        "frame_sequence": "7",
+        "control_outcome": "accepted",
+        "physical_sorting_confirmed": "false",
+        "profile": "software-controlled-review-tests",
+        "source": "item_detected",
+        "inspection_count": "83",
+        "pass_count": "24",
+        "observation_count": "21",
+        "reject_rate_percent": "71.08433734939759",
+        "reject_count": "59",
+        "failure_count": "41",
+        "item_inspection_count": "62",
+        "validation_status": "failed",
+        "validation_missed_defects": "6",
+        "validation_false_rejects": "21",
+        "validation_errors": "0",
+        "validation_samples": "45",
+        "validation_quality_gate": "failed",
+        "validation_timing_gate": "failed",
+        "validation_consistency_gate": "passed",
+        "validation_assessed_at": "2026-11-03T09:39:30.319Z",
+        "coverage_threshold_available": "true",
+        "prompt_verification_available": "false",
+        "prompt_mismatch": "false",
+        "prompt_verified": "false",
+        "validation_integrity_gate": "passed",
+        "validation_fallback_gate": "passed",
+        "validation_monitoring_gate": "passed",
+        "validation_recovery_gate": "passed",
+        "review_required": "true",
+        "review_reason": "model_timeout",
+        "model_suggestion": "unavailable",
+        "policy_id": "fixture-unqualified",
+        "review_snapshot_url": "",
+        "frame_width": "448",
+        "frame_height": "448",
+        "review_detections_json": "[]",
+        "review_count": "15"
+      },
+      "executionDetails": [
+        {
+          "id": 7,
+          "status": "success",
+          "lastNode": "done",
+          "error": null,
+          "nodes": [
+            {
+              "name": "trigger-item-detected",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "begin-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "valid-item-context",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "verify-verdict-budget",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "fetch-current-prompt",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "resolve-instruction",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "capture-frame",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "read-frame-context",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "detect-defects",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": {
+                    "message": "timeout of 1200ms exceeded"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "decide-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "to-control-action",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "duplicate-guard",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "physical-item",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "post-verdict",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "capture-esp32-response",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-inspection-response",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "respond-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "publish-monitoring",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "restore-after-monitoring",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "duplicate-or-new",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "restore-snapshot",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "snapshot-available",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "upload-snapshot",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-snapshot-url",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-inspection-record",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "insert-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-control-action",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "insert-control-action",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "inspection-record-is-new",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-hud-broadcast",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "broadcast-hud",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-outcome-log",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "log-outcome",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "done",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "discrepancies": [],
+      "controller": {
+        "accepted": false,
+        "status": "ignored",
+        "reason": "no_active_item",
+        "controller_session": "",
+        "item_id": "",
+        "active_item": {
+          "controller_session": "review-2312ae98-f63a-40f9-84bd-065280d3bfb2",
+          "item_id": "1",
+          "verdict_window_ms": 3000
+        },
+        "state": "rejecting",
+        "pass_count": 0,
+        "reject_count": 1,
+        "resolution_reason": "verdict",
+        "admission_ready": false,
+        "actions": []
+      },
+      "reviewRecord": {
+        "eventId": "[\"item\",\"review-2312ae98-f63a-40f9-84bd-065280d3bfb2\",\"1\"]",
+        "status": "reviewed",
+        "disposition": "unsure",
+        "controllerVerdictChanged": false
+      },
+      "inspection": {
+        "id": 101,
+        "created_at": "2026-11-03T14:27:19.306603+00:00",
+        "prompt": null,
+        "defect_type": null,
+        "confidence": null,
+        "result": null,
+        "bbox": null,
+        "image_url": null,
+        "inspection_at": "2026-11-03T14:27:17.68+00:00",
+        "inspection_target": "controlled software review test defect",
+        "model_instruction": "Locate all the instances that matches the following description: controlled software review test defect.",
+        "camera_session": "fc36ede2-514b-4817-b810-9b9cb721136e",
+        "frame_sequence": 7,
+        "frame_width": 448,
+        "frame_height": 448,
+        "box_count": 0,
+        "defect_coverage": null,
+        "coverage_threshold": 0.003,
+        "verdict": "reject",
+        "prompt_verified": null,
+        "frame_url": "https://zjxcxgpcbmpjinwgvejx.supabase.co/storage/v1/object/public/cn360-test-snapshots/fc36ede2-514b-4817-b810-9b9cb721136e-7.jpg",
+        "controller_session": "review-2312ae98-f63a-40f9-84bd-065280d3bfb2",
+        "item_id": "1"
+      },
+      "action": {
+        "id": 128,
+        "created_at": "2026-11-03T14:27:20.095449+00:00",
+        "inspection_id": 101,
+        "action": "reject",
+        "device": null,
+        "status": null,
+        "response_messege": null,
+        "esp32_accepted": true,
+        "esp32_status": "accepted",
+        "esp32_http_status": 200,
+        "esp32_error": null,
+        "requested_at": "2026-11-03T14:27:17.68+00:00",
+        "controller_session": "review-2312ae98-f63a-40f9-84bd-065280d3bfb2",
+        "item_id": "1",
+        "control_outcome": "accepted",
+        "control_reason": "accepted",
+        "ack_controller_session": "review-2312ae98-f63a-40f9-84bd-065280d3bfb2",
+        "ack_item_id": "1"
+      },
+      "hud": {
+        "type": "detections",
+        "coordinateSpace": "pixel",
+        "status": "reject",
+        "reason": "model_timeout",
+        "reviewRequired": true,
+        "reviewReason": "model_timeout",
+        "modelSuggestion": null,
+        "policyId": "fixture-unqualified",
+        "timestamp": "2026-11-03T14:27:16.429Z",
+        "frame": {
+          "id": "fc36ede2-514b-4817-b810-9b9cb721136e:7",
+          "sessionId": "fc36ede2-514b-4817-b810-9b9cb721136e",
+          "sequence": 7,
+          "width": 448,
+          "height": 448
+        },
+        "snapshotUrl": "https://zjxcxgpcbmpjinwgvejx.supabase.co/storage/v1/object/public/cn360-test-snapshots/fc36ede2-514b-4817-b810-9b9cb721136e-7.jpg",
+        "detections": []
+      },
+      "passed": true
+    },
+    {
+      "name": "invalid-box",
+      "expected": "error",
+      "response": {
+        "status": "error",
+        "result": "error",
+        "reason": "model_invalid_box",
+        "item": {
+          "controller_session": "review-1727de0e-fd91-4969-8eab-dbff167df65e",
+          "item_id": "1",
+          "verdict_window_ms": 3000
+        },
+        "control": {
+          "esp32Accepted": true,
+          "esp32Status": "accepted",
+          "esp32HttpStatus": 200,
+          "esp32Error": null,
+          "controllerSession": "review-1727de0e-fd91-4969-8eab-dbff167df65e",
+          "itemId": "1",
+          "acknowledgedControllerSession": "review-1727de0e-fd91-4969-8eab-dbff167df65e",
+          "acknowledgedItemId": "1",
+          "controlOutcome": "accepted",
+          "controlReason": "accepted"
+        }
+      },
+      "responseMs": 230.14550000001327,
+      "completion": {
+        "testCaseId": "review-239dc716-c74b-4394-abce-4cf0857e1143",
+        "executionId": "8",
+        "decision": {
+          "verdict": "reject",
+          "reason": "model_invalid_box",
+          "coverage": null,
+          "coverageThreshold": 0.003,
+          "boxCount": 0,
+          "detections": [],
+          "promptVerified": null,
+          "promptUsed": null,
+          "promptMismatch": false,
+          "modelVerdict": null,
+          "modelReason": "model_invalid_box",
+          "policyId": "fixture-unqualified",
+          "reviewRequired": true,
+          "reviewReason": "model_invalid_box"
+        },
+        "frame": {
+          "inspectionProfile": "test/unqualified",
+          "sessionId": "fc36ede2-514b-4817-b810-9b9cb721136e",
+          "sequence": 8,
+          "capturedAt": "2026-11-03T14:27:21.714Z",
+          "width": 448,
+          "height": 448
+        },
+        "control": {
+          "esp32Accepted": true,
+          "esp32Status": "accepted",
+          "esp32HttpStatus": 200,
+          "esp32Error": null,
+          "controllerSession": "review-1727de0e-fd91-4969-8eab-dbff167df65e",
+          "itemId": "1",
+          "acknowledgedControllerSession": "review-1727de0e-fd91-4969-8eab-dbff167df65e",
+          "acknowledgedItemId": "1",
+          "controlOutcome": "accepted",
+          "controlReason": "accepted"
+        },
+        "response": {
+          "status": "error",
+          "result": "error",
+          "reason": "model_invalid_box",
+          "item": {
+            "controller_session": "review-1727de0e-fd91-4969-8eab-dbff167df65e",
+            "item_id": "1",
+            "verdict_window_ms": 3000
+          },
+          "control": {
+            "esp32Accepted": true,
+            "esp32Status": "accepted",
+            "esp32HttpStatus": 200,
+            "esp32Error": null,
+            "controllerSession": "review-1727de0e-fd91-4969-8eab-dbff167df65e",
+            "itemId": "1",
+            "acknowledgedControllerSession": "review-1727de0e-fd91-4969-8eab-dbff167df65e",
+            "acknowledgedItemId": "1",
+            "controlOutcome": "accepted",
+            "controlReason": "accepted"
+          }
+        },
+        "duplicate": false
+      },
+      "telemetry": {
+        "bridge_heartbeat": "1793716040948",
+        "pending_events": "0",
+        "model_healthy": "false",
+        "capture_healthy": "false",
+        "relay_healthy": "true",
+        "n8n_healthy": "false",
+        "system_healthy": "false",
+        "event_id": "[\"item\",\"review-1727de0e-fd91-4969-8eab-dbff167df65e\",\"1\"]",
+        "inspection_at": "2026-11-03T14:27:21.769Z",
+        "inspection_target": "controlled software review test defect",
+        "verdict": "reject",
+        "verdict_reason": "model_invalid_box",
+        "processing_ms": "155",
+        "coverage_available": "false",
+        "defect_coverage_display": "Unavailable",
+        "defect_coverage": "0",
+        "defect_coverage_percent": "0",
+        "coverage_threshold": "0.003",
+        "box_count": "0",
+        "inspection_failed": "true",
+        "failure_reason": "model_invalid_box",
+        "item_bound": "true",
+        "controller_session": "review-1727de0e-fd91-4969-8eab-dbff167df65e",
+        "item_id": "1",
+        "camera_session": "fc36ede2-514b-4817-b810-9b9cb721136e",
+        "frame_sequence": "8",
+        "control_outcome": "accepted",
+        "physical_sorting_confirmed": "false",
+        "profile": "software-controlled-review-tests",
+        "source": "item_detected",
+        "inspection_count": "84",
+        "pass_count": "24",
+        "observation_count": "21",
+        "reject_rate_percent": "71.42857142857143",
+        "reject_count": "60",
+        "failure_count": "42",
+        "item_inspection_count": "63",
+        "validation_status": "failed",
+        "validation_missed_defects": "6",
+        "validation_false_rejects": "21",
+        "validation_errors": "0",
+        "validation_samples": "45",
+        "validation_quality_gate": "failed",
+        "validation_timing_gate": "failed",
+        "validation_consistency_gate": "passed",
+        "validation_assessed_at": "2026-11-03T09:39:30.319Z",
+        "coverage_threshold_available": "true",
+        "prompt_verification_available": "false",
+        "prompt_mismatch": "false",
+        "prompt_verified": "false",
+        "validation_integrity_gate": "passed",
+        "validation_fallback_gate": "passed",
+        "validation_monitoring_gate": "passed",
+        "validation_recovery_gate": "passed",
+        "review_required": "true",
+        "review_reason": "model_invalid_box",
+        "model_suggestion": "unavailable",
+        "policy_id": "fixture-unqualified",
+        "review_snapshot_url": "",
+        "frame_width": "448",
+        "frame_height": "448",
+        "review_detections_json": "[]",
+        "review_count": "16"
+      },
+      "executionDetails": [
+        {
+          "id": 8,
+          "status": "success",
+          "lastNode": "done",
+          "error": null,
+          "nodes": [
+            {
+              "name": "trigger-item-detected",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "begin-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "valid-item-context",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "verify-verdict-budget",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "fetch-current-prompt",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "resolve-instruction",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "capture-frame",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "read-frame-context",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "detect-defects",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "decide-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "to-control-action",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "duplicate-guard",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "physical-item",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "post-verdict",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "capture-esp32-response",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-inspection-response",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "respond-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "publish-monitoring",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "restore-after-monitoring",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "duplicate-or-new",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "restore-snapshot",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "snapshot-available",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "upload-snapshot",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-snapshot-url",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-inspection-record",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "insert-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-control-action",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "insert-control-action",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "inspection-record-is-new",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-hud-broadcast",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "broadcast-hud",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-outcome-log",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "log-outcome",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "done",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "discrepancies": [],
+      "controller": {
+        "accepted": false,
+        "status": "ignored",
+        "reason": "no_active_item",
+        "controller_session": "",
+        "item_id": "",
+        "active_item": {
+          "controller_session": "review-1727de0e-fd91-4969-8eab-dbff167df65e",
+          "item_id": "1",
+          "verdict_window_ms": 3000
+        },
+        "state": "rejecting",
+        "pass_count": 0,
+        "reject_count": 1,
+        "resolution_reason": "verdict",
+        "admission_ready": false,
+        "actions": []
+      },
+      "reviewRecord": {
+        "eventId": "[\"item\",\"review-1727de0e-fd91-4969-8eab-dbff167df65e\",\"1\"]",
+        "status": "reviewed",
+        "disposition": "unsure",
+        "controllerVerdictChanged": false
+      },
+      "inspection": {
+        "id": 102,
+        "created_at": "2026-11-03T14:27:23.272469+00:00",
+        "prompt": null,
+        "defect_type": null,
+        "confidence": null,
+        "result": null,
+        "bbox": null,
+        "image_url": null,
+        "inspection_at": "2026-11-03T14:27:21.769+00:00",
+        "inspection_target": "controlled software review test defect",
+        "model_instruction": "Locate all the instances that matches the following description: controlled software review test defect.",
+        "camera_session": "fc36ede2-514b-4817-b810-9b9cb721136e",
+        "frame_sequence": 8,
+        "frame_width": 448,
+        "frame_height": 448,
+        "box_count": 0,
+        "defect_coverage": null,
+        "coverage_threshold": 0.003,
+        "verdict": "reject",
+        "prompt_verified": null,
+        "frame_url": "https://zjxcxgpcbmpjinwgvejx.supabase.co/storage/v1/object/public/cn360-test-snapshots/fc36ede2-514b-4817-b810-9b9cb721136e-8.jpg",
+        "controller_session": "review-1727de0e-fd91-4969-8eab-dbff167df65e",
+        "item_id": "1"
+      },
+      "action": {
+        "id": 129,
+        "created_at": "2026-11-03T14:27:23.785936+00:00",
+        "inspection_id": 102,
+        "action": "reject",
+        "device": null,
+        "status": null,
+        "response_messege": null,
+        "esp32_accepted": true,
+        "esp32_status": "accepted",
+        "esp32_http_status": 200,
+        "esp32_error": null,
+        "requested_at": "2026-11-03T14:27:21.769+00:00",
+        "controller_session": "review-1727de0e-fd91-4969-8eab-dbff167df65e",
+        "item_id": "1",
+        "control_outcome": "accepted",
+        "control_reason": "accepted",
+        "ack_controller_session": "review-1727de0e-fd91-4969-8eab-dbff167df65e",
+        "ack_item_id": "1"
+      },
+      "hud": {
+        "type": "detections",
+        "coordinateSpace": "pixel",
+        "status": "reject",
+        "reason": "model_invalid_box",
+        "reviewRequired": true,
+        "reviewReason": "model_invalid_box",
+        "modelSuggestion": null,
+        "policyId": "fixture-unqualified",
+        "timestamp": "2026-11-03T14:27:21.714Z",
+        "frame": {
+          "id": "fc36ede2-514b-4817-b810-9b9cb721136e:8",
+          "sessionId": "fc36ede2-514b-4817-b810-9b9cb721136e",
+          "sequence": 8,
+          "width": 448,
+          "height": 448
+        },
+        "snapshotUrl": "https://zjxcxgpcbmpjinwgvejx.supabase.co/storage/v1/object/public/cn360-test-snapshots/fc36ede2-514b-4817-b810-9b9cb721136e-8.jpg",
+        "detections": []
+      },
+      "passed": true
+    },
+    {
+      "name": "recovery",
+      "expected": "review",
+      "response": {
+        "status": "review_required",
+        "result": "review",
+        "reason": "condition_not_qualified",
+        "modelSuggestion": "pass",
+        "policyId": "fixture-unqualified",
+        "controlVerdict": "reject",
+        "item": {
+          "controller_session": "review-4d4ab292-c61e-41e4-9765-ad1a4ad95944",
+          "item_id": "1",
+          "verdict_window_ms": 3000
+        },
+        "control": {
+          "esp32Accepted": true,
+          "esp32Status": "accepted",
+          "esp32HttpStatus": 200,
+          "esp32Error": null,
+          "controllerSession": "review-4d4ab292-c61e-41e4-9765-ad1a4ad95944",
+          "itemId": "1",
+          "acknowledgedControllerSession": "review-4d4ab292-c61e-41e4-9765-ad1a4ad95944",
+          "acknowledgedItemId": "1",
+          "controlOutcome": "accepted",
+          "controlReason": "accepted"
+        }
+      },
+      "responseMs": 242.2335000000021,
+      "completion": {
+        "testCaseId": "review-9bfc6359-4758-4c52-8677-405fccdfe60b",
+        "executionId": "9",
+        "decision": {
+          "verdict": "reject",
+          "reason": "manual_review_required",
+          "coverage": 0,
+          "coverageThreshold": 0.003,
+          "boxCount": 0,
+          "detections": [],
+          "promptVerified": true,
+          "promptUsed": "Locate all the instances that matches the following description: controlled software review test defect.",
+          "promptMismatch": false,
+          "modelVerdict": "pass",
+          "modelReason": "no_defect_detected",
+          "policyId": "fixture-unqualified",
+          "reviewRequired": true,
+          "reviewReason": "condition_not_qualified"
+        },
+        "frame": {
+          "inspectionProfile": "test/unqualified",
+          "sessionId": "fc36ede2-514b-4817-b810-9b9cb721136e",
+          "sequence": 9,
+          "capturedAt": "2026-11-03T14:27:25.959Z",
+          "width": 448,
+          "height": 448
+        },
+        "control": {
+          "esp32Accepted": true,
+          "esp32Status": "accepted",
+          "esp32HttpStatus": 200,
+          "esp32Error": null,
+          "controllerSession": "review-4d4ab292-c61e-41e4-9765-ad1a4ad95944",
+          "itemId": "1",
+          "acknowledgedControllerSession": "review-4d4ab292-c61e-41e4-9765-ad1a4ad95944",
+          "acknowledgedItemId": "1",
+          "controlOutcome": "accepted",
+          "controlReason": "accepted"
+        },
+        "response": {
+          "status": "review_required",
+          "result": "review",
+          "reason": "condition_not_qualified",
+          "modelSuggestion": "pass",
+          "policyId": "fixture-unqualified",
+          "controlVerdict": "reject",
+          "item": {
+            "controller_session": "review-4d4ab292-c61e-41e4-9765-ad1a4ad95944",
+            "item_id": "1",
+            "verdict_window_ms": 3000
+          },
+          "control": {
+            "esp32Accepted": true,
+            "esp32Status": "accepted",
+            "esp32HttpStatus": 200,
+            "esp32Error": null,
+            "controllerSession": "review-4d4ab292-c61e-41e4-9765-ad1a4ad95944",
+            "itemId": "1",
+            "acknowledgedControllerSession": "review-4d4ab292-c61e-41e4-9765-ad1a4ad95944",
+            "acknowledgedItemId": "1",
+            "controlOutcome": "accepted",
+            "controlReason": "accepted"
+          }
+        },
+        "duplicate": false
+      },
+      "telemetry": {
+        "bridge_heartbeat": "1793716040948",
+        "pending_events": "0",
+        "model_healthy": "false",
+        "capture_healthy": "false",
+        "relay_healthy": "true",
+        "n8n_healthy": "false",
+        "system_healthy": "false",
+        "event_id": "[\"item\",\"review-4d4ab292-c61e-41e4-9765-ad1a4ad95944\",\"1\"]",
+        "inspection_at": "2026-11-03T14:27:26.007Z",
+        "inspection_target": "controlled software review test defect",
+        "verdict": "reject",
+        "verdict_reason": "manual_review_required",
+        "processing_ms": "165",
+        "coverage_available": "true",
+        "defect_coverage_display": "0.000%",
+        "defect_coverage": "0",
+        "defect_coverage_percent": "0",
+        "coverage_threshold": "0.003",
+        "box_count": "0",
+        "inspection_failed": "false",
+        "failure_reason": "none",
+        "item_bound": "true",
+        "controller_session": "review-4d4ab292-c61e-41e4-9765-ad1a4ad95944",
+        "item_id": "1",
+        "camera_session": "fc36ede2-514b-4817-b810-9b9cb721136e",
+        "frame_sequence": "9",
+        "control_outcome": "accepted",
+        "physical_sorting_confirmed": "false",
+        "profile": "software-controlled-review-tests",
+        "source": "item_detected",
+        "inspection_count": "85",
+        "pass_count": "24",
+        "observation_count": "21",
+        "reject_rate_percent": "71.76470588235294",
+        "reject_count": "61",
+        "failure_count": "42",
+        "item_inspection_count": "64",
+        "validation_status": "failed",
+        "validation_missed_defects": "6",
+        "validation_false_rejects": "21",
+        "validation_errors": "0",
+        "validation_samples": "45",
+        "validation_quality_gate": "failed",
+        "validation_timing_gate": "failed",
+        "validation_consistency_gate": "passed",
+        "validation_assessed_at": "2026-11-03T09:39:30.319Z",
+        "coverage_threshold_available": "true",
+        "prompt_verification_available": "true",
+        "prompt_mismatch": "false",
+        "prompt_verified": "true",
+        "validation_integrity_gate": "passed",
+        "validation_fallback_gate": "passed",
+        "validation_monitoring_gate": "passed",
+        "validation_recovery_gate": "passed",
+        "review_required": "true",
+        "review_reason": "condition_not_qualified",
+        "model_suggestion": "pass",
+        "policy_id": "fixture-unqualified",
+        "review_snapshot_url": "",
+        "frame_width": "448",
+        "frame_height": "448",
+        "review_detections_json": "[]",
+        "review_count": "17"
+      },
+      "executionDetails": [
+        {
+          "id": 9,
+          "status": "success",
+          "lastNode": "done",
+          "error": null,
+          "nodes": [
+            {
+              "name": "trigger-item-detected",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "begin-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "valid-item-context",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "verify-verdict-budget",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "fetch-current-prompt",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "resolve-instruction",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "capture-frame",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "read-frame-context",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "detect-defects",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "decide-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "to-control-action",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "duplicate-guard",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "physical-item",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "post-verdict",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "capture-esp32-response",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-inspection-response",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "respond-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "publish-monitoring",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "restore-after-monitoring",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "duplicate-or-new",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "restore-snapshot",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "snapshot-available",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "upload-snapshot",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-snapshot-url",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-inspection-record",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "insert-inspection",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-control-action",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "insert-control-action",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "inspection-record-is-new",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-hud-broadcast",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "broadcast-hud",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "build-outcome-log",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "log-outcome",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            },
+            {
+              "name": "done",
+              "runs": [
+                {
+                  "status": "success",
+                  "error": null,
+                  "responseError": null
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "discrepancies": [],
+      "controller": {
+        "accepted": false,
+        "status": "ignored",
+        "reason": "no_active_item",
+        "controller_session": "",
+        "item_id": "",
+        "active_item": {
+          "controller_session": "review-4d4ab292-c61e-41e4-9765-ad1a4ad95944",
+          "item_id": "1",
+          "verdict_window_ms": 3000
+        },
+        "state": "rejecting",
+        "pass_count": 0,
+        "reject_count": 1,
+        "resolution_reason": "verdict",
+        "admission_ready": false,
+        "actions": []
+      },
+      "reviewRecord": {
+        "eventId": "[\"item\",\"review-4d4ab292-c61e-41e4-9765-ad1a4ad95944\",\"1\"]",
+        "status": "reviewed",
+        "disposition": "unsure",
+        "controllerVerdictChanged": false
+      },
+      "inspection": {
+        "id": 103,
+        "created_at": "2026-11-03T14:27:27.049279+00:00",
+        "prompt": null,
+        "defect_type": null,
+        "confidence": null,
+        "result": null,
+        "bbox": null,
+        "image_url": null,
+        "inspection_at": "2026-11-03T14:27:26.007+00:00",
+        "inspection_target": "controlled software review test defect",
+        "model_instruction": "Locate all the instances that matches the following description: controlled software review test defect.",
+        "camera_session": "fc36ede2-514b-4817-b810-9b9cb721136e",
+        "frame_sequence": 9,
+        "frame_width": 448,
+        "frame_height": 448,
+        "box_count": 0,
+        "defect_coverage": 0,
+        "coverage_threshold": 0.003,
+        "verdict": "reject",
+        "prompt_verified": true,
+        "frame_url": "https://zjxcxgpcbmpjinwgvejx.supabase.co/storage/v1/object/public/cn360-test-snapshots/fc36ede2-514b-4817-b810-9b9cb721136e-9.jpg",
+        "controller_session": "review-4d4ab292-c61e-41e4-9765-ad1a4ad95944",
+        "item_id": "1"
+      },
+      "action": {
+        "id": 130,
+        "created_at": "2026-11-03T14:27:27.762869+00:00",
+        "inspection_id": 103,
+        "action": "reject",
+        "device": null,
+        "status": null,
+        "response_messege": null,
+        "esp32_accepted": true,
+        "esp32_status": "accepted",
+        "esp32_http_status": 200,
+        "esp32_error": null,
+        "requested_at": "2026-11-03T14:27:26.007+00:00",
+        "controller_session": "review-4d4ab292-c61e-41e4-9765-ad1a4ad95944",
+        "item_id": "1",
+        "control_outcome": "accepted",
+        "control_reason": "accepted",
+        "ack_controller_session": "review-4d4ab292-c61e-41e4-9765-ad1a4ad95944",
+        "ack_item_id": "1"
+      },
+      "hud": {
+        "type": "detections",
+        "coordinateSpace": "pixel",
+        "status": "reject",
+        "reason": "manual_review_required",
+        "reviewRequired": true,
+        "reviewReason": "condition_not_qualified",
+        "modelSuggestion": "pass",
+        "policyId": "fixture-unqualified",
+        "timestamp": "2026-11-03T14:27:25.959Z",
+        "frame": {
+          "id": "fc36ede2-514b-4817-b810-9b9cb721136e:9",
+          "sessionId": "fc36ede2-514b-4817-b810-9b9cb721136e",
+          "sequence": 9,
+          "width": 448,
+          "height": 448
+        },
+        "snapshotUrl": "https://zjxcxgpcbmpjinwgvejx.supabase.co/storage/v1/object/public/cn360-test-snapshots/fc36ede2-514b-4817-b810-9b9cb721136e-9.jpg",
+        "detections": []
+      },
+      "passed": true
+    }
+  ],
+  "passed": true,
+  "finishedAt": "2026-11-03T14:27:29.075Z"
+}

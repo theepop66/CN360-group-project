@@ -1,0 +1,12 @@
+{
+  "name": "cn360-thingsboard",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24.0.0" },
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test",
+    "provision": "node scripts/provision.mjs",
+    "accept": "node scripts/accept.mjs"
+  }
+}

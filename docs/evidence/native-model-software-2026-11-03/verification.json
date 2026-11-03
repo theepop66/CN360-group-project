@@ -1,10 +1,10 @@
 {
   "node": {
     "detectionRelay": 22,
-    "n8n": 227,
+    "n8n": 230,
     "picoMyApp": 33,
     "picoWebapp": 59,
-    "thingsboard": 6
+    "thingsboard": 7
   },
   "python": {
     "passed": 12,
@@ -17,5 +17,11 @@
     "checks": 135
   },
   "consistencyCases": 10,
-  "consistencyPassed": true
+  "consistencyPassed": true,
+  "review": {
+    "standardsUnresolved": 0,
+    "specUnresolved": 0,
+    "fixCommit": "deb61e2"
+  },
+  "finalRuntimeEvidence": "review-verified"
 }

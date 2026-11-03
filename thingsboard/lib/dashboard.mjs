@@ -14,7 +14,7 @@ export const summaryHtml = `<section class="cn360">
 <article><small>Reject rate</small><strong data-ref="reject_rate_percent">—</strong><span>Reject verdicts / inspections</span></article>
 </div>
 <div class="details"><div><small>Inspection target</small><p data-ref="inspection_target">—</p></div><div><small>Latest failure</small><p data-ref="failure_reason">—</p></div><div><small>Controller response</small><p data-ref="control_outcome">—</p></div><div><small>Last inspection</small><p data-ref="inspection_at">—</p></div></div>
-<p data-ref="validation" hidden></p>
+<p data-ref="validation" class="muted" hidden></p>
 <footer><span data-ref="health">Waiting for health checks</span><span data-ref="queue">—</span><span>Controller acceptance does not confirm physical sorting.</span></footer>
 </section>`;
 

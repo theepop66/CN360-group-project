@@ -100,6 +100,9 @@ let streamResetObserved = false;
 let detachStreamListeners = () => {};
 let localWebcamStream = null;
 let localWebcamGeneration = 0;
+let broadcastTimer = null;
+let broadcastCanvas = null;
+let broadcastGeneration = 0;
 let n8nFrameGeneration = 0;
 let n8nFrameTimer = null;
 let pendingN8nFrame = null;
@@ -132,7 +135,7 @@ function loadConfig() {
     saved.controllerShortcuts ?? defaults.controllerShortcuts ?? {}
   );
   return {
-    cameraSource: cameraSource === "remote" ? "remote" : "local",
+    cameraSource: ["remote", "broadcast"].includes(cameraSource) ? cameraSource : "local",
     streamUrl: saved.streamUrl ?? defaults.raspberryPiStreamUrl ?? "",
     healthUrl: saved.healthUrl ?? defaults.raspberryPiHealthUrl ?? "",
     websocketUrl: currentSavedUrl(saved.websocketUrl) ?? defaults.n8nDetectionWebSocketUrl ?? "",
@@ -201,7 +204,7 @@ function revealFreshVideo(mediaElement = elements.stream) {
 }
 
 function activeMediaElement() {
-  if (config.cameraSource === "local") return elements.webcam;
+  if (config.cameraSource === "local" || config.cameraSource === "broadcast") return elements.webcam;
   return isN8nFrameVisible() ? elements.snapshot : elements.stream;
 }
 
@@ -340,6 +343,14 @@ function stopLocalWebcam() {
   elements.webcam.classList.add("video-feed--hidden");
 }
 
+function stopBroadcast() {
+  broadcastGeneration += 1;
+  if (broadcastTimer !== null) {
+    window.clearInterval(broadcastTimer);
+    broadcastTimer = null;
+  }
+}
+
 function localCameraErrorMessage(error) {
   if (!window.isSecureContext) return "Local webcam requires HTTPS or localhost.";
   if (error?.name === "NotAllowedError") return "Camera permission was denied.";
@@ -366,14 +377,14 @@ async function startLocalWebcam() {
 
   try {
     mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-    if (generation !== localWebcamGeneration || config.cameraSource !== "local") {
+    if (generation !== localWebcamGeneration || config.cameraSource !== "local" && config.cameraSource !== "broadcast") {
       for (const track of mediaStream.getTracks()) track.stop();
       return;
     }
 
     localWebcamStream = mediaStream;
     markLocalLive = () => {
-      if (generation !== localWebcamGeneration || config.cameraSource !== "local") return;
+      if (generation !== localWebcamGeneration || config.cameraSource !== "local" && config.cameraSource !== "broadcast") return;
       revealFreshVideo(elements.webcam);
       setStatus(elements.streamStatus, "Camera: local live", "ok");
       drawDetections();
@@ -387,7 +398,7 @@ async function startLocalWebcam() {
 
     for (const track of mediaStream.getVideoTracks()) {
       track.addEventListener("ended", () => {
-        if (generation !== localWebcamGeneration || config.cameraSource !== "local") return;
+        if (generation !== localWebcamGeneration || config.cameraSource !== "local" && config.cameraSource !== "broadcast") return;
         hideStaleVideo("The local webcam stopped.");
         setStatus(elements.streamStatus, "Camera: stopped", "error");
       }, { once: true });
@@ -402,10 +413,47 @@ async function startLocalWebcam() {
       localWebcamStream = null;
       elements.webcam.srcObject = null;
     }
-    if (generation !== localWebcamGeneration || config.cameraSource !== "local") return;
+    if (generation !== localWebcamGeneration || config.cameraSource !== "local" && config.cameraSource !== "broadcast") return;
     setPlaceholder(localCameraErrorMessage(error));
     setStatus(elements.streamStatus, "Camera: unavailable", "error");
   }
+}
+
+async function startBroadcast() {
+  stopBroadcast();
+  const generation = ++broadcastGeneration;
+
+  await startLocalWebcam();
+  if (generation !== broadcastGeneration || config.cameraSource !== "broadcast") return;
+  if (!localWebcamStream) return;
+
+  if (!broadcastCanvas) {
+    broadcastCanvas = document.createElement("canvas");
+  }
+
+  let uploading = false;
+  broadcastTimer = window.setInterval(() => {
+    if (generation !== broadcastGeneration || uploading) return;
+    const video = elements.webcam;
+    if (!video.videoWidth) return;
+
+    const scale = Math.min(1, 800 / video.videoWidth);
+    broadcastCanvas.width = Math.round(video.videoWidth * scale);
+    broadcastCanvas.height = Math.round(video.videoHeight * scale);
+    broadcastCanvas.getContext("2d").drawImage(
+      video, 0, 0, broadcastCanvas.width, broadcastCanvas.height
+    );
+
+    uploading = true;
+    broadcastCanvas.toBlob((blob) => {
+      if (generation !== broadcastGeneration || !blob) { uploading = false; return; }
+      fetch("/camera/frame", { method: "POST", body: blob, headers: { "Content-Type": "image/jpeg" } })
+        .catch(() => {})
+        .finally(() => { uploading = false; });
+    }, "image/jpeg", 0.7);
+  }, 200);
+
+  setStatus(elements.streamStatus, "Camera: broadcasting", "ok");
 }
 
 function connectCamera() {
@@ -413,9 +461,12 @@ function connectCamera() {
   stopLocalWebcam();
   stopRemoteStream();
   stopHealthPolling();
+  stopBroadcast();
   cameraHealthState = null;
 
-  if (config.cameraSource === "local") {
+  if (config.cameraSource === "broadcast") {
+    void startBroadcast();
+  } else if (config.cameraSource === "local") {
     void startLocalWebcam();
   } else {
     connectStream();
@@ -1188,7 +1239,7 @@ elements.settingsForm.addEventListener("submit", (event) => {
   const previousWebsocketUrl = config.websocketUrl;
   config = {
     ...config,
-    cameraSource: elements.cameraSource.value === "remote" ? "remote" : "local",
+    cameraSource: ["remote", "broadcast"].includes(elements.cameraSource.value) ? elements.cameraSource.value : "local",
     streamUrl: elements.streamUrl.value.trim(),
     healthUrl: elements.healthUrl.value.trim(),
     websocketUrl: elements.websocketUrl.value.trim(),
@@ -1263,6 +1314,7 @@ window.addEventListener("pagehide", () => {
   stopLocalWebcam();
   stopRemoteStream();
   stopHealthPolling();
+  stopBroadcast();
   setStatus(elements.socketStatus, "AI data: paused", "idle");
 });
 

@@ -103,10 +103,14 @@
             <select id="camera-source" name="cameraSource">
               <option value="local">Local webcam (this device)</option>
               <option value="remote">Remote stream / n8n source (PICO)</option>
+              <option value="broadcast">Broadcast camera (phone → VR)</option>
             </select>
             <p class="settings-hint">
               Local uses this browser's camera. Remote accepts an MJPEG/image URL or a
-              <code>camera.source</code> message from the n8n gateway.
+              <code>camera.source</code> message from the n8n gateway. Broadcast captures
+              this device's camera and relays it via <code>/camera/stream.mjpg</code>
+              (on the receiver set Remote URL to <code>/camera/stream.mjpg</code>,
+              health URL to <code>/camera/health</code>).
             </p>
 
             <label for="stream-url">Remote image or MJPEG URL</label>

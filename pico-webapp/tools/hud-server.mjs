@@ -179,9 +179,97 @@ function proxyToControlUnit(req, res, target, pathname, search) {
   req.pipe(proxyReq);
 }
 
+// ── Camera relay ──────────────────────────────────────────────────────
+// Phone POSTs JPEG frames to /camera/frame; the server re-serves them
+// as a standard MJPEG stream at /camera/stream.mjpg for VR headsets.
+const MAX_FRAME_BYTES = 2 * 1024 * 1024;
+const MJPEG_BOUNDARY = "camerarelay";
+let latestCameraFrame = null;
+let latestCameraFrameTime = 0;
+const mjpegClients = new Set();
+
+function handleCameraFrame(req, res) {
+  if (req.method !== "POST") return sendText(res, 405, "Method not allowed");
+  if (!(req.headers["content-type"] ?? "").startsWith("image/jpeg")) {
+    return sendText(res, 415, "Content-Type must be image/jpeg");
+  }
+
+  let size = 0;
+  const chunks = [];
+  req.on("data", (chunk) => {
+    size += chunk.length;
+    if (size > MAX_FRAME_BYTES) {
+      req.destroy();
+      if (!res.headersSent) sendText(res, 413, "Frame too large");
+    } else {
+      chunks.push(chunk);
+    }
+  });
+  req.on("end", () => {
+    if (res.writableEnded) return;
+    latestCameraFrame = Buffer.concat(chunks);
+    latestCameraFrameTime = Date.now();
+
+    const header = `--${MJPEG_BOUNDARY}\r\nContent-Type: image/jpeg\r\nContent-Length: ${latestCameraFrame.length}\r\n\r\n`;
+    for (const client of mjpegClients) {
+      try {
+        client.write(header);
+        client.write(latestCameraFrame);
+        client.write("\r\n");
+      } catch {
+        mjpegClients.delete(client);
+      }
+    }
+
+    res.writeHead(204);
+    res.end();
+  });
+}
+
+function serveMjpegStream(req, res) {
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    return sendText(res, 405, "Method not allowed");
+  }
+
+  res.writeHead(200, {
+    "Content-Type": `multipart/x-mixed-replace; boundary=${MJPEG_BOUNDARY}`,
+    "Cache-Control": "no-store",
+    "Connection": "keep-alive"
+  });
+  if (req.method === "HEAD") return res.end();
+
+  mjpegClients.add(res);
+  console.log(`[hud] MJPEG client connected (${mjpegClients.size} total)`);
+
+  if (latestCameraFrame) {
+    res.write(`--${MJPEG_BOUNDARY}\r\nContent-Type: image/jpeg\r\nContent-Length: ${latestCameraFrame.length}\r\n\r\n`);
+    res.write(latestCameraFrame);
+    res.write("\r\n");
+  }
+
+  req.on("close", () => {
+    mjpegClients.delete(res);
+    console.log(`[hud] MJPEG client disconnected (${mjpegClients.size} remaining)`);
+  });
+  res.on("error", () => mjpegClients.delete(res));
+}
+
+function serveCameraHealth(req, res) {
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    return sendText(res, 405, "Method not allowed");
+  }
+  const age = latestCameraFrameTime ? Date.now() - latestCameraFrameTime : Infinity;
+  const body = JSON.stringify({ status: age < 5000 ? "ok" : "waiting", clients: mjpegClients.size });
+  res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+  res.end(body);
+}
+
 export function createHandler({ root, controlUnit }) {
   return (req, res) => {
     const url = new URL(req.url ?? "/", "http://localhost");
+    if (url.pathname === "/camera/frame") return handleCameraFrame(req, res);
+    if (url.pathname === "/camera/stream.mjpg") return serveMjpegStream(req, res);
+    if (url.pathname === "/camera/health") return serveCameraHealth(req, res);
     if (url.pathname === "/esp" || url.pathname.startsWith("/esp/")) {
       return proxyToControlUnit(req, res, controlUnit, url.pathname, url.search);
     }
@@ -246,6 +334,7 @@ async function main() {
 
   console.log("[hud] serving", options.root);
   console.log(`[hud] /esp/* -> ${options.controlUnit}`);
+  console.log("[hud] /camera/* -> phone camera relay (POST frame, GET MJPEG stream)");
   for (const line of started) console.log(`[hud] ${line}`);
   console.log("[hud] open the PICO at the HTTPS address, e.g. https://<pc-ip>:8443/?xrdebug=1");
 }

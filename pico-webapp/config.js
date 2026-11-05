@@ -13,6 +13,8 @@ window.HUD_CONFIG = Object.freeze({
   // Use "local" while developing on a computer. Switch to "remote" on the
   // PICO headset so it loads a LAN-reachable MJPEG/image source.
   cameraSource: "local",
+  cameraBroadcastStreamUrl: "/camera/stream.mjpg",
+  cameraBroadcastHealthUrl: "/camera/health",
   raspberryPiStreamUrl: "http://raspberrypi.local:8000/stream.mjpg",
   raspberryPiHealthUrl: "http://raspberrypi.local:8000/health",
   // Stock n8n cannot broadcast to a WebSocket; n8n POSTs to relay/ and the

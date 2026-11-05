@@ -17,6 +17,7 @@ import { networkInterfaces } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createPhoneCamera } from "./phone-camera.mjs";
+import { attachWebRtcSignaling } from "./webrtc-signal.mjs";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_ROOT = path.resolve(SCRIPT_DIR, "..");
@@ -215,7 +216,7 @@ export function attachDetectionRelay(server, { relayOrigin = "http://127.0.0.1:8
     // An upgraded browser can reset before the relay finishes its handshake.
     // Own its errors immediately, including rejected upgrade paths.
     socket.on("error", () => socket.destroy());
-    if (req.method !== "GET" || req.url !== "/detections") { socket.end("HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n"); return; }
+    if (req.method !== "GET" || req.url !== "/detections") return;
     const headers = { connection: "Upgrade", upgrade: "websocket" };
     for (const name of ["sec-websocket-key", "sec-websocket-version", "sec-websocket-protocol"]) {
       if (req.headers[name]) headers[name] = req.headers[name];
@@ -283,6 +284,7 @@ async function main() {
   if (options.httpPort > 0) {
     const server = createHttpServer(handler);
     attachDetectionRelay(server, options);
+    attachWebRtcSignaling(server);
     await listen(server, options.httpPort, "HTTP");
     started.push(`HTTP  http://localhost:${options.httpPort}/`);
     for (const address of addresses) started.push(`      http://${address}:${options.httpPort}/`);
@@ -297,6 +299,7 @@ async function main() {
       key: readFileSync(options.key)
     }, handler);
     attachDetectionRelay(server, options);
+    attachWebRtcSignaling(server);
     await listen(server, options.httpsPort, "HTTPS");
     started.push(`HTTPS https://localhost:${options.httpsPort}/`);
     for (const address of addresses) started.push(`      https://${address}:${options.httpsPort}/`);
@@ -307,6 +310,7 @@ async function main() {
   console.log("[hud] serving", options.root);
   console.log(`[hud] /esp/* -> ${options.controlUnit}`);
   console.log(`[hud] WebSocket /detections -> ${options.relayOrigin}/detections`);
+  console.log("[hud] WebSocket /rtc -> WebRTC signaling (phone-to-VR peer-to-peer video)");
   for (const line of started) console.log(`[hud] ${line}`);
   console.log("[hud] open the PICO at the HTTPS address, e.g. https://<pc-ip>:8443/?xrdebug=1");
   if (options.phoneCamera) {

@@ -14,6 +14,7 @@ import {
   clampAngle,
   DEFAULT_CONTROLLER_SHORTCUTS
 } from "./xr-controller.js";
+import { createWebRtcReceiver } from "./webrtc-camera.js";
 
 const STORAGE_KEY = "cn360-hud-connections";
 const defaults = window.HUD_CONFIG ?? {};
@@ -89,6 +90,7 @@ let streamResetObserved = false;
 let detachStreamListeners = () => {};
 let localWebcamStream = null;
 let localWebcamGeneration = 0;
+let webrtcReceiver = null;
 let n8nFrameGeneration = 0;
 let n8nFrameTimer = null;
 let pendingN8nFrame = null;
@@ -202,7 +204,7 @@ function revealFreshVideo(mediaElement = elements.stream) {
 }
 
 function activeMediaElement() {
-  if (config.cameraSource === "local") return elements.webcam;
+  if (config.cameraSource === "local" || config.cameraSource === "webrtc") return elements.webcam;
   return isN8nFrameVisible() ? elements.snapshot : elements.stream;
 }
 
@@ -409,14 +411,57 @@ async function startLocalWebcam() {
   }
 }
 
+function stopWebRtc() {
+  if (webrtcReceiver) { webrtcReceiver.stop(); webrtcReceiver = null; }
+}
+
+function startWebRtcReceiver() {
+  stopWebRtc();
+  setPlaceholder("Connecting to phone camera via WebRTC…");
+  setStatus(elements.streamStatus, "Camera: waiting for WebRTC", "idle");
+
+  webrtcReceiver = createWebRtcReceiver();
+  webrtcReceiver.start(
+    (remoteStream) => {
+      elements.webcam.srcObject = remoteStream;
+      elements.webcam.play().catch(() => {});
+      revealFreshVideo(elements.webcam);
+      setStatus(elements.streamStatus, "Camera: WebRTC live", "ok");
+      drawDetections();
+    },
+    (state) => {
+      const messages = {
+        "waiting-for-sender": "Waiting for phone to connect…",
+        "requesting-offer": "Phone found, negotiating…",
+        "signal-disconnected": "Signaling lost, reconnecting…",
+        "sender-left": "Phone disconnected.",
+        "failed": "WebRTC connection failed.",
+        "disconnected": "WebRTC disconnected."
+      };
+      if (messages[state]) {
+        if (state === "sender-left" || state === "failed" || state === "disconnected") {
+          hideStaleVideo(messages[state]);
+          setStatus(elements.streamStatus, `Camera: ${state}`, "error");
+        } else {
+          setPlaceholder(messages[state]);
+          setStatus(elements.streamStatus, `Camera: ${state}`, "idle");
+        }
+      }
+    }
+  );
+}
+
 function connectCamera() {
   stopN8nFrame();
   stopLocalWebcam();
   stopRemoteStream();
   stopHealthPolling();
+  stopWebRtc();
   cameraHealthState = null;
 
-  if (config.cameraSource === "local") {
+  if (config.cameraSource === "webrtc") {
+    startWebRtcReceiver();
+  } else if (config.cameraSource === "local") {
     void startLocalWebcam();
   } else {
     connectStream();
@@ -1246,7 +1291,7 @@ elements.settingsForm.addEventListener("submit", (event) => {
   const previousWebsocketUrl = config.websocketUrl;
   config = {
     ...config,
-    cameraSource: elements.cameraSource.value === "remote" ? "remote" : "local",
+    cameraSource: ["remote", "webrtc"].includes(elements.cameraSource.value) ? elements.cameraSource.value : "local",
     streamUrl: elements.streamUrl.value.trim(),
     healthUrl: elements.healthUrl.value.trim(),
     websocketUrl: elements.websocketUrl.value.trim(),
@@ -1322,6 +1367,7 @@ window.addEventListener("pagehide", () => {
   stopLocalWebcam();
   stopRemoteStream();
   stopHealthPolling();
+  stopWebRtc();
 });
 
 populateSettings();

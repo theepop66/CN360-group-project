@@ -9,6 +9,10 @@ window.HUD_CONFIG = Object.freeze({
   // wss:// so WebXR does not block the overlay as mixed content.
   n8nDetectionWebSocketUrl: (window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.host + "/detections",
   n8nPromptWebhookUrl: "http://n8n.local:5678/webhook/detection-prompt",
+  // "Take a photo" (left Y button, or Capture & inspect in the 2D panel): one unpaired n8n
+  // inspection. hud-server forwards this same-origin path to its --n8n-origin, so it works
+  // over the HTTPS page WebXR needs. The n8n workflow must be active.
+  captureWebhookUrl: "/n8n/inspect-now",
   // 360ControlUnit (ESP32) endpoints are same-origin paths served by
   // tools/hud-server.mjs, which proxies /esp/* to the ESP32 (172.20.10.5).
   // Same-origin keeps WebXR working over HTTPS without mixed-content blocking.
@@ -21,6 +25,8 @@ window.HUD_CONFIG = Object.freeze({
   // stick controls the servo. Left up/down controls the conveyor, left/right
   // zooms the paired phone camera, and left stick click resets to 1x.
   // Camera control needs the phone pairing code entered in Connection settings.
+  // Left Y ("capture") takes a photo: one n8n inspection that only advises the operator.
+  // Auto mode has no controller button any more; use the Auto toggle in the 2D panel.
   // Buttons use the
   // current PICO indices (1 squeeze, 3 A/X, 4 B/Y); open the HUD with
   // ?xrdebug=1 to log the real indices if PICO reports a different layout.
@@ -35,7 +41,7 @@ window.HUD_CONFIG = Object.freeze({
       rightPrimary: "reject",
       rightSecondary: "pass",
       leftPrimary: "manual",
-      leftSecondary: "auto",
+      leftSecondary: "capture",
       leftStick: "reset-zoom"
     }
   },
@@ -44,5 +50,7 @@ window.HUD_CONFIG = Object.freeze({
   healthRequestTimeoutMs: 1500,
   detectionTtlMs: 3000,
   promptTimeoutMs: 8000,
-  servoRequestTimeoutMs: 5000
+  servoRequestTimeoutMs: 5000,
+  // hud-server gives up on n8n after 12 s, so wait a little longer than that.
+  captureTimeoutMs: 15000
 });

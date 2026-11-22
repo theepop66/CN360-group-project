@@ -28,7 +28,7 @@ The flat 2D browser never exposes controller buttons to page script — there th
 | Right **B** (secondary) | Pass now (`/verdict`) |
 | **Grip** (either hand) | Sweep |
 | Left **X** (primary) | Mode → Manual |
-| Left **Y** (secondary) | Mode → Auto |
+| Left **Y** (secondary) | **Capture & inspect**: take a photo and let the AI inspect it ([details](#capture--inspect-take-a-photo)) |
 
 The action mapping, step size, repeat cadence, and deadzone live in `controllerShortcuts` in `config.js`. The current PICO button indices are defined in `js/xr-controller.js`; open the HUD with `?xrdebug=1` to print which index each press reports if a firmware/browser update changes it. The firmware still enforces its own rules — angle jogs need Manual mode and an idle unit, reject/pass only apply while an item is in the beam — and the HUD mirrors that feedback to the VR status line or the AR panel.
 
@@ -59,6 +59,17 @@ An ignored constraint is reported as a failure. A camera operation that times
 out stops the sender, requiring Start again rather than uploading uncertain
 pixels. Physical camera zoom and headset acceptance remain pending.
 Conveyor commands require a centered left stick before starting. In Auto, the belt stops when an item is detected and stays stopped during the Verdict and reject cycle. After the cycle, center the stick and push forward again to clear the item. A Verdict timeout requires switching to Manual, clearing the item and returning to Auto. Loss of controller input or XR frame updates stops command renewals, and the ESP32 expires the motor command locally. Automatic admission remains disabled unless the controller is explicitly configured for bench validation.
+
+### Capture & inspect (take a photo)
+
+The left **Y** button in AR/VR, and **Capture & inspect** in the 2D panel, take one photo and let the AI inspect it. The HUD posts to its own `/n8n/inspect-now`; `tools/hud-server.mjs` forwards that to n8n's `POST /webhook/inspect-now` (`--n8n-origin`, default `http://127.0.0.1:5678`). The n8n workflow must be active: only the production webhook URL answers. n8n then runs the same inspection path as the item-detected and schedule triggers: it pulls a fresh frame from the camera node, asks the model, broadcasts the boxes to the relay and stores the result.
+
+- It is an *unpaired* inspection. It evaluates the image and never sends a physical command, and the result line says so (`Captured · AI says reject · advice only, no machine command sent`). The operator still decides and moves the servo or conveyor by hand in Manual mode.
+- The result line comes from n8n's own answer: `success` (the model's pass or reject), `review_required` (the model's suggestion needs a human) or `error` (with the reason). A missing or inactive workflow (404), an unreachable n8n (504), a timeout, or an answer the HUD does not recognise is reported as `Capture failed · …`, never as a result.
+- Boxes arrive separately over the relay WebSocket. When the inspection failed, the summary bar reads `AI unavailable · <reason>`, the AI status pill turns red, and the message stays until the next result instead of fading to "No recent detections".
+- The HUD ignores presses while a capture is in flight. The proxy always sends `{}` to n8n, accepts only `POST` with a JSON content type, and refuses a second request while one is running (`429`).
+- `captureWebhookUrl` (same-origin path) and `captureTimeoutMs` live in `config.js`; the URL can also be changed under **Connection settings**.
+- Auto mode no longer has a controller button. Use the **Auto** toggle in the 2D panel.
 
 ## Run locally
 
@@ -153,6 +164,8 @@ on a secure page. Use `--relay-origin` to point the HUD server at another relay.
 If using a different static server, set an explicit relay URL in Connection
 settings; that server does not automatically provide the tunnel.
 
+Taking a photo needs one more same-origin route: the HUD server forwards `POST /n8n/inspect-now` to `<n8n origin>/webhook/inspect-now`. The origin defaults to `http://127.0.0.1:5678` (n8n on this PC); use `--n8n-origin http://<n8n-host>:5678` for another host.
+
 The browser must load the files through HTTP (not by opening `index.html` directly):
 
 ```bash
@@ -172,7 +185,7 @@ WebXR on the headset needs HTTPS. Place a certificate trusted by the PICO browse
 npm run serve:vr -- --control-unit http://172.20.10.5
 ```
 
-Open `https://<DEVELOPMENT-PC-IP>:8443/?xrdebug=1` on the headset, then enter AR passthrough or VR cinema. Servo requests use the same HTTPS origin (`/esp/mode`, `/esp/servo`, `/esp/verdict`); the server forwards them to the ESP32 over HTTP. `npm run serve` keeps the flat HUD available on port 8080, but does not enable headset WebXR by itself.
+Open `https://<DEVELOPMENT-PC-IP>:8443/?xrdebug=1` on the headset, then enter AR passthrough or VR cinema. Servo requests use the same HTTPS origin (`/esp/mode`, `/esp/servo`, `/esp/verdict`); the server forwards them to the ESP32 over HTTP. Capture requests use `/n8n/inspect-now` the same way. `npm run serve` keeps the flat HUD available on port 8080, but does not enable headset WebXR by itself.
 
 The default development source is **Local webcam**. Allow camera permission when prompted. `getUserMedia()` always opens the camera attached to the device running the browser; it does not relay a computer webcam to a PICO headset. It also requires a secure browser context, normally HTTPS or localhost.
 
@@ -265,6 +278,7 @@ The configured WebSocket gateway should broadcast messages in this shape:
 - Send an empty `detections` array to clear the overlay immediately. Old boxes also clear after `detectionTtlMs`.
 - Include a capture `timestamp`, increasing `frame.sequence`, and producer `frame.sessionId`; the HUD ignores older results that arrive after a newer n8n execution and accepts a reset sequence after a new producer session. If `timestamp` is omitted, ordering falls back to `sequence` rather than inventing a receive-time timestamp. The n8n flow should copy these values from the Pi capture response headers.
 - The parser also accepts `boxes`, `imageWidth`, and `imageHeight` as compatibility aliases.
+- n8n puts the reason for an inspection in `reason`. `defect_detected`, `no_defect_detected` and `manual_review_required` mean the model really looked at the frame. Any other reason (`model_timeout`, `model_unreachable`, `frame_capture_failed`, …) or `"status": "error"` marks a failed inspection: the HUD shows `AI unavailable · <reason>` instead of "AI reports no detections", turns the AI status pill red, and keeps the message until the next result. Successful results still fade after `detectionTtlMs`.
 
 > **WebSocket ownership:** a standard n8n Webhook node is HTTP-only. The [detection relay](../detection-relay/README.md) serves port 8081, and the HUD server tunnels its `/detections` channel on the page's own host and port. The default therefore follows HTTP/HTTPS as `ws://`/`wss://`; set `--relay-origin` on the HUD server when the relay is on another machine. Connection settings can override this for a different deployment.
 
@@ -321,6 +335,6 @@ No packages need to be installed. With Node.js 18 or newer:
 npm test
 ```
 
-The tests cover camera-message parsing, payload parsing, result ordering, normalized coordinates, validation, contain/cover-aware box scaling, prompt payloads, HTTP errors, and request timeouts.
+The tests cover camera-message parsing, payload parsing, result ordering, normalized coordinates, validation, contain/cover-aware box scaling, prompt payloads, HTTP errors, and request timeouts. They also cover the capture request and its result wording, the failed-inspection summary, and the HUD server's `/n8n/inspect-now` proxy.
 
 Before a demo, also smoke-test on the physical Pico 4: rotate/resize the view, disconnect and restore Wi-Fi, verify that stale boxes clear, submit a prompt through the real n8n CORS policy, and compare one known box against the inference snapshot.

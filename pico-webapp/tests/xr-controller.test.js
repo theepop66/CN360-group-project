@@ -6,6 +6,7 @@ import {
   clampAngle,
   createEdgeTracker,
   createStickRepeater,
+  DEFAULT_CONTROLLER_SHORTCUTS,
   resolveButtonAction,
   stickDirection
 } from "../js/xr-controller.js";
@@ -67,12 +68,38 @@ test("resolves the configured PICO buttons per hand", () => {
   assert.equal(resolveButtonAction({ ...right, buttonIndex: 3 }), "reject");
   assert.equal(resolveButtonAction({ ...right, buttonIndex: 4 }), "pass");
   assert.equal(resolveButtonAction({ ...left, buttonIndex: 3 }), "manual");
-  assert.equal(resolveButtonAction({ ...left, buttonIndex: 4 }), "auto");
+  assert.equal(resolveButtonAction({ ...left, buttonIndex: 4 }), "capture");
   assert.equal(resolveButtonAction({ ...right, buttonIndex: 1 }), "sweep");
   assert.equal(resolveButtonAction({ handedness: "left", buttonIndex: 1 }), "sweep");
   assert.equal(resolveButtonAction({ ...right, buttonIndex: 0 }), null);
   assert.equal(resolveButtonAction({ ...right, buttonIndex: 2 }), null);
   assert.equal(resolveButtonAction({ handedness: "", buttonIndex: 3 }), null);
+});
+
+test("puts capture on the left secondary button and keeps the other shortcuts", () => {
+  assert.deepEqual({ ...DEFAULT_CONTROLLER_SHORTCUTS.buttons }, {
+    squeeze: "sweep",
+    rightPrimary: "reject",
+    rightSecondary: "pass",
+    leftPrimary: "manual",
+    leftSecondary: "capture",
+    leftStick: "reset-zoom"
+  });
+});
+
+test("left Y asks for a capture and no longer switches to Auto", () => {
+  const session = createFakeSession();
+  const actions = [];
+  attachXrControllerShortcuts({ session, onAction: (action) => actions.push(action) });
+
+  session.inputSources = [pad("left", { buttons: [false, false, false, false, true] })];
+  session.frame(0);
+  assert.deepEqual(actions, ["capture"]);
+
+  // X still selects Manual; its own key is not held back by Y's cooldown.
+  session.inputSources = [pad("left", { buttons: [false, false, false, true, false] })];
+  session.frame(100);
+  assert.deepEqual(actions, ["capture", "manual"]);
 });
 
 test("fires once per press and honours the cooldown", () => {

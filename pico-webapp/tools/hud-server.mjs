@@ -23,6 +23,14 @@ const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_ROOT = path.resolve(SCRIPT_DIR, "..");
 const DEFAULT_CONTROL_UNIT = "http://172.20.10.5";
 const PROXY_TIMEOUT_MS = 8000;
+const DEFAULT_N8N_ORIGIN = "http://127.0.0.1:5678";
+// The one n8n webhook the HUD may trigger. Taking a photo is an unpaired inspect-now: n8n
+// evaluates a fresh frame and never sends a physical command.
+const INSPECT_PATH = "/n8n/inspect-now";
+const INSPECT_UPSTREAM_PATH = "/webhook/inspect-now";
+// n8n answers once the model has decided (about a 2.5 s budget); the HUD client waits 15 s.
+const INSPECT_TIMEOUT_MS = 12000;
+const INSPECT_BODY_LIMIT = 4096;
 
 const MIME_TYPES = new Map(Object.entries({
   ".html": "text/html; charset=utf-8",
@@ -53,6 +61,7 @@ function parseArgs(argv) {
     key: "",
     controlUnit: DEFAULT_CONTROL_UNIT,
     relayOrigin: "http://127.0.0.1:8081",
+    n8nOrigin: DEFAULT_N8N_ORIGIN,
     root: DEFAULT_ROOT
   };
   const names = new Map([
@@ -62,6 +71,7 @@ function parseArgs(argv) {
     ["--key", "key"],
     ["--control-unit", "controlUnit"],
     ["--relay-origin", "relayOrigin"],
+    ["--n8n-origin", "n8nOrigin"],
     ["--phone-ca", "phoneCa"],
     ["--root", "root"]
   ]);
@@ -185,7 +195,111 @@ function proxyToControlUnit(req, res, target, pathname, search) {
   req.pipe(proxyReq);
 }
 
-export function createHandler({ root, controlUnit, phoneCamera, phoneCaBytes }) {
+// POST /n8n/inspect-now -> {n8nOrigin}/webhook/inspect-now. The HUD page may be HTTPS (WebXR),
+// which cannot call n8n over plain HTTP directly, so the HUD server relays this one request.
+//   - POST only, and only with a JSON content type: a cross-site form post or fetch from another
+//     page then needs a CORS preflight, which this server never answers.
+//   - The upstream body is always `{}`. The caller's body is read and dropped, so nobody can attach
+//     a controller_session or item_id and turn the request into a paired one.
+//   - One inspection at a time. A second one is refused (429) instead of queueing model runs.
+function createInspectProxy(n8nOrigin) {
+  let target = null;
+  try {
+    target = new URL(n8nOrigin);
+  } catch {
+    target = null;
+  }
+  if (!target || !["http:", "https:"].includes(target.protocol) || target.username || target.password ||
+      target.pathname !== "/" || target.search || target.hash) {
+    throw new Error("--n8n-origin must be an HTTP(S) origin without credentials or a path");
+  }
+
+  let inFlight = false;
+
+  const reply = (res, status, body, headers = {}) => {
+    if (res.headersSent) return;
+    res.writeHead(status, { "Content-Type": "application/json", "Cache-Control": "no-store", ...headers });
+    res.end(JSON.stringify(body));
+  };
+
+  const forward = (res) => {
+    const body = "{}";
+    const requestImpl = target.protocol === "https:" ? httpsRequest : httpRequest;
+    const startedAt = Date.now();
+    let timedOut = false;
+
+    const upstream = requestImpl({
+      protocol: target.protocol,
+      hostname: target.hostname,
+      port: target.port || (target.protocol === "https:" ? 443 : 80),
+      method: "POST",
+      path: INSPECT_UPSTREAM_PATH,
+      headers: {
+        "content-type": "application/json",
+        "content-length": Buffer.byteLength(body),
+        accept: "application/json"
+      }
+    }, (upstreamRes) => {
+      const status = upstreamRes.statusCode ?? 502;
+      console.log(`[hud] POST ${INSPECT_PATH} -> ${status} (${Date.now() - startedAt} ms)`);
+      res.writeHead(status, {
+        "Content-Type": upstreamRes.headers["content-type"] ?? "application/json",
+        "Cache-Control": "no-store"
+      });
+      upstreamRes.pipe(res);
+    });
+
+    // Take the slot only once the request exists, and keep it until the upstream request is
+    // really over, even if the browser gave up.
+    inFlight = true;
+    upstream.once("close", () => { inFlight = false; });
+    upstream.setTimeout(INSPECT_TIMEOUT_MS, () => {
+      timedOut = true;
+      upstream.destroy(new Error(`n8n timed out after ${INSPECT_TIMEOUT_MS} ms`));
+    });
+    upstream.on("error", (error) => {
+      console.error(`[hud] POST ${INSPECT_PATH} -> proxy error: ${error.message}`);
+      if (!res.headersSent) {
+        reply(res, 504, { error: timedOut ? "n8n timed out" : "n8n unreachable", detail: error.message });
+      } else {
+        res.destroy();
+      }
+    });
+    upstream.end(body);
+  };
+
+  return (req, res) => {
+    if (req.method !== "POST") {
+      req.resume();
+      return reply(res, 405, { error: "method not allowed" }, { Allow: "POST" });
+    }
+    if (!/^application\/json\b/i.test(req.headers["content-type"] ?? "")) {
+      req.resume();
+      return reply(res, 415, { error: "content-type must be application/json" });
+    }
+
+    let received = 0;
+    let tooLarge = false;
+    req.on("data", (chunk) => {
+      received += chunk.length;
+      if (received > INSPECT_BODY_LIMIT && !tooLarge) {
+        tooLarge = true;
+        reply(res, 413, { error: "request body too large" });
+      }
+    });
+    req.on("error", () => {});
+    req.on("end", () => {
+      if (tooLarge) return;
+      if (inFlight) {
+        return reply(res, 429, { error: "an inspection is already running" }, { "Retry-After": "2" });
+      }
+      forward(res);
+    });
+  };
+}
+
+export function createHandler({ root, controlUnit, n8nOrigin = DEFAULT_N8N_ORIGIN, phoneCamera, phoneCaBytes }) {
+  const inspectProxy = createInspectProxy(n8nOrigin);
   return (req, res) => {
     const url = new URL(req.url ?? "/", "http://localhost");
     if (url.pathname === "/phone-camera-ca.cer" && phoneCaBytes && req.method === "GET") {
@@ -193,6 +307,7 @@ export function createHandler({ root, controlUnit, phoneCamera, phoneCaBytes }) 
       return res.end(phoneCaBytes);
     }
     if (phoneCamera?.handle(req, res, url.pathname)) return;
+    if (url.pathname === INSPECT_PATH) return inspectProxy(req, res);
     if (url.pathname === "/esp" || url.pathname.startsWith("/esp/")) {
       return proxyToControlUnit(req, res, controlUnit, url.pathname, url.search);
     }
@@ -309,6 +424,7 @@ async function main() {
 
   console.log("[hud] serving", options.root);
   console.log(`[hud] /esp/* -> ${options.controlUnit}`);
+  console.log(`[hud] POST ${INSPECT_PATH} -> ${options.n8nOrigin}${INSPECT_UPSTREAM_PATH} (unpaired capture + inspection)`);
   console.log(`[hud] WebSocket /detections -> ${options.relayOrigin}/detections`);
   console.log("[hud] WebSocket /rtc -> WebRTC signaling (phone-to-VR peer-to-peer video)");
   for (const line of started) console.log(`[hud] ${line}`);

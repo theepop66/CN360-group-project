@@ -71,6 +71,33 @@ export function mapBoxToDisplay(box, source, container, fit = "contain") {
   };
 }
 
+// n8n puts the reason for an inspection in `reason`. Only these three mean the model really
+// looked at the frame. Anything else (model_timeout, model_unreachable, frame_capture_failed,
+// ...) is a failed inspection, so a reason n8n adds later fails safe: it is shown as
+// "AI unavailable" instead of being read as "no detections".
+const EVALUATED_REASONS = new Set(["defect_detected", "no_defect_detected", "manual_review_required"]);
+
+function inspectionFailure(payload) {
+  const reason = typeof payload.reason === "string" && payload.reason.trim() ? payload.reason.trim() : null;
+  const status = typeof payload.status === "string" ? payload.status.trim().toLowerCase() : "";
+  const failureReason = status === "error"
+    ? (reason ?? "error")
+    : (reason !== null && !EVALUATED_REASONS.has(reason) ? reason : null);
+  return failureReason === null ? {} : { inspectionFailed: true, failureReason };
+}
+
+// One line for the HUD summary. A failed inspection has an empty box list, which must never be
+// worded like a clean result.
+export function describeResult(parsed, { timeText = "" } = {}) {
+  const stamp = timeText ? ` · ${timeText}` : "";
+  if (parsed.inspectionFailed) return `AI unavailable · ${parsed.failureReason}${stamp}`;
+  if (parsed.reviewRequired) {
+    return "Human review required · controller reject · model suggestion: " + (parsed.modelSuggestion ?? "unavailable");
+  }
+  const count = parsed.detections.length;
+  return count === 0 ? "AI reports no detections" : `${count} detection${count === 1 ? "" : "s"}${stamp}`;
+}
+
 export function parseDetectionPayload(rawPayload) {
   const payload = typeof rawPayload === "string" ? JSON.parse(rawPayload) : rawPayload;
 
@@ -130,6 +157,7 @@ export function parseDetectionPayload(rawPayload) {
     sessionId: frame.sessionId ?? payload.sessionId ?? null,
     sequence: asFiniteNumber(frame.sequence ?? payload.sequence),
     timestamp: payload.timestamp ?? null,
+    ...inspectionFailure(payload),
     ...(typeof payload.reviewRequired === "boolean" ? { reviewRequired: payload.reviewRequired,
       reviewReason: payload.reviewReason ?? null, modelSuggestion: payload.modelSuggestion ?? null } : {}),
     detections

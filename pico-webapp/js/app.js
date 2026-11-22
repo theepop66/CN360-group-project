@@ -5,17 +5,18 @@ import { createDetectionOrderTracker } from "./detection-order.js";
 import { sendPrompt } from "./prompt.js";
 import { requestCapture, CAPTURE_TIMEOUT_MS } from "./capture.js";
 import { parseCameraMessage } from "./camera-message.js";
-import { VIEW_MODES, isImmersiveArSupported, isImmersiveVrSupported } from "./xr-modes.js";
+import { VIEW_MODES, xrContextError, isImmersiveArSupported, isImmersiveVrSupported } from "./xr-modes.js";
 import { startArPassthrough } from "./ar-passthrough.js";
 import { startVrCinema } from "./vr-cinema.js?v=4";
 import { installXrEmulatorIfRequested } from "./dev-xr-emulator.js";
 import { setMode, setServoAngle, runSweep, sendVerdict } from "./servo.js";
 import { createConveyorSender } from "./conveyor.js";
+import { controlFeedback } from "./control-feedback.js";
 import {
   attachXrControllerShortcuts,
   clampAngle,
   DEFAULT_CONTROLLER_SHORTCUTS
-} from "./xr-controller.js";
+} from "./xr-controller.js?v=4";
 import { createWebRtcReceiver } from "./webrtc-camera.js";
 
 const STORAGE_KEY = "cn360-hud-connections";
@@ -64,7 +65,8 @@ const elements = {
   servoPass: document.querySelector("#servo-pass"),
   servoReject: document.querySelector("#servo-reject"),
   servoFeedback: document.querySelector("#servo-feedback"),
-  captureNow: document.querySelector("#capture-now")
+  captureNow: document.querySelector("#capture-now"),
+  controllerInput: document.querySelector("#controller-input")
 };
 
 // Where the prompt form lives outside fullscreen, so it can be moved back
@@ -109,6 +111,7 @@ let controllerAngle = 0;
 let pendingControllerAngle = null;
 let controllerAngleSending = false;
 const controllerTrigger = { disabled: false };
+let controllerActionBusy = false;
 const xrDebugEnabled = new URLSearchParams(window.location.search).has("xrdebug");
 
 function loadConfig() {
@@ -171,6 +174,7 @@ function syncXrHud() {
   if (!activeXrController) return;
   activeXrController.setSummaryText?.(elements.summary.textContent);
   activeXrController.setServoStatusText?.(elements.servoFeedback.textContent);
+  activeXrController.setControllerInputText?.(elements.controllerInput?.textContent ?? "");
   for (const [kind, status] of Object.entries(lastStatus)) {
     if (status) activeXrController.setStatusText?.(kind, status.text, status.state);
   }
@@ -1026,6 +1030,12 @@ async function enterViewMode(targetMode) {
 
   if (targetMode === VIEW_MODES.FLAT) return;
 
+  const contextError = xrContextError(targetMode);
+  if (contextError) {
+    setStatus(elements.streamStatus, contextError, "error");
+    return;
+  }
+
   if (targetMode === VIEW_MODES.AR) {
     if (!(await isImmersiveArSupported())) {
       setStatus(elements.streamStatus, "AR passthrough is not supported on this browser/device.", "error");
@@ -1042,7 +1052,7 @@ async function enterViewMode(targetMode) {
       setModeButtonsState(VIEW_MODES.AR);
     } catch (error) {
       console.warn("Could not start AR passthrough:", error);
-      setStatus(elements.streamStatus, "Could not start AR passthrough.", "error");
+      setStatus(elements.streamStatus, `Could not start AR passthrough: ${error?.message || "unknown error"}`, "error");
     }
     return;
   }
@@ -1065,7 +1075,7 @@ async function enterViewMode(targetMode) {
       setModeButtonsState(VIEW_MODES.VR);
     } catch (error) {
       console.warn("Could not start VR cinema mode:", error);
-      setStatus(elements.streamStatus, "Could not start VR cinema mode.", "error");
+      setStatus(elements.streamStatus, `Could not start VR cinema: ${error?.message || "unknown error"}`, "error");
     }
   }
 }
@@ -1108,23 +1118,16 @@ elements.promptForm.addEventListener("submit", async (event) => {
 // (wrong mode, or the unit is mid-cycle) — surfaced as feedback rather
 // than treated as a thrown error like a network failure or timeout.
 async function runServoAction(trigger, action, describeSuccess) {
+  if (trigger.disabled) return null;
   const wasDisabled = trigger.disabled;
   trigger.disabled = true;
   elements.servoFeedback.className = "feedback";
   elements.servoFeedback.textContent = "Sending…";
+  mirrorServoFeedbackToVr();
 
   try {
     const result = await action();
-    if (result?.accepted === null || result?.accepted === undefined) {
-      elements.servoFeedback.className = "feedback feedback--error";
-      elements.servoFeedback.textContent = "Control acceptance is unknown. Check the current item before trying again.";
-    } else if (result.accepted === false) {
-      elements.servoFeedback.className = "feedback";
-      elements.servoFeedback.textContent = `Control unit ignored this request (${result.reason ?? "wrong mode, or mid-cycle"}).`;
-    } else {
-      elements.servoFeedback.className = "feedback feedback--ok";
-      elements.servoFeedback.textContent = describeSuccess(result);
-    }
+    renderControlFeedback(result, describeSuccess);
     return result;
   } catch (error) {
     elements.servoFeedback.className = "feedback feedback--error";
@@ -1134,7 +1137,14 @@ async function runServoAction(trigger, action, describeSuccess) {
     return null;
   } finally {
     trigger.disabled = wasDisabled;
+    mirrorServoFeedbackToVr();
   }
+}
+
+function renderControlFeedback(result, describeSuccess) {
+  const { state, text } = controlFeedback(result, describeSuccess);
+  elements.servoFeedback.className = `feedback${state === "idle" ? "" : ` feedback--${state}`}`;
+  elements.servoFeedback.textContent = text;
 }
 
 async function setServoMode(mode) {
@@ -1178,14 +1188,7 @@ async function pushControllerAngle(angle) {
           angle: next,
           timeoutMs: config.servoRequestTimeoutMs
         });
-        if (result?.accepted === false) {
-          elements.servoFeedback.className = "feedback";
-          elements.servoFeedback.textContent =
-            `Angle ${next}° ignored (switch to Manual, or wait for the cycle).`;
-        } else {
-          elements.servoFeedback.className = "feedback feedback--ok";
-          elements.servoFeedback.textContent = `Servo set to ${next}°.`;
-        }
+        renderControlFeedback(result, () => `Servo angle command accepted: ${next}°.`);
       } catch (error) {
         elements.servoFeedback.className = "feedback feedback--error";
         elements.servoFeedback.textContent = error.name === "AbortError"
@@ -1198,6 +1201,7 @@ async function pushControllerAngle(angle) {
     }
   } finally {
     controllerAngleSending = false;
+    mirrorServoFeedbackToVr();
   }
 }
 
@@ -1240,30 +1244,44 @@ async function runCapture() {
 }
 
 async function handleControllerAction(action) {
-  if (action === "reject" || action === "pass") {
-    await runServoAction(
-      controllerTrigger,
-      () => sendVerdict({
-        servoUrl: config.servoUrl,
-        action,
-        timeoutMs: config.servoRequestTimeoutMs
-      }),
-      (res) => (action === "reject" ? `Marked as ${res.status ?? "reject"}.` : "Marked as pass.")
-    );
-  } else if (action === "sweep") {
-    await runServoAction(
-      controllerTrigger,
-      () => runSweep({ url: config.servoUrl, timeoutMs: config.servoRequestTimeoutMs }),
-      () => "Sweep triggered."
-    );
-  } else if (action === "capture") {
+  // Taking a photo talks to n8n, not to the control unit, so it neither waits for a servo
+  // command nor holds one up while the model runs.
+  if (action === "capture") {
     await runCapture();
-  } else if (action === "manual" || action === "auto") {
-    await setServoMode(action);
-  } else {
     return;
   }
-  mirrorServoFeedbackToVr();
+
+  // Do not race a mode change with a sweep or another controller command.
+  if (controllerActionBusy || controllerAngleSending) {
+    elements.servoFeedback.textContent = "Wait for the current control request to finish, then press again.";
+    mirrorServoFeedbackToVr();
+    return;
+  }
+  controllerActionBusy = true;
+  try {
+    if (action === "reject" || action === "pass") {
+      await runServoAction(
+        controllerTrigger,
+        () => sendVerdict({
+          servoUrl: config.servoUrl,
+          action,
+          timeoutMs: config.servoRequestTimeoutMs
+        }),
+        (res) => (action === "reject" ? `Marked as ${res.status ?? "reject"}.` : "Marked as pass.")
+      );
+    } else if (action === "sweep") {
+      await runServoAction(
+        controllerTrigger,
+        () => runSweep({ url: config.servoUrl, timeoutMs: config.servoRequestTimeoutMs }),
+        () => "Sweep command accepted."
+      );
+    } else if (action === "manual" || action === "auto") {
+      await setServoMode(action);
+    }
+  } finally {
+    controllerActionBusy = false;
+    mirrorServoFeedbackToVr();
+  }
 }
 
 function startControllerShortcuts(session) {
@@ -1287,6 +1305,10 @@ function startControllerShortcuts(session) {
     onConveyor: (direction) => conveyor.setDirection(direction),
     onStop: () => conveyor.stop(),
     onAngle: (angle) => {
+      if (controllerActionBusy) {
+        activeControllerShortcuts?.setAngle?.(controllerAngle);
+        return;
+      }
       controllerAngle = angle;
       syncAngleUi(angle);
       void pushControllerAngle(angle);
@@ -1297,8 +1319,11 @@ function startControllerShortcuts(session) {
     onDebug: xrDebugEnabled
       ? (text) => {
           console.info(`[xr-controller] ${text}`);
-          elements.servoFeedback.textContent = `Controller: ${text}`;
-          activeXrController?.setServoStatusText?.(`Controller: ${text}`);
+          if (elements.controllerInput) {
+            elements.controllerInput.hidden = false;
+            elements.controllerInput.textContent = `Input: ${text}`;
+          }
+          activeXrController?.setControllerInputText?.(`Input: ${text}`);
         }
       : null
   });

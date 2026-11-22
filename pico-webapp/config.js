@@ -28,7 +28,7 @@ window.HUD_CONFIG = Object.freeze({
   // Left Y ("capture") takes a photo: one n8n inspection that only advises the operator.
   // Auto mode has no controller button any more; use the Auto toggle in the 2D panel.
   // Buttons use the
-  // current PICO indices (1 squeeze, 3 A/X, 4 B/Y); open the HUD with
+  // PICO xr-standard indices (1 grip, 3 stick click, 4 A/X, 5 B/Y); open the HUD with
   // ?xrdebug=1 to log the real indices if PICO reports a different layout.
   controllerShortcuts: {
     stepDeg: 5,

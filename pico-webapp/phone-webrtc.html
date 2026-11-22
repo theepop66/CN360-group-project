@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="th">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -29,8 +29,8 @@
     <button id="start">Start</button>
     <button id="stop" disabled>Stop</button>
   </div>
-  <p id="status">กดปุ่ม Start เพื่อเริ่มส่งภาพผ่าน WebRTC</p>
-  <p class="hint">เปิดหน้านี้บน iPhone แล้วกด Start · ฝั่ง VR เปิด HUD ด้วย <code>?camera=webrtc</code></p>
+  <p id="status">Tap Start to stream the camera over WebRTC.</p>
+  <p class="hint">Open this page on iPhone and tap Start. On PICO, open the HUD with <code>?camera=webrtc</code>.</p>
   <script type="module">
     import { createWebRtcSender } from "./js/webrtc-camera.js";
 
@@ -46,7 +46,7 @@
     async function start() {
       startBtn.disabled = true;
       stopBtn.disabled = false;
-      setStatus("กำลังขอใช้กล้อง…");
+      setStatus("Requesting camera access...");
       try {
         media = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } },
@@ -57,17 +57,17 @@
         sender = createWebRtcSender(media);
         sender.start((state) => {
           const labels = {
-            "connected-to-signal": "เชื่อมต่อ signaling แล้ว · รอ VR headset…",
-            "signal-disconnected": "signaling ขาด · กำลังเชื่อมต่อใหม่…",
-            "connected": "WebRTC เชื่อมต่อสำเร็จ · กำลังส่งภาพ",
-            "connecting": "กำลังเชื่อมต่อ WebRTC…",
-            "failed": "การเชื่อมต่อล้มเหลว",
-            "disconnected": "ขาดการเชื่อมต่อ"
+            "connected-to-signal": "Signaling connected. Waiting for the VR headset...",
+            "signal-disconnected": "Signaling disconnected. Reconnecting...",
+            "connected": "WebRTC connected. Streaming camera video.",
+            "connecting": "Connecting WebRTC...",
+            "failed": "Connection failed",
+            "disconnected": "Disconnected"
           };
           setStatus(labels[state] ?? state);
         });
       } catch (error) {
-        setStatus(`ใช้กล้องไม่ได้: ${error.message}`);
+        setStatus(`Camera unavailable: ${error.message}`);
         stop();
       }
     }
@@ -78,7 +78,7 @@
       video.srcObject = null;
       startBtn.disabled = false;
       stopBtn.disabled = true;
-      setStatus("หยุดส่งภาพแล้ว");
+      setStatus("Streaming stopped");
     }
 
     startBtn.addEventListener("click", start);

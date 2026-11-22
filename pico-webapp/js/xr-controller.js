@@ -5,8 +5,9 @@
 // node --test, which cannot create a real XRSession.
 //
 // Current PICO controller button indices used by this deployment:
-//   0 trigger, 1 squeeze (grip), 2 thumbstick click, 3 primary (A/X),
-//   4 secondary (B/Y).
+//   0 trigger, 1 squeeze (grip), 2 unused touchpad placeholder,
+//   3 thumbstick click, 4 primary (A/X), 5 secondary (B/Y).
+// Source: immersive-web/webxr-input-profiles, registry/profiles/pico/pico-4.json.
 // The discovery helper (?xrdebug=1) logs the real indices per hand because
 // the browser's reported layout can vary between controller profiles.
 
@@ -27,8 +28,18 @@ export const DEFAULT_CONTROLLER_SHORTCUTS = Object.freeze({
 });
 
 const SQUEEZE_BUTTON = 1;
-const PRIMARY_BUTTON = 3;
-const SECONDARY_BUTTON = 4;
+const THUMBSTICK_BUTTON = 3;
+const PRIMARY_BUTTON = 4;
+const SECONDARY_BUTTON = 5;
+
+export function controllerButtonLabel(handedness, buttonIndex) {
+  if (buttonIndex === 0) return "Trigger";
+  if (buttonIndex === SQUEEZE_BUTTON) return "Grip";
+  if (buttonIndex === THUMBSTICK_BUTTON) return "Stick click";
+  if (buttonIndex === PRIMARY_BUTTON) return handedness === "left" ? "X" : "A";
+  if (buttonIndex === SECONDARY_BUTTON) return handedness === "left" ? "Y" : "B";
+  return `Button ${buttonIndex}`;
+}
 
 export function clampAngle(angle) {
   const value = Math.round(Number(angle));
@@ -58,10 +69,10 @@ export function resolveButtonAction(
   { handedness = "", buttonIndex },
   buttons = DEFAULT_CONTROLLER_SHORTCUTS.buttons
 ) {
-  if (buttonIndex === SQUEEZE_BUTTON) return buttons.squeeze ?? null;
   const hand = handedness === "left" || handedness === "right" ? handedness : null;
   if (!hand) return null;
-  if (buttonIndex === 2 && hand === "left") return buttons.leftStick ?? null;
+  if (buttonIndex === SQUEEZE_BUTTON) return buttons.squeeze ?? null;
+  if (buttonIndex === THUMBSTICK_BUTTON && hand === "left") return buttons.leftStick ?? null;
   if (buttonIndex === PRIMARY_BUTTON) return buttons[`${hand}Primary`] ?? null;
   if (buttonIndex === SECONDARY_BUTTON) return buttons[`${hand}Secondary`] ?? null;
   return null;
@@ -73,6 +84,9 @@ export function createEdgeTracker({ cooldownMs = 350 } = {}) {
   const held = new Set();
   const lastFiredAt = new Map();
   return {
+    releaseMissing(keys) {
+      for (const key of held) if (!keys.has(key)) held.delete(key);
+    },
     update(key, isDown, now) {
       if (!isDown) {
         held.delete(key);
@@ -113,9 +127,12 @@ export function createStickRepeater({ repeatMs = 220, firstRepeatMs = 350 } = {}
 }
 
 function pulse(source, intensity = 0.45, durationMs = 45) {
-  const actuator = source?.gamepad?.hapticActuators?.[0];
-  const result = actuator?.pulse?.(intensity, durationMs);
-  Promise.resolve(result).catch(() => {});
+  // Haptics are optional. Driver errors must not stop input polling.
+  try {
+    const actuator = source?.gamepad?.hapticActuators?.[0];
+    const result = actuator?.pulse?.(intensity, durationMs);
+    Promise.resolve(result).catch(() => {});
+  } catch { /* Controller input remains usable without vibration. */ }
 }
 
 export function attachXrControllerShortcuts({
@@ -134,6 +151,11 @@ export function attachXrControllerShortcuts({
     throw new TypeError("attachXrControllerShortcuts requires a WebXR session.");
   }
 
+  shortcuts = {
+    ...DEFAULT_CONTROLLER_SHORTCUTS,
+    ...shortcuts,
+    buttons: { ...DEFAULT_CONTROLLER_SHORTCUTS.buttons, ...shortcuts?.buttons }
+  };
   const edges = createEdgeTracker({ cooldownMs: shortcuts.buttonCooldownMs });
   const repeater = createStickRepeater({
     repeatMs: shortcuts.repeatMs,
@@ -150,23 +172,25 @@ export function attachXrControllerShortcuts({
     let zoomDirection = 0;
     let zoomReset = false;
     let conveyorDirection = null;
+    const observedButtons = new Set();
 
     for (const source of session.inputSources ?? []) {
       const gamepad = source?.gamepad;
-      if (!gamepad) continue;
+      if (!gamepad || gamepad.connected === false) continue;
 
       const buttons = gamepad.buttons ?? [];
       for (let index = 0; index < buttons.length; index += 1) {
         const button = buttons[index];
         const down = Boolean(button?.pressed) || Number(button?.value ?? 0) > 0.5;
         const key = `${source.handedness || "unknown"}:${index}`;
+        observedButtons.add(key);
         if (!edges.update(key, down, stamp)) continue;
 
         const action = resolveButtonAction(
           { handedness: source.handedness, buttonIndex: index },
           shortcuts.buttons
         );
-        onDebug?.(`${source.handedness || "unknown"} button ${index} → ${action ?? "unmapped"}`);
+        onDebug?.(`${source.handedness || "unknown"} ${controllerButtonLabel(source.handedness, index)} [${index}] -> ${action ?? "no shortcut"}`);
         if (action) {
           if (action === "reset-zoom") {
             zoomReset = true; onCameraZoom("reset");
@@ -192,6 +216,7 @@ export function attachXrControllerShortcuts({
       }
     }
 
+    edges.releaseMissing(observedButtons);
     onConveyor(conveyorDirection);
 
     const step = repeater.update(Math.sign(direction), stamp);

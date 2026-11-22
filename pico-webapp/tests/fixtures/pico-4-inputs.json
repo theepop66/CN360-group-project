@@ -1,0 +1,7 @@
+{
+  "source": "https://github.com/immersive-web/webxr-input-profiles/blob/main/packages/registry/profiles/pico/pico-4.json",
+  "profileId": "pico-4",
+  "mapping": "xr-standard",
+  "left": ["trigger", "grip", null, "stick", "X", "Y"],
+  "right": ["trigger", "grip", null, "stick", "A", "B"]
+}

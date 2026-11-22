@@ -7,7 +7,7 @@
     <title>VisionQC</title>
     <link rel="stylesheet" href="./styles.css" />
     <script src="./config.js"></script>
-    <script type="module" src="./js/app.js?v=3"></script>
+    <script type="module" src="./js/app.js?v=4"></script>
   </head>
   <body>
     <main class="app-shell">
@@ -180,6 +180,7 @@
           <button type="button" class="primary-button" id="servo-reject">Reject now</button>
         </div>
 
+        <p id="controller-input" class="feedback" hidden></p>
         <p id="servo-feedback" class="feedback" role="status" aria-live="polite">
           Switch to Manual to move the servo directly. Reject/Pass apply while the unit is awaiting a verdict.
           In AR/VR, the right thumbstick jogs the servo. The left thumbstick controls the conveyor up/down and camera zoom left/right (click to reset). Controller buttons send Reject, Pass, Sweep and Manual; the left Y button captures a photo and asks the AI to inspect it.

@@ -48,11 +48,32 @@ export async function setServoAngle({ fetchImpl, url, angle, timeoutMs }) {
   if (!Number.isInteger(value) || value < 0 || value > 180) {
     throw new TypeError("angle must be an integer between 0 and 180.");
   }
-  return postJson({ fetchImpl, url, body: { angle: value }, timeoutMs });
+  return servoCommand({ fetchImpl, url, body: { angle: value }, timeoutMs });
 }
 
 export function runSweep({ fetchImpl, url, timeoutMs }) {
-  return postJson({ fetchImpl, url, body: { sweep: true }, timeoutMs });
+  return servoCommand({ fetchImpl, url, body: { sweep: true }, timeoutMs });
+}
+
+// Older firmware returns only accepted:false for /servo. Read status once to
+// explain the refusal; never switch modes or retry a physical command here.
+async function servoCommand(options) {
+  const result = await postJson(options);
+  if (result?.accepted !== false || result.reason) return result;
+  try {
+    const status = await postJson({
+      fetchImpl: options.fetchImpl,
+      url: deriveControlUrl(options.url, "status"),
+      method: "GET",
+      timeoutMs: options.timeoutMs
+    });
+    const reason = status.mode === "auto" ? "manual_mode_required"
+      : typeof status.state === "string" && status.state !== "idle" ? "controller_busy"
+      : "servo_command_refused";
+    return { ...result, reason };
+  } catch {
+    return result;
+  }
 }
 
 // The firmware exposes /verdict on the same host as /servo but the HUD only

@@ -1,5 +1,8 @@
 # Controller item/deadline contract
 
+For the complete installation and device startup sequence, see the
+[English PICO, camera and controller setup guide](../docs/PICO_SETUP.md).
+
 Build outputs and `src/secrets.h` are ignored. Copy `src/secrets.example.h` for
 local configuration and keep real values outside Git. Ignoring a file does not
 remove older commits; see the [history cleanup procedure](../docs/history-cleanup.md).
@@ -61,6 +64,45 @@ unknown delivery. The installed n8n workflows remain inactive/unmodified until
 separately configured for deployment.
 
 ## PC verification
+
+### Physical conveyor bench test from a PC
+
+With Node.js 18+ installed, run these commands from the repository root. Replace
+`172.20.10.5` (the firmware's configured address) with the board's current IP.
+Use the board's IP, not the PC's Wi-Fi address. Start with the read-only status check:
+
+```powershell
+node 360ControlUnit/test/conveyor-bench.mjs http://172.20.10.5 status
+```
+
+With the belt clear and ready to move, run one pulse at a time:
+
+```powershell
+node 360ControlUnit/test/conveyor-bench.mjs http://172.20.10.5 forward 2
+```
+
+This selects Manual mode, sends neutral, renews forward commands for two seconds,
+and requests a stop. The controller stays in Manual. To test reverse, use
+`reverse 2`. To request only a stop, use `stop`. Ctrl+C ends renewals and attempts
+a stop; the firmware also expires the lease locally after 400 ms without renewal.
+Each pulse is limited to five seconds. An accepted response confirms the command,
+so verify actual belt rotation and stopping by observation.
+
+The installed firmware must expose `/status`, `/mode`, `/conveyor/lease` and
+`/conveyor` with the current session/sequence/lease contract. A missing endpoint
+or missing status fields requires checking the board's installed firmware.
+A timeout requires checking that the PC and ESP32 can reach each other on Wi-Fi.
+Status requests allow five seconds; conveyor requests retain a 250 ms timeout
+to stay within the firmware's short lease window.
+This script does not flash firmware.
+
+Software verification without operating hardware:
+
+```powershell
+node --test 360ControlUnit/test/conveyor-bench.test.mjs
+```
+
+### Existing controller checks
 
 From the repository root:
 

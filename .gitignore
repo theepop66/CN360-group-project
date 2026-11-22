@@ -1,0 +1,5 @@
+# Local compiler and editor output; source files remain tracked.
+360ControlUnit/test/host/build/
+controlunit_schematic/.history/
+.scratch/
+.mypy_cache/

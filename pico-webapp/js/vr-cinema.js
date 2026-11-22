@@ -284,6 +284,9 @@ export async function startVrCinema({ compositeCanvasId, onEnd, onFrame } = {}) 
   const servoStatus = label(root, "", {
     x: 0, y: 0.67, z: CARD_Z + 0.02, width: 2.3, wrapCount: 84, color: THEME.blue, align: "center", anchor: "center"
   });
+  const controllerInput = label(root, "", {
+    x: 0, y: 0.57, z: CARD_Z + 0.02, width: 2.3, wrapCount: 100, color: THEME.inkSoft, align: "center", anchor: "center"
+  });
 
   // --- Controller legend (mirrors the HUD buttons) -------------------------
   const chips = [
@@ -356,6 +359,9 @@ export async function startVrCinema({ compositeCanvasId, onEnd, onFrame } = {}) 
     },
     setServoStatusText(text) {
       setText(servoStatus, truncate(text, 110));
+    },
+    setControllerInputText(text) {
+      setText(controllerInput, truncate(text, 110));
     },
     setZoomText(text) {
       setText(zoomStatus, truncate(text, 110));

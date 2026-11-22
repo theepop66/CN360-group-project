@@ -64,6 +64,38 @@ test("posts a sweep request to the servo endpoint", async () => {
   assert.equal(request.options.body, '{"sweep":true}');
 });
 
+test("a refused sweep reports Manual mode as the missing requirement without changing mode or retrying", async () => {
+  const calls = [];
+  const result = await runSweep({ url: SERVO_URL, fetchImpl: async (url, options) => {
+    calls.push({ url, method: options.method, body: options.body });
+    return jsonResponse(options.method === "GET" ? { mode: "auto", state: "idle" } : { accepted: false });
+  } });
+  assert.equal(result.accepted, false);
+  assert.equal(result.reason, "manual_mode_required");
+  assert.deepEqual(calls, [
+    { url: SERVO_URL, method: "POST", body: '{"sweep":true}' },
+    { url: "http://192.168.1.50/status", method: "GET", body: undefined }
+  ]);
+});
+
+test("a busy servo cycle reports refusal and does not queue a later sweep", async () => {
+  let posts = 0;
+  const result = await runSweep({ url: SERVO_URL, fetchImpl: async (_url, options) => {
+    if (options.method === "POST") posts++;
+    return jsonResponse(options.method === "GET" ? { mode: "manual", state: "rejecting" } : { accepted: false });
+  } });
+  assert.equal(result.reason, "controller_busy");
+  assert.equal(posts, 1);
+});
+
+test("failure to read status preserves a refused servo receipt", async () => {
+  const result = await runSweep({ url: SERVO_URL, fetchImpl: async (_url, options) => {
+    if (options.method === "GET") throw new Error("offline");
+    return jsonResponse({ accepted: false });
+  } });
+  assert.deepEqual(result, { accepted: false });
+});
+
 test("surfaces accepted:false instead of throwing (firmware no-op, not an error)", async () => {
   const result = await setServoAngle({
     fetchImpl: async () => jsonResponse({ accepted: false }),

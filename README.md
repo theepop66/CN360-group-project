@@ -2,6 +2,68 @@
 
 An adaptive, vision-based quality inspection system that lets operators redefine what counts as a "defect" on the fly — no model retraining required. The project combines **Vision AI** (NVIDIA LocateAnything), **workflow automation** (n8n), **embedded hardware** (ESP32 + Raspberry Pi), and an **immersive interface** (Pico 4 Web HUD) into a single closed-loop inspection pipeline.
 
+## Setup
+
+Use **Node.js 20+**, **Git**, and **PowerShell 7.2+** on the Windows PC.
+Connect the PC, ESP32, PICO and optional phone to the same Wi-Fi network.
+
+### 1. Clone the project
+
+```powershell
+git clone https://github.com/theepop66/CN360-group-project.git
+cd CN360-group-project
+```
+
+Run the following commands from this repository root. The HUD server needs no
+`npm install`. If the ESP32 has not been configured yet, follow the
+[ESP32 firmware and wiring steps](./docs/PICO_SETUP.md#3-prepare-the-esp32-and-wiring)
+before continuing.
+
+### 2. Find the PC address and prepare HTTPS
+
+```powershell
+ipconfig
+.\pico-webapp\tools\setup-vr-https.ps1 -IpAddress 172.20.10.3
+```
+
+Replace `172.20.10.3` with the PC's Wi-Fi IPv4 address. Generate the certificate
+once; reuse a matching, unexpired certificate. The script refuses to overwrite
+an existing pair. Review certificate trust on each device.
+
+### 3. Start the PICO HUD and ESP32 connection
+
+```powershell
+.\START-PICO-VR.cmd
+```
+
+The default ESP32 address is `172.20.10.5`. For another board address:
+
+```powershell
+.\START-PICO-VR.cmd http://192.168.1.50
+```
+
+Keep the terminal open. Wait for the HTTPS and ESP32 status checks to report
+`[OK]`. If the terminal is already inside `pico-webapp`, use
+`..\START-PICO-VR.cmd` instead. Press Ctrl+C to stop the server.
+
+### 4. Open the correct page on each device
+
+| Device / purpose | URL to open |
+| --- | --- |
+| PICO Browser: VR and controller controls | `https://172.20.10.3:8443/?xrdebug=1` |
+| Optional phone browser: WebRTC camera sender | `https://172.20.10.3:8443/phone-webrtc.html` |
+| PICO Browser: receive the phone's WebRTC video | `https://172.20.10.3:8443/?camera=webrtc&xrdebug=1` |
+
+Replace the PC IP in every URL. On PICO, review the local certificate, open the
+HUD and select **VR cinema**. Press **X** and wait for Manual confirmation.
+Use the **left stick up/down** for conveyor forward/reverse; release to stop.
+Press either **side Grip** for a servo Sweep. On the optional phone sender,
+tap **Start**, allow camera access and keep the page visible.
+
+For the full installation, phone pairing and remote zoom, optional AI services,
+all controller buttons and troubleshooting, see the
+[complete English setup guide](./docs/PICO_SETUP.md).
+
 ## 📖 Overview
 Traditional AI-based QC systems require retraining whenever the target defect changes. This project solves that by using an **open-vocabulary detection model** (LocateAnything) driven by a live text prompt. An operator can type a new inspection target — e.g., `"bruised spot on fruit"`, `"scratch"`, `"hole"`, `"mold"` — directly from the HUD, and the system immediately starts detecting that target on the production line.
 

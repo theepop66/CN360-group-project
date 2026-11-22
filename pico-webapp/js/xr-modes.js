@@ -14,6 +14,12 @@ export function isViewMode(value) {
   return value === VIEW_MODES.FLAT || value === VIEW_MODES.AR || value === VIEW_MODES.VR;
 }
 
+export function xrContextError(viewMode, secureContext = globalThis.isSecureContext) {
+  if (viewMode === VIEW_MODES.FLAT || secureContext !== false) return null;
+  const label = viewMode === VIEW_MODES.AR ? "AR passthrough" : "VR cinema";
+  return `${label} requires HTTPS. Open the HTTPS HUD on port 8443 on your headset.`;
+}
+
 export async function isSessionModeSupported(sessionMode, xr = globalThis.navigator?.xr) {
   if (!xr?.isSessionSupported) return false;
   try {

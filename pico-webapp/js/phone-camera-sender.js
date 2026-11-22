@@ -24,8 +24,8 @@ function nextVideoFrame() {
       if (cancelFrameWait === cancel) cancelFrameWait = null;
       if (error) reject(error); else resolve();
     };
-    const cancel = () => finish(new Error("หยุดรอภาพจากกล้องแล้ว"));
-    const timer = setTimeout(() => finish(new Error("กล้องไม่มีภาพใหม่ กรุณาเริ่มใหม่")), 2000);
+    const cancel = () => finish(new Error("Stopped waiting for a camera frame"));
+    const timer = setTimeout(() => finish(new Error("No new camera frame. Please restart the camera.")), 2000);
     cancelFrameWait = cancel;
     callbackId = video.requestVideoFrameCallback(() => finish());
   });
@@ -43,7 +43,7 @@ async function api(path, options) {
   } finally { clearTimeout(timer); if (pending === controller) pending = null; }
 }
 
-function stop(message = "หยุดส่งภาพแล้ว") {
+function stop(message = "Streaming stopped") {
   generation++;
   zoomApplyingGeneration = null;
   pending?.abort();
@@ -65,7 +65,7 @@ async function publish(current, serverTime, clockStart) {
   while (current === generation) {
     await nextVideoFrame();
     if (current !== generation) return;
-    if (!video.videoWidth || video.readyState < 2 || media.getVideoTracks()[0].muted) throw new Error("กล้องถูกพัก กรุณาเริ่มใหม่");
+    if (!video.videoWidth || video.readyState < 2 || media.getVideoTracks()[0].muted) throw new Error("Camera paused. Please restart the camera.");
     const scale = Math.min(1, 960 / video.videoWidth, 720 / video.videoHeight);
     canvas.width = Math.round(video.videoWidth * scale);
     canvas.height = Math.round(video.videoHeight * scale);
@@ -73,7 +73,7 @@ async function publish(current, serverTime, clockStart) {
     canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
     const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.75));
     if (current !== generation) return;
-    if (!blob) throw new Error("ไม่สามารถแปลงภาพจากกล้องได้");
+    if (!blob) throw new Error("Could not encode the camera frame");
     const result = await api("/phone-camera/frame", {
       method: "POST", body: blob,
       headers: { Authorization: `Bearer ${session.token}`, "Content-Type": "image/jpeg", "X-Frame-Sequence": String(++sequence), "X-Captured-At-Ms": String(capturedMs), "X-Camera-Zoom-Command": String(confirmedZoomCommand) }
@@ -101,7 +101,7 @@ async function publish(current, serverTime, clockStart) {
       confirmedZoomCommand = result.zoomCommand.id;
       if (current !== generation) return;
     }
-    status.textContent = `กำลังส่งภาพ · ${canvas.width} × ${canvas.height} · ภาพที่ ${result.sequence}`;
+    status.textContent = `Streaming · ${canvas.width} × ${canvas.height} · Frame ${result.sequence}`;
     await new Promise(resolve => setTimeout(resolve, 125));
   }
 }
@@ -112,23 +112,23 @@ async function reportZoom(track, commandId = 0, error = null) {
     method: "POST", headers: { Authorization: `Bearer ${session.token}`, "Content-Type": "application/json" },
     body: JSON.stringify({ ...camera, commandId, error })
   });
-  zoomStatus.textContent = !camera.supported ? "เบราว์เซอร์/กล้องนี้ไม่รองรับการควบคุมซูมกล้อง" :
-    `ซูมกล้องจริง ${camera.value.toFixed(2)}× (${camera.min}–${camera.max}×)${error ? " · คำสั่งซูมไม่สำเร็จ" : ""}`;
+  zoomStatus.textContent = !camera.supported ? "This browser/camera does not support remote camera zoom" :
+    `Actual camera zoom ${camera.value.toFixed(2)}× (${camera.min}–${camera.max}×)${error ? " · Zoom command failed" : ""}`;
 }
 
 form.addEventListener("submit", async event => {
   event.preventDefault();
-  if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) { status.textContent = "ต้องเปิดผ่าน HTTPS ที่เชื่อถือได้ก่อนจึงใช้กล้องได้"; return; }
-  if (!video.requestVideoFrameCallback) { status.textContent = "เบราว์เซอร์นี้ไม่รองรับการยืนยันภาพใหม่ กรุณาอัปเดต Safari"; return; }
+  if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) { status.textContent = "Open this page over trusted HTTPS to use the camera"; return; }
+  if (!video.requestVideoFrameCallback) { status.textContent = "This browser cannot confirm new frames. Please update Safari."; return; }
   const current = ++generation;
   startButton.disabled = true; stopButton.disabled = false; codeInput.disabled = true;
-  status.textContent = "กำลังขอใช้กล้อง…";
+  status.textContent = "Requesting camera access...";
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" }, width: { ideal: 960 }, height: { ideal: 720 }, zoom: true }, audio: false });
     if (current !== generation) { stream.getTracks().forEach(track => track.stop()); return; }
     media = stream;
-    stream.getVideoTracks()[0].addEventListener("ended", () => { if (current === generation) stop("กล้องหยุดทำงาน กรุณาเริ่มใหม่"); });
-    stream.getVideoTracks()[0].addEventListener("mute", () => { if (current === generation && zoomApplyingGeneration !== current) stop("กล้องถูกพัก กรุณาเริ่มใหม่"); });
+    stream.getVideoTracks()[0].addEventListener("ended", () => { if (current === generation) stop("Camera ended. Please restart the camera."); });
+    stream.getVideoTracks()[0].addEventListener("mute", () => { if (current === generation && zoomApplyingGeneration !== current) stop("Camera paused. Please restart the camera."); });
     video.srcObject = stream;
     await video.play();
     if (current !== generation) return;
@@ -142,9 +142,9 @@ form.addEventListener("submit", async event => {
     await reportZoom(stream.getVideoTracks()[0]);
     if (current !== generation) return;
     await publish(current, paired.serverTime, clockStart);
-  } catch (error) { if (current === generation) stop(`ส่งภาพไม่ได้: ${error.message}`); }
+  } catch (error) { if (current === generation) stop(`Streaming failed: ${error.message}`); }
 });
 stopButton.addEventListener("click", () => stop());
-document.addEventListener("visibilitychange", () => { if (document.hidden) stop("หยุดส่งภาพเมื่อออกจากหน้านี้ กดเริ่มเพื่อเชื่อมต่ออีกครั้ง"); });
+document.addEventListener("visibilitychange", () => { if (document.hidden) stop("Streaming stopped because this page was hidden. Tap Start to reconnect."); });
 window.addEventListener("pagehide", () => stop());
-video.addEventListener("pause", () => { if (media && video.paused) stop("วิดีโอถูกพัก กรุณาเริ่มใหม่"); });
+video.addEventListener("pause", () => { if (media && video.paused) stop("Video paused. Please restart the camera."); });

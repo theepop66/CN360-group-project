@@ -2,6 +2,13 @@
 
 A build-free 2D quality-control HUD for the Pico 4 browser. It can display this device's local webcam or a remote MJPEG/image feed, draws n8n detection results on a canvas, and sends a new text prompt to n8n.
 
+## Installation and startup
+
+Follow [PICO_SETUP.md](../docs/PICO_SETUP.md) for the complete English walkthrough,
+including commands from a fresh clone, ESP32 setup, HTTPS certificate generation,
+the root/subfolder launcher paths, PICO and phone URLs, camera-only versus
+combined controller servers, controller mappings, shutdown and troubleshooting.
+
 ## View modes
 
 The viewer toolbar has a **2D HUD / AR passthrough / VR cinema** switcher (top-right of the video panel):
@@ -13,6 +20,19 @@ The viewer toolbar has a **2D HUD / AR passthrough / VR cinema** switcher (top-r
 Both XR modes require the headset's browser to support the relevant WebXR session mode; unsupported devices get an inline error and stay on 2D HUD instead of failing silently. Verify camera-passthrough- and detection-related logic with the 2D HUD first — it is the only mode this project's `npm test` suite and a desktop browser can exercise directly. Test the XR modes with the [Immersive Web Emulator](https://chromewebstore.google.com/detail/immersive-web-emulator/cgffilbpcibhmcfbgggfhfolhkfbhmik) in desktop Chrome/Edge for quick iteration, then confirm on a physical Pico 4 before a demo — an emulator cannot verify stereo rendering, head tracking, controller input, or real passthrough latency.
 
 ### Controller shortcuts (AR / VR only)
+
+PICO 4 uses the registered `xr-standard` layout: Grip = index 1, stick click =
+index 3, A/X = index 4 and B/Y = index 5. Index 2 is an unused touchpad slot;
+it must not be removed when interpreting the button array. See the
+[PICO 4 input profile](https://github.com/immersive-web/webxr-input-profiles/blob/main/packages/registry/profiles/pico/pico-4.json).
+The trigger has no actuator shortcut, and the menu/home buttons belong to the
+headset/browser. In `?xrdebug=1`, the HUD and VR screen show the physical button
+and index on a separate input line; the controller receipt remains visible on
+the status line. A refused Sweep explains whether Manual mode or an idle unit
+is needed. Press **X**, wait for **Mode set to manual**, then press the side
+**Grip** for a Sweep (0 to 90 degrees and back with the current firmware).
+Tests use the registered layout, including its placeholder, instead of assuming
+a compact five-button array. Reload the HUD after updating the scripts.
 
 The flat 2D browser never exposes controller buttons to page script — there the controller is only a pointer. Inside AR passthrough or VR cinema, `js/xr-controller.js` polls the XR gamepads:
 
@@ -178,6 +198,22 @@ For desktop webcam development, open `http://localhost:8080`. From the PICO brow
 The bundled server serves the HUD and forwards `/esp/*` to the control unit. Its default target is `http://172.20.10.5`, matching the current bench firmware. Use `--control-unit http://<ESP32-IP>` for another network.
 
 ### HTTPS for AR / VR controller input
+
+On Windows, with the IP-specific `tools/dev-cert.pem` and matching key already
+prepared, double-click `START-PICO-VR.cmd` in the repository root. Keep its
+window open. It starts only HTTPS 8443, leaving an existing HTTP 8080 server
+alone, verifies an actual HUD response using the certificate, and reads
+`/esp/status` to check the controller's conveyor session/sequence fields.
+It does not change trust/firewall settings or move the belt. If the controller
+uses another IP, run `./START-PICO-VR.cmd http://<ESP32-IP>` from the repository
+root. A reused HTTPS server retains its existing controller target.
+
+Run this launcher from the PC's normal Windows terminal. An isolated agent
+shell can report a listening process while LAN access remains blocked; an
+`EACCES` startup check is a failure, not confirmation that the headset can connect.
+The PICO browser must also trust the server certificate. After entering VR,
+press **X** for Manual, then use the left stick up/down for forward/reverse;
+release it to stop. Physical headset/belt operation must be confirmed on-device.
 
 WebXR on the headset needs HTTPS. Place a certificate trusted by the PICO browser at `tools/dev-cert.pem` and its private key at `tools/dev-key.pem`, with a certificate valid for the hostname or IP address used by the headset. These local files and server logs are gitignored.
 

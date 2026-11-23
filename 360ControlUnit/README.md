@@ -11,7 +11,7 @@ remove older commits; see the [history cleanup procedure](../docs/history-cleanu
 
 Connect GPIO32, GPIO33, GPIO25 and GPIO26 to ULN2003 IN1–IN4 respectively. Connect the 5 V 28BYJ-48 motor to the module and power it with a suitable regulated 5 V supply. Connect the module ground to ESP32 ground. The firmware uses a fixed 3 ms half-step interval; direction and mechanical travel need physical verification.
 
-The XR client obtains a short-lived lease from `GET /conveyor/lease` and sends ordered direction commands to `POST /conveyor`. The control task stops the motor when the lease expires, independently of network servicing. Starting, resuming after a cycle, changing mode or reconnecting requires an observed neutral command. Auto forward requires automatic admission to be enabled. After a Verdict timeout, select Manual, clear the beam and return to Auto. Manual servo motion stops the conveyor.
+The XR client obtains a short-lived lease from `GET /conveyor/lease` and sends ordered direction commands to `POST /conveyor`. The control task stops the motor 500 ms after the last accepted movement command and revokes the lease (`conveyorLeaseMs` in `src/main.cpp`, 2000 ms) if it is not renewed in that time, independently of network servicing. Starting, resuming after a cycle, changing mode or reconnecting requires an observed neutral command. Auto forward requires automatic admission to be enabled. After a Verdict timeout, select Manual, clear the beam and return to Auto. Manual servo motion stops the conveyor.
 
 The controller owns one active physical item and its local 3000 ms Verdict
 Window. Admission issues opaque string `controller_session` and `item_id` values.
@@ -84,7 +84,7 @@ node 360ControlUnit/test/conveyor-bench.mjs http://172.20.10.5 forward 2
 This selects Manual mode, sends neutral, renews forward commands for two seconds,
 and requests a stop. The controller stays in Manual. To test reverse, use
 `reverse 2`. To request only a stop, use `stop`. Ctrl+C ends renewals and attempts
-a stop; the firmware also expires the lease locally after 400 ms without renewal.
+a stop; without renewals the firmware stops the belt after 500 ms and revokes the lease after 2000 ms.
 Each pulse is limited to five seconds. An accepted response confirms the command,
 so verify actual belt rotation and stopping by observation.
 
@@ -93,7 +93,7 @@ The installed firmware must expose `/status`, `/mode`, `/conveyor/lease` and
 or missing status fields requires checking the board's installed firmware.
 A timeout requires checking that the PC and ESP32 can reach each other on Wi-Fi.
 Status requests allow five seconds; conveyor requests retain a 250 ms timeout
-to stay within the firmware's short lease window.
+to stay within the firmware's 500 ms command limit.
 This script does not flash firmware.
 
 Software verification without operating hardware:

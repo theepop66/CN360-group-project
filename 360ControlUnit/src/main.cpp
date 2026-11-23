@@ -30,7 +30,11 @@ static uint32_t conveyorStepAt = 0;
 static uint32_t conveyorSequence = 0;
 static uint32_t conveyorLease = 0;
 static uint32_t conveyorLeaseAt = 0;
-static const uint32_t conveyorLeaseMs = 400;
+// How long a lease token stays valid after its last renewal; an unrenewed lease is revoked and the
+// conveyor expired. The belt also stops 500 ms after the last accepted movement command whatever this
+// value is (ControlUnit::conveyorDirection), so it only sets how long a client may pause before it
+// must fetch a new lease.
+static const uint32_t conveyorLeaseMs = 2000;
 
 // ---- Static network configuration (adjust to your LAN) ----
 IPAddress staticIp(172, 20, 10, 5);

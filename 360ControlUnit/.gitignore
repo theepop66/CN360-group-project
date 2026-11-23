@@ -5,3 +5,8 @@ node_modules/
 .idea/
 .vscode/
 .pio/
+test/host/build/
+*.obj
+*.exe
+__pycache__/
+*.py[cod]

@@ -1,0 +1,18 @@
+{
+  "inspection_results": {
+    "count": 3,
+    "verdicts": [
+      "pass",
+      "reject",
+      "reject"
+    ],
+    "accepted": 0,
+    "storedSnapshots": 3
+  },
+  "control_actions": {
+    "count": 3,
+    "verdicts": [],
+    "accepted": 3,
+    "storedSnapshots": 0
+  }
+}

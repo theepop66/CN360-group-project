@@ -7,6 +7,7 @@ from flask import Flask, Response, jsonify
 from . import __version__
 from .camera import CameraService, FrameEncodingError, FrameSnapshot
 from .config import Settings
+from .push import FramePusher
 
 
 MJPEG_BOUNDARY = "frame"
@@ -35,7 +36,11 @@ def _mjpeg_chunk(snapshot: FrameSnapshot) -> bytes:
     ).encode("ascii") + jpeg + b"\r\n"
 
 
-def create_app(settings: Settings, camera: CameraService) -> Flask:
+def create_app(
+    settings: Settings,
+    camera: CameraService,
+    pusher: FramePusher | None = None,
+) -> Flask:
     app = Flask(__name__)
     app.extensions["camera_service"] = camera
     app.config["CAMERA_SETTINGS"] = settings
@@ -43,7 +48,8 @@ def create_app(settings: Settings, camera: CameraService) -> Flask:
     @app.after_request
     def add_cors_headers(response: Response) -> Response:
         response.headers["Access-Control-Allow-Origin"] = settings.cors_allowed_origin
-        response.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type"
         response.headers["Vary"] = "Origin"
         return response
 
@@ -56,6 +62,7 @@ def create_app(settings: Settings, camera: CameraService) -> Flask:
                 "endpoints": {
                     "stream": "/stream.mjpg",
                     "capture": "/capture",
+                    "push": "/push",
                     "health": "/health",
                     "info": "/info",
                 },
@@ -95,11 +102,24 @@ def create_app(settings: Settings, camera: CameraService) -> Flask:
                     "streamJpegQuality": settings.stream_jpeg_quality,
                     "captureJpegQuality": settings.capture_jpeg_quality,
                 },
+                "push": (
+                    {**pusher.status(), "webhook": settings.public_webhook_url()}
+                    if pusher is not None
+                    else {"enabled": False}
+                ),
                 "mjpegBoundary": MJPEG_BOUNDARY,
-                "endpoints": ["/stream.mjpg", "/capture", "/health", "/info"],
+                "endpoints": ["/stream.mjpg", "/capture", "/push", "/health", "/info"],
             }
         )
         return _no_cache(response)
+
+    @app.post("/push")
+    def push() -> tuple[Response, int]:
+        if pusher is None:
+            return _error("frame push is not configured", 409)
+        pusher.request_push()
+        response = jsonify({"status": "accepted", "trigger": "manual"})
+        return _no_cache(response), 202
 
     @app.get("/capture")
     def capture() -> Response | tuple[Response, int]:

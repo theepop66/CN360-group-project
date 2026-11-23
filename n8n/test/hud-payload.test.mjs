@@ -15,6 +15,15 @@ const FRAME = {
 
 const INSTRUCTION = "Locate all the instances that matches the following description: mold.";
 
+test("HUD preserves review state separately from the physical reject verdict", () => {
+  const payload = buildHudPayload({ decision: { verdict: "reject", reason: "manual_review_required", reviewRequired: true,
+    reviewReason: "condition_not_qualified", modelVerdict: "pass", detections: [] }, frameContext: FRAME });
+  const parsed = parseDetectionPayload(payload);
+  assert.equal(payload.status, "reject");
+  assert.equal(parsed.reviewRequired, true);
+  assert.equal(parsed.modelSuggestion, "pass");
+});
+
 function payloadFor(detections, overrides = {}) {
   const decision = buildInspectionDecision({
     outcome: {

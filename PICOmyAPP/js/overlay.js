@@ -119,6 +119,8 @@ export function parseDetectionPayload(rawPayload) {
     sessionId: frame.sessionId ?? payload.sessionId ?? null,
     sequence: asFiniteNumber(frame.sequence ?? payload.sequence),
     timestamp: payload.timestamp ?? null,
+    ...(typeof payload.reviewRequired === "boolean" ? { reviewRequired: payload.reviewRequired,
+      reviewReason: payload.reviewReason ?? null, modelSuggestion: payload.modelSuggestion ?? null } : {}),
     detections
   };
 }

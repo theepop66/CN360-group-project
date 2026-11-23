@@ -1,0 +1,914 @@
+[
+  {
+    "id": "bottle-broken-large/bottle__good__000",
+    "target": "chipped or missing glass at the edge of the bottle opening",
+    "hasDefect": false,
+    "inspectionProfile": "bottle-broken-large/central80",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      90,
+      90,
+      810,
+      810
+    ],
+    "originalWidth": 900,
+    "originalHeight": 900,
+    "file": "inputs/development/bottle__good__000__central80.jpg",
+    "sha256": "57516d10b0ea47c58202c2df2e94c9c737ba2c45ba0f3b3a97d9f130d42dce1f",
+    "originalSha256": "9e7bfe658efe9b6db2607a96405b4ac6880936eaf93b89c85bcd311122ceb57b"
+  },
+  {
+    "id": "bottle-broken-large/bottle__broken_large__000",
+    "target": "chipped or missing glass at the edge of the bottle opening",
+    "hasDefect": true,
+    "inspectionProfile": "bottle-broken-large/central80",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      90,
+      90,
+      810,
+      810
+    ],
+    "originalWidth": 900,
+    "originalHeight": 900,
+    "file": "inputs/development/bottle__broken_large__000__central80.jpg",
+    "sha256": "5e1ef614579354cda7cad3e46cdfd1f57c433a90cdfa7127d256322cf188438a",
+    "originalSha256": "11a691a06a33dd78c5fcab6a822caa48c0d72f27f660e19f5abd9b5aa392b0eb"
+  },
+  {
+    "id": "bottle-broken-large/bottle__good__010",
+    "target": "chipped or missing glass at the edge of the bottle opening",
+    "hasDefect": false,
+    "inspectionProfile": "bottle-broken-large/central80",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      90,
+      90,
+      810,
+      810
+    ],
+    "originalWidth": 900,
+    "originalHeight": 900,
+    "file": "inputs/heldout/bottle__good__010__central80.jpg",
+    "sha256": "88e28db5451d107c5553499bbcdd59a6dd9272c4d57306177398ea5470e415e7",
+    "originalSha256": "b31ddd1a297e85ad505f8d8b1b2df94452ab22a5d5482f500db920635356f963"
+  },
+  {
+    "id": "bottle-broken-large/bottle__good__011",
+    "target": "chipped or missing glass at the edge of the bottle opening",
+    "hasDefect": false,
+    "inspectionProfile": "bottle-broken-large/central80",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      90,
+      90,
+      810,
+      810
+    ],
+    "originalWidth": 900,
+    "originalHeight": 900,
+    "file": "inputs/heldout/bottle__good__011__central80.jpg",
+    "sha256": "34601ceeb2f356c9deabd55a49efb95a6e019f5a4b87041819dd07229f2d625e",
+    "originalSha256": "17033f7fb5f93eee444224d7dd9482a6444c526e0f68591a21b12b4d356cbb8a"
+  },
+  {
+    "id": "bottle-broken-large/bottle__broken_large__010",
+    "target": "chipped or missing glass at the edge of the bottle opening",
+    "hasDefect": true,
+    "inspectionProfile": "bottle-broken-large/central80",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      90,
+      90,
+      810,
+      810
+    ],
+    "originalWidth": 900,
+    "originalHeight": 900,
+    "file": "inputs/heldout/bottle__broken_large__010__central80.jpg",
+    "sha256": "09986bd9cf1355b7c96a21904c7dd40c311ccad78a5a9ccbe2ff67e7b9533962",
+    "originalSha256": "cac8b9cc86de2513a673453689e927a2c70a86b2f4961df2e70d795aad9fc0c6"
+  },
+  {
+    "id": "bottle-broken-large/bottle__broken_large__011",
+    "target": "chipped or missing glass at the edge of the bottle opening",
+    "hasDefect": true,
+    "inspectionProfile": "bottle-broken-large/central80",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      90,
+      90,
+      810,
+      810
+    ],
+    "originalWidth": 900,
+    "originalHeight": 900,
+    "file": "inputs/heldout/bottle__broken_large__011__central80.jpg",
+    "sha256": "aca9185631b89f59637ff9857decaf59be3c23e78f3510046ac8e18820461020",
+    "originalSha256": "d1819a2167952638c4826a78d3d081fdf26e5a923f3868713af122f5b1d8eddb"
+  },
+  {
+    "id": "bottle-broken-small/bottle__good__000",
+    "target": "chipped or missing glass at the edge of the bottle opening",
+    "hasDefect": false,
+    "inspectionProfile": "bottle-broken-small/full",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      0,
+      0,
+      900,
+      900
+    ],
+    "originalWidth": 900,
+    "originalHeight": 900,
+    "file": "inputs/development/bottle__good__000__full.jpg",
+    "sha256": "9bc1ffdadedc9e6639449cb647c24233118e7d52df303b89cf7e19bca799c68d",
+    "originalSha256": "9e7bfe658efe9b6db2607a96405b4ac6880936eaf93b89c85bcd311122ceb57b"
+  },
+  {
+    "id": "bottle-broken-small/bottle__broken_small__000",
+    "target": "chipped or missing glass at the edge of the bottle opening",
+    "hasDefect": true,
+    "inspectionProfile": "bottle-broken-small/full",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      0,
+      0,
+      900,
+      900
+    ],
+    "originalWidth": 900,
+    "originalHeight": 900,
+    "file": "inputs/development/bottle__broken_small__000__full.jpg",
+    "sha256": "96b69942f144b6894685c6dbea70219b49058d129637fc1d9280b62bdb58182c",
+    "originalSha256": "05b96e1102fba8cc19bf60e17d33a0830247df2bbba56cae3df100336392941e"
+  },
+  {
+    "id": "bottle-broken-small/bottle__good__010",
+    "target": "chipped or missing glass at the edge of the bottle opening",
+    "hasDefect": false,
+    "inspectionProfile": "bottle-broken-small/full",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      0,
+      0,
+      900,
+      900
+    ],
+    "originalWidth": 900,
+    "originalHeight": 900,
+    "file": "inputs/heldout/bottle__good__010__full.jpg",
+    "sha256": "85ee937087e8bd706abaa2862c8e701b0fdb95eee14be9893ac51609c9a7e194",
+    "originalSha256": "b31ddd1a297e85ad505f8d8b1b2df94452ab22a5d5482f500db920635356f963"
+  },
+  {
+    "id": "bottle-broken-small/bottle__good__011",
+    "target": "chipped or missing glass at the edge of the bottle opening",
+    "hasDefect": false,
+    "inspectionProfile": "bottle-broken-small/full",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      0,
+      0,
+      900,
+      900
+    ],
+    "originalWidth": 900,
+    "originalHeight": 900,
+    "file": "inputs/heldout/bottle__good__011__full.jpg",
+    "sha256": "87ade535c61fc427e23e9def35650959af4249991b9a6385fd2f25d1cbd150fa",
+    "originalSha256": "17033f7fb5f93eee444224d7dd9482a6444c526e0f68591a21b12b4d356cbb8a"
+  },
+  {
+    "id": "bottle-broken-small/bottle__broken_small__010",
+    "target": "chipped or missing glass at the edge of the bottle opening",
+    "hasDefect": true,
+    "inspectionProfile": "bottle-broken-small/full",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      0,
+      0,
+      900,
+      900
+    ],
+    "originalWidth": 900,
+    "originalHeight": 900,
+    "file": "inputs/heldout/bottle__broken_small__010__full.jpg",
+    "sha256": "9115e39a3f1e064ef8767d728755c3710e680765fc7c6bc5b15c42d0087b0792",
+    "originalSha256": "21cd62dad2af2a7841c2ed469ab0909385805fa67d4ee7ba4b8dd6417c6ea95c"
+  },
+  {
+    "id": "bottle-broken-small/bottle__broken_small__011",
+    "target": "chipped or missing glass at the edge of the bottle opening",
+    "hasDefect": true,
+    "inspectionProfile": "bottle-broken-small/full",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      0,
+      0,
+      900,
+      900
+    ],
+    "originalWidth": 900,
+    "originalHeight": 900,
+    "file": "inputs/heldout/bottle__broken_small__011__full.jpg",
+    "sha256": "ffe81ca2c8e7ca562cd08bc5c81a16f9629c7d94e6f5d224286960c85867494e",
+    "originalSha256": "0b864bfc835768c65992b235c435e397480cfadeed57ea3884e234a2b473a9c9"
+  },
+  {
+    "id": "metal-nut-scratch/metal_nut__good__000",
+    "target": "scratch on the metal nut",
+    "hasDefect": false,
+    "inspectionProfile": "metal-nut-scratch/full",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      0,
+      0,
+      700,
+      700
+    ],
+    "originalWidth": 700,
+    "originalHeight": 700,
+    "file": "inputs/development/metal_nut__good__000__full.jpg",
+    "sha256": "a7d9da263fbe3344cd3c11360784db286c00f13ad48f05f55197cbaa019e1c54",
+    "originalSha256": "d7ca543f04733fb91ac02e18d0fbf06dcff554a1b1ad754173c42d10bb026bb6"
+  },
+  {
+    "id": "metal-nut-scratch/metal_nut__scratch__000",
+    "target": "scratch on the metal nut",
+    "hasDefect": true,
+    "inspectionProfile": "metal-nut-scratch/full",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      0,
+      0,
+      700,
+      700
+    ],
+    "originalWidth": 700,
+    "originalHeight": 700,
+    "file": "inputs/development/metal_nut__scratch__000__full.jpg",
+    "sha256": "0af2792af973b4c6fa022a061d76c875a537a1af5a2cb61a7601f80ee4267030",
+    "originalSha256": "1e5637c3409d05709eae62c7254f38900afa296902b1626e5902a5a2a4095f3d"
+  },
+  {
+    "id": "metal-nut-scratch/metal_nut__good__010",
+    "target": "scratch on the metal nut",
+    "hasDefect": false,
+    "inspectionProfile": "metal-nut-scratch/full",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      0,
+      0,
+      700,
+      700
+    ],
+    "originalWidth": 700,
+    "originalHeight": 700,
+    "file": "inputs/heldout/metal_nut__good__010__full.jpg",
+    "sha256": "494c0c37375e19bae61c67bec7e27c5ea01c41b7f141be4c41312266e79fb2a8",
+    "originalSha256": "f77e35d23046cdcd10d647d4eeeff54be41faa94371e07f526d169ccf234bcb3"
+  },
+  {
+    "id": "metal-nut-scratch/metal_nut__good__011",
+    "target": "scratch on the metal nut",
+    "hasDefect": false,
+    "inspectionProfile": "metal-nut-scratch/full",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      0,
+      0,
+      700,
+      700
+    ],
+    "originalWidth": 700,
+    "originalHeight": 700,
+    "file": "inputs/heldout/metal_nut__good__011__full.jpg",
+    "sha256": "f743d96848b309616ff75ce20e5d4dbe7451930187dcf77982bc2a1b4579bee8",
+    "originalSha256": "79283964b757e67af9699abc3ffc26ad45d4aeed5de0b0f9b7fb6cac3d2dae0d"
+  },
+  {
+    "id": "metal-nut-scratch/metal_nut__scratch__010",
+    "target": "scratch on the metal nut",
+    "hasDefect": true,
+    "inspectionProfile": "metal-nut-scratch/full",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      0,
+      0,
+      700,
+      700
+    ],
+    "originalWidth": 700,
+    "originalHeight": 700,
+    "file": "inputs/heldout/metal_nut__scratch__010__full.jpg",
+    "sha256": "11f730a9a23c501e6fea697a004183fd422af6ab078e99221af292c2d7894834",
+    "originalSha256": "49b7f5e443fc22fb47ce7edf303623893e7791c2687213e98f9a2d80579e83ea"
+  },
+  {
+    "id": "metal-nut-scratch/metal_nut__scratch__011",
+    "target": "scratch on the metal nut",
+    "hasDefect": true,
+    "inspectionProfile": "metal-nut-scratch/full",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      0,
+      0,
+      700,
+      700
+    ],
+    "originalWidth": 700,
+    "originalHeight": 700,
+    "file": "inputs/heldout/metal_nut__scratch__011__full.jpg",
+    "sha256": "99a9fc361d774f03ac156342c28302f9736f85f41e04c0b5c5144aa5f17619ba",
+    "originalSha256": "af11f5a1ce2cc39e54cf25ec42eeaf45d9fcac91c181744efead9df70789cb7b"
+  },
+  {
+    "id": "metal-nut-bent/metal_nut__good__000",
+    "target": "bent edge of the metal nut",
+    "hasDefect": false,
+    "inspectionProfile": "metal-nut-bent/full",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      0,
+      0,
+      700,
+      700
+    ],
+    "originalWidth": 700,
+    "originalHeight": 700,
+    "file": "inputs/development/metal_nut__good__000__full.jpg",
+    "sha256": "a7d9da263fbe3344cd3c11360784db286c00f13ad48f05f55197cbaa019e1c54",
+    "originalSha256": "d7ca543f04733fb91ac02e18d0fbf06dcff554a1b1ad754173c42d10bb026bb6"
+  },
+  {
+    "id": "metal-nut-bent/metal_nut__bent__000",
+    "target": "bent edge of the metal nut",
+    "hasDefect": true,
+    "inspectionProfile": "metal-nut-bent/full",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      0,
+      0,
+      700,
+      700
+    ],
+    "originalWidth": 700,
+    "originalHeight": 700,
+    "file": "inputs/development/metal_nut__bent__000__full.jpg",
+    "sha256": "366bec9bd5b5eaac98f33d6422af1e72223dc36fbb260683e1112800858d5ebf",
+    "originalSha256": "602cceb099d5aa10a416f31cd6370ef9d8c810118f4ada9dbc9c28e91a889e0b"
+  },
+  {
+    "id": "metal-nut-bent/metal_nut__good__010",
+    "target": "bent edge of the metal nut",
+    "hasDefect": false,
+    "inspectionProfile": "metal-nut-bent/full",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      0,
+      0,
+      700,
+      700
+    ],
+    "originalWidth": 700,
+    "originalHeight": 700,
+    "file": "inputs/heldout/metal_nut__good__010__full.jpg",
+    "sha256": "494c0c37375e19bae61c67bec7e27c5ea01c41b7f141be4c41312266e79fb2a8",
+    "originalSha256": "f77e35d23046cdcd10d647d4eeeff54be41faa94371e07f526d169ccf234bcb3"
+  },
+  {
+    "id": "metal-nut-bent/metal_nut__good__011",
+    "target": "bent edge of the metal nut",
+    "hasDefect": false,
+    "inspectionProfile": "metal-nut-bent/full",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      0,
+      0,
+      700,
+      700
+    ],
+    "originalWidth": 700,
+    "originalHeight": 700,
+    "file": "inputs/heldout/metal_nut__good__011__full.jpg",
+    "sha256": "f743d96848b309616ff75ce20e5d4dbe7451930187dcf77982bc2a1b4579bee8",
+    "originalSha256": "79283964b757e67af9699abc3ffc26ad45d4aeed5de0b0f9b7fb6cac3d2dae0d"
+  },
+  {
+    "id": "metal-nut-bent/metal_nut__bent__010",
+    "target": "bent edge of the metal nut",
+    "hasDefect": true,
+    "inspectionProfile": "metal-nut-bent/full",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      0,
+      0,
+      700,
+      700
+    ],
+    "originalWidth": 700,
+    "originalHeight": 700,
+    "file": "inputs/heldout/metal_nut__bent__010__full.jpg",
+    "sha256": "93ea74ed6cef18affd2cc898bfeea347a397ed17eb17174549887ff55a933348",
+    "originalSha256": "aeeb8141c7dcbdac4a4dda19b8ddd23a8cf3be7c1b60b0f26ab2a465adb976c3"
+  },
+  {
+    "id": "metal-nut-bent/metal_nut__bent__011",
+    "target": "bent edge of the metal nut",
+    "hasDefect": true,
+    "inspectionProfile": "metal-nut-bent/full",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      0,
+      0,
+      700,
+      700
+    ],
+    "originalWidth": 700,
+    "originalHeight": 700,
+    "file": "inputs/heldout/metal_nut__bent__011__full.jpg",
+    "sha256": "f95d9ae23b977d5e3a05b10687f7da9ccf56a26b3428d8526cf0db9cffc317c5",
+    "originalSha256": "74bf23df92b90626e99c2c7c78f526c203ff0f1c0a1d6a6d785ae689a8c2d4a8"
+  },
+  {
+    "id": "hazelnut-crack/hazelnut__good__000",
+    "target": "a split or fracture in the hazelnut shell",
+    "hasDefect": false,
+    "inspectionProfile": "hazelnut-crack/central80",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      102,
+      102,
+      922,
+      922
+    ],
+    "originalWidth": 1024,
+    "originalHeight": 1024,
+    "file": "inputs/development/hazelnut__good__000__central80.jpg",
+    "sha256": "e46f19a0f05856c330a7e760505286e065a99e341605caab9936476108a0c1ed",
+    "originalSha256": "32034b75a2dca53cff86c4833e00a25cd65939859820e96ce9b980359cb08955"
+  },
+  {
+    "id": "hazelnut-crack/hazelnut__crack__000",
+    "target": "a split or fracture in the hazelnut shell",
+    "hasDefect": true,
+    "inspectionProfile": "hazelnut-crack/central80",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      102,
+      102,
+      922,
+      922
+    ],
+    "originalWidth": 1024,
+    "originalHeight": 1024,
+    "file": "inputs/development/hazelnut__crack__000__central80.jpg",
+    "sha256": "3737e874f7ac5d415d295288601b633638ef2b630701e1461375f8f36917499e",
+    "originalSha256": "e26b54282b6b11286760905ca2880af594561b606dfa0643859d6ee6027cf8c2"
+  },
+  {
+    "id": "hazelnut-crack/hazelnut__good__010",
+    "target": "a split or fracture in the hazelnut shell",
+    "hasDefect": false,
+    "inspectionProfile": "hazelnut-crack/central80",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      102,
+      102,
+      922,
+      922
+    ],
+    "originalWidth": 1024,
+    "originalHeight": 1024,
+    "file": "inputs/heldout/hazelnut__good__010__central80.jpg",
+    "sha256": "ea50833ecdbe3de936c8002153270460557a9ac72f8177f89013db0eeeac38d4",
+    "originalSha256": "b7299fd3b5f3791ed98fa5a54a55ee1471b7dd54b56b903a0309246f973c3163"
+  },
+  {
+    "id": "hazelnut-crack/hazelnut__good__011",
+    "target": "a split or fracture in the hazelnut shell",
+    "hasDefect": false,
+    "inspectionProfile": "hazelnut-crack/central80",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      102,
+      102,
+      922,
+      922
+    ],
+    "originalWidth": 1024,
+    "originalHeight": 1024,
+    "file": "inputs/heldout/hazelnut__good__011__central80.jpg",
+    "sha256": "57f7c8a30806677ffcd680eb8811748e28e6597b74f6b03bb267c0768427fbd6",
+    "originalSha256": "1f894dfe85923cb67e2fe1407dded8d1481c25e21f31dba959eee2f22a4669c5"
+  },
+  {
+    "id": "hazelnut-crack/hazelnut__crack__010",
+    "target": "a split or fracture in the hazelnut shell",
+    "hasDefect": true,
+    "inspectionProfile": "hazelnut-crack/central80",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      102,
+      102,
+      922,
+      922
+    ],
+    "originalWidth": 1024,
+    "originalHeight": 1024,
+    "file": "inputs/heldout/hazelnut__crack__010__central80.jpg",
+    "sha256": "276de53bd84f32a15b5f82ce89fb2e00dc21a7537254eb270cf25c46601ef809",
+    "originalSha256": "39cadf02608a7a36041a2326c2a2c09dca5b0ccb44a7570bc71b70dee5bfdada"
+  },
+  {
+    "id": "hazelnut-crack/hazelnut__crack__011",
+    "target": "a split or fracture in the hazelnut shell",
+    "hasDefect": true,
+    "inspectionProfile": "hazelnut-crack/central80",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      102,
+      102,
+      922,
+      922
+    ],
+    "originalWidth": 1024,
+    "originalHeight": 1024,
+    "file": "inputs/heldout/hazelnut__crack__011__central80.jpg",
+    "sha256": "b8e7d3e0637d4002f87436a790d9d8e5bf2f60e4b98279a3efb55612c984605b",
+    "originalSha256": "c83d9f85a2c0cfbaa407b41bc667ca56e4c66274f3fc2d503be2e799a12f955e"
+  },
+  {
+    "id": "hazelnut-hole/hazelnut__good__000",
+    "target": "a puncture hole in the hazelnut shell",
+    "hasDefect": false,
+    "inspectionProfile": "hazelnut-hole/central80",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      102,
+      102,
+      922,
+      922
+    ],
+    "originalWidth": 1024,
+    "originalHeight": 1024,
+    "file": "inputs/development/hazelnut__good__000__central80.jpg",
+    "sha256": "e46f19a0f05856c330a7e760505286e065a99e341605caab9936476108a0c1ed",
+    "originalSha256": "32034b75a2dca53cff86c4833e00a25cd65939859820e96ce9b980359cb08955"
+  },
+  {
+    "id": "hazelnut-hole/hazelnut__hole__000",
+    "target": "a puncture hole in the hazelnut shell",
+    "hasDefect": true,
+    "inspectionProfile": "hazelnut-hole/central80",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      102,
+      102,
+      922,
+      922
+    ],
+    "originalWidth": 1024,
+    "originalHeight": 1024,
+    "file": "inputs/development/hazelnut__hole__000__central80.jpg",
+    "sha256": "49bc317cc7402734b3f3d66f6aa0fb6b6f046d20f7f6f943e9a0f9c45f7e5d59",
+    "originalSha256": "b9a1a102db263079fec8bc9836f182253dced9ca178957b7e9bef05cba3312c2"
+  },
+  {
+    "id": "hazelnut-hole/hazelnut__good__010",
+    "target": "a puncture hole in the hazelnut shell",
+    "hasDefect": false,
+    "inspectionProfile": "hazelnut-hole/central80",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      102,
+      102,
+      922,
+      922
+    ],
+    "originalWidth": 1024,
+    "originalHeight": 1024,
+    "file": "inputs/heldout/hazelnut__good__010__central80.jpg",
+    "sha256": "ea50833ecdbe3de936c8002153270460557a9ac72f8177f89013db0eeeac38d4",
+    "originalSha256": "b7299fd3b5f3791ed98fa5a54a55ee1471b7dd54b56b903a0309246f973c3163"
+  },
+  {
+    "id": "hazelnut-hole/hazelnut__good__011",
+    "target": "a puncture hole in the hazelnut shell",
+    "hasDefect": false,
+    "inspectionProfile": "hazelnut-hole/central80",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      102,
+      102,
+      922,
+      922
+    ],
+    "originalWidth": 1024,
+    "originalHeight": 1024,
+    "file": "inputs/heldout/hazelnut__good__011__central80.jpg",
+    "sha256": "57f7c8a30806677ffcd680eb8811748e28e6597b74f6b03bb267c0768427fbd6",
+    "originalSha256": "1f894dfe85923cb67e2fe1407dded8d1481c25e21f31dba959eee2f22a4669c5"
+  },
+  {
+    "id": "hazelnut-hole/hazelnut__hole__010",
+    "target": "a puncture hole in the hazelnut shell",
+    "hasDefect": true,
+    "inspectionProfile": "hazelnut-hole/central80",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      102,
+      102,
+      922,
+      922
+    ],
+    "originalWidth": 1024,
+    "originalHeight": 1024,
+    "file": "inputs/heldout/hazelnut__hole__010__central80.jpg",
+    "sha256": "0fefdf7c463c0ca8021fc75ef8d9b05742ccb9a3a8541a9258faadc593986a3d",
+    "originalSha256": "b0db81b6c3b05ca4e62383b2a827d35aa488a187a563828a56ea68778f64f35f"
+  },
+  {
+    "id": "hazelnut-hole/hazelnut__hole__011",
+    "target": "a puncture hole in the hazelnut shell",
+    "hasDefect": true,
+    "inspectionProfile": "hazelnut-hole/central80",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      102,
+      102,
+      922,
+      922
+    ],
+    "originalWidth": 1024,
+    "originalHeight": 1024,
+    "file": "inputs/heldout/hazelnut__hole__011__central80.jpg",
+    "sha256": "eb9a6e715d0d25d7208c9e6c3ac1d9bb4acadbe9b4a9b90f0fc8053d7bd0b512",
+    "originalSha256": "cb0185418d152ea6626d41039ad5c78714dcb9e68a2da3726cbac239ebd8029a"
+  },
+  {
+    "id": "capsule-crack/capsule__good__000",
+    "target": "crack in the capsule",
+    "hasDefect": false,
+    "inspectionProfile": "capsule-crack/central80",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      100,
+      100,
+      900,
+      900
+    ],
+    "originalWidth": 1000,
+    "originalHeight": 1000,
+    "file": "inputs/development/capsule__good__000__central80.jpg",
+    "sha256": "f2b965da877f3087f79e16a9cca2f370dd80dfaa4b61416a3390f25d5ac9c066",
+    "originalSha256": "86366d544a0182b04fdeacb62c9b23af8c72af24d35eaafeb8c210f603174728"
+  },
+  {
+    "id": "capsule-crack/capsule__crack__000",
+    "target": "crack in the capsule",
+    "hasDefect": true,
+    "inspectionProfile": "capsule-crack/central80",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      100,
+      100,
+      900,
+      900
+    ],
+    "originalWidth": 1000,
+    "originalHeight": 1000,
+    "file": "inputs/development/capsule__crack__000__central80.jpg",
+    "sha256": "1a02772b87e719cfb1132a91f0a88d33bb70ecc9c33b2361f4a6f47dd22bdf5c",
+    "originalSha256": "6462a533da731a19e4df05fc1815719b94603aee341a2ac620add75ec2334ef4"
+  },
+  {
+    "id": "capsule-crack/capsule__good__010",
+    "target": "crack in the capsule",
+    "hasDefect": false,
+    "inspectionProfile": "capsule-crack/central80",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      100,
+      100,
+      900,
+      900
+    ],
+    "originalWidth": 1000,
+    "originalHeight": 1000,
+    "file": "inputs/heldout/capsule__good__010__central80.jpg",
+    "sha256": "2b938ffe51914547507217b084218dac59cc040bb9a0839768744f9a770edc76",
+    "originalSha256": "3e1d45837e483b3a95a66aabd9c19947691f14fd54b020723f42fad08a62c922"
+  },
+  {
+    "id": "capsule-crack/capsule__good__011",
+    "target": "crack in the capsule",
+    "hasDefect": false,
+    "inspectionProfile": "capsule-crack/central80",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      100,
+      100,
+      900,
+      900
+    ],
+    "originalWidth": 1000,
+    "originalHeight": 1000,
+    "file": "inputs/heldout/capsule__good__011__central80.jpg",
+    "sha256": "cc083be3acb09356f27994fa3eb208eb70601e3aea6f286b57e2aa1223cae669",
+    "originalSha256": "f4d1ddcfc0389391a704e4f4c9ab71457195d844a2e7d4b7f2c0692898d0d227"
+  },
+  {
+    "id": "capsule-crack/capsule__crack__010",
+    "target": "crack in the capsule",
+    "hasDefect": true,
+    "inspectionProfile": "capsule-crack/central80",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      100,
+      100,
+      900,
+      900
+    ],
+    "originalWidth": 1000,
+    "originalHeight": 1000,
+    "file": "inputs/heldout/capsule__crack__010__central80.jpg",
+    "sha256": "0e7887e60497818b2e910bd582d8490f298e936ef879a380d9495cb424e1592d",
+    "originalSha256": "e6b6bf744e2d563ce02319699a30fa25e2a23dae26fd09901b9f3c3cf74cdce6"
+  },
+  {
+    "id": "capsule-crack/capsule__crack__011",
+    "target": "crack in the capsule",
+    "hasDefect": true,
+    "inspectionProfile": "capsule-crack/central80",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      100,
+      100,
+      900,
+      900
+    ],
+    "originalWidth": 1000,
+    "originalHeight": 1000,
+    "file": "inputs/heldout/capsule__crack__011__central80.jpg",
+    "sha256": "52f3f004fc9597bbf2cb9ad117ce905fc3e5229b7da18afa1b81f3390569a0ea",
+    "originalSha256": "f414406fd3a64283e0540349e11a2a1f7f6e705a9c1e50fd649c372562832e7f"
+  },
+  {
+    "id": "capsule-squeeze/capsule__good__000",
+    "target": "dented area on the capsule",
+    "hasDefect": false,
+    "inspectionProfile": "capsule-squeeze/full",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      0,
+      0,
+      1000,
+      1000
+    ],
+    "originalWidth": 1000,
+    "originalHeight": 1000,
+    "file": "inputs/development/capsule__good__000__full.jpg",
+    "sha256": "1c5168880adcd026f71a7de36578fe971397306a3320ea800e1ba5c2ef49f5c1",
+    "originalSha256": "86366d544a0182b04fdeacb62c9b23af8c72af24d35eaafeb8c210f603174728"
+  },
+  {
+    "id": "capsule-squeeze/capsule__squeeze__000",
+    "target": "dented area on the capsule",
+    "hasDefect": true,
+    "inspectionProfile": "capsule-squeeze/full",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      0,
+      0,
+      1000,
+      1000
+    ],
+    "originalWidth": 1000,
+    "originalHeight": 1000,
+    "file": "inputs/development/capsule__squeeze__000__full.jpg",
+    "sha256": "b9b5fe3a1edd299e9d00ce7f6ec4eb26dba54b390e97ef4d1875f0d8f5eeb4d0",
+    "originalSha256": "28e839bfc1dcc9c8c811d0f3817fb7c1184147883f5fefbb7b6fef787e69dc9a"
+  },
+  {
+    "id": "capsule-squeeze/capsule__good__010",
+    "target": "dented area on the capsule",
+    "hasDefect": false,
+    "inspectionProfile": "capsule-squeeze/full",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      0,
+      0,
+      1000,
+      1000
+    ],
+    "originalWidth": 1000,
+    "originalHeight": 1000,
+    "file": "inputs/heldout/capsule__good__010__full.jpg",
+    "sha256": "18528c7192ff4a1a909a8ac5475c20bc6b186507a1c481194cdd2e55a4874915",
+    "originalSha256": "3e1d45837e483b3a95a66aabd9c19947691f14fd54b020723f42fad08a62c922"
+  },
+  {
+    "id": "capsule-squeeze/capsule__good__011",
+    "target": "dented area on the capsule",
+    "hasDefect": false,
+    "inspectionProfile": "capsule-squeeze/full",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      0,
+      0,
+      1000,
+      1000
+    ],
+    "originalWidth": 1000,
+    "originalHeight": 1000,
+    "file": "inputs/heldout/capsule__good__011__full.jpg",
+    "sha256": "ca305fa2c2f75cc982052758fda52244493d0eaadf312d9090a62e4344472edb",
+    "originalSha256": "f4d1ddcfc0389391a704e4f4c9ab71457195d844a2e7d4b7f2c0692898d0d227"
+  },
+  {
+    "id": "capsule-squeeze/capsule__squeeze__010",
+    "target": "dented area on the capsule",
+    "hasDefect": true,
+    "inspectionProfile": "capsule-squeeze/full",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      0,
+      0,
+      1000,
+      1000
+    ],
+    "originalWidth": 1000,
+    "originalHeight": 1000,
+    "file": "inputs/heldout/capsule__squeeze__010__full.jpg",
+    "sha256": "beff789b3da3056f06c32add02288a26b57384981b10362988eb4b2210982ffb",
+    "originalSha256": "5981c80512292dc9e1805b9a0cf9590146a70f188347bd9a356b8d3dd3dff30f"
+  },
+  {
+    "id": "capsule-squeeze/capsule__squeeze__011",
+    "target": "dented area on the capsule",
+    "hasDefect": true,
+    "inspectionProfile": "capsule-squeeze/full",
+    "width": 448,
+    "height": 448,
+    "cropPixels": [
+      0,
+      0,
+      1000,
+      1000
+    ],
+    "originalWidth": 1000,
+    "originalHeight": 1000,
+    "file": "inputs/heldout/capsule__squeeze__011__full.jpg",
+    "sha256": "7a4e58ef4258d6d0dc506beda98872a4e297c3b81f9129b4147ba903ea1b3d2f",
+    "originalSha256": "46e573a917f738d07564eec5cf5ab0a3c6d4b4f0fe6373e62f0a06603260ce24"
+  }
+]

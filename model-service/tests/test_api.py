@@ -1,5 +1,9 @@
 import asyncio
 import io
+import time
+from contextlib import contextmanager
+from collections.abc import Iterator
+from fastapi import FastAPI
 from typing import Any
 
 import httpx
@@ -31,8 +35,10 @@ class ControlledModel:
         self.block = False
         self.fail = False
         self.detections: list[Any] = []
+        self.warmup_pending = True
 
     async def start(self) -> None:
+        self.warmup_pending = True
         self.ready = not self.startup_failure
         self.error = "model_load_failed" if self.startup_failure else None
 
@@ -40,6 +46,9 @@ class ControlledModel:
         self.ready = False
 
     async def predict(self, data: bytes, prompt: str, timeout: float) -> dict[str, Any]:
+        if self.warmup_pending:
+            self.warmup_pending = False
+            return {"detections": []}
         self.started.set()
         if self.block:
             try:
@@ -53,8 +62,20 @@ class ControlledModel:
         return {"detections": self.detections, "backend": self.backend, "timings_ms": {"inference": 1.0}}
 
 
+@contextmanager
+def ready_client(app: FastAPI) -> Iterator[TestClient]:
+    with TestClient(app) as client:
+        until = time.monotonic() + 5
+        while time.monotonic() < until:
+            response = client.get("/health")
+            if response.status_code == 200 or response.json().get("reason") not in {"model_loading", "model_warming"}:
+                break
+            time.sleep(0.005)
+        yield client
+
+
 def test_public_prediction_keeps_geometry_prompt_and_valid_empty_result() -> None:
-    with TestClient(create_app(model=ControlledModel())) as client:
+    with ready_client(create_app(model=ControlledModel(), warmup_image=image_bytes())) as client:
         assert client.get("/health").json()["backend"] == "fixture"
         instruction = "Locate all the instances that matches the following description: scratch."
         assert client.get("/set_prompt", params={"prompt": instruction}).json()["status"] == "updated"
@@ -73,7 +94,7 @@ def test_public_prediction_keeps_geometry_prompt_and_valid_empty_result() -> Non
 
 
 def test_explicit_instruction_is_not_replaced_by_global_prompt() -> None:
-    with TestClient(create_app(model=ControlledModel())) as client:
+    with ready_client(create_app(model=ControlledModel(), warmup_image=image_bytes())) as client:
         client.get("/set_prompt", params={"prompt": "global instruction"})
         response = client.post("/predict", data={"prompt": "explicit instruction"}, files={"file": ("frame.png", image_bytes(), "image/png")})
         assert response.json()["prompt_used"] == "explicit instruction"
@@ -82,7 +103,7 @@ def test_explicit_instruction_is_not_replaced_by_global_prompt() -> None:
 
 def test_invalid_uploads_and_engine_failure_cannot_look_like_empty_success() -> None:
     model = ControlledModel()
-    with TestClient(create_app(model=model)) as client:
+    with ready_client(create_app(model=model, warmup_image=image_bytes())) as client:
         assert client.post("/predict", files={"image": ("frame.png", image_bytes(), "image/png")}).status_code == 422
         response = client.post("/predict", files={"file": ("bad.png", b"broken", "image/png")})
         assert response.status_code == 400
@@ -95,7 +116,7 @@ def test_invalid_uploads_and_engine_failure_cannot_look_like_empty_success() -> 
 
 
 def test_health_is_not_ready_when_initialization_failed() -> None:
-    with TestClient(create_app(model=ControlledModel(startup_failure=True))) as client:
+    with ready_client(create_app(model=ControlledModel(startup_failure=True), warmup_image=image_bytes())) as client:
         assert client.get("/health").status_code == 503
         response = client.post("/predict", files={"file": ("frame.png", image_bytes(), "image/png")})
         assert response.status_code == 503
@@ -104,7 +125,7 @@ def test_health_is_not_ready_when_initialization_failed() -> None:
 
 def test_malformed_engine_geometry_is_not_returned_as_success() -> None:
     model = ControlledModel()
-    with TestClient(create_app(model=model)) as client:
+    with ready_client(create_app(model=model, warmup_image=image_bytes())) as client:
         for box in [[4, 4, 1, 1], [0, 0, float("nan"), 4], [0, 0, True, 4], []]:
             model.detections = [{"label": "scratch", "box": box}]
             response = client.post("/predict", files={"file": ("frame.png", image_bytes(), "image/png")})
@@ -116,7 +137,7 @@ def test_real_worker_startup_failure_is_reported_over_http(monkeypatch: pytest.M
     monkeypatch.setenv("CN360_MODEL_LIBRARY", "missing-model-library")
     monkeypatch.setenv("CN360_MODEL_PATH", "missing-model")
     monkeypatch.setenv("CN360_MODEL_STARTUP_TIMEOUT", "5")
-    with TestClient(create_app()) as client:
+    with ready_client(create_app(warmup_image=image_bytes())) as client:
         response = client.get("/health")
         assert response.status_code == 503
         assert response.json()["reason"] == "model_load_failed"
@@ -126,9 +147,12 @@ def test_real_worker_startup_failure_is_reported_over_http(monkeypatch: pytest.M
 async def test_concurrent_request_is_bounded_and_timeout_is_not_reused() -> None:
     model = ControlledModel()
     model.block = True
-    app = create_app(model=model, request_timeout=0.15)
+    app = create_app(model=model, request_timeout=0.15, warmup_image=image_bytes())
     async with app.router.lifespan_context(app):
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app), base_url="http://fixture") as client:
+            async with asyncio.timeout(2):
+                while (await client.get("/health")).status_code != 200:
+                    await asyncio.sleep(0.005)
             first = asyncio.create_task(client.post("/predict", files={"file": ("frame.png", image_bytes(), "image/png")}))
             await model.started.wait()
             second = await client.post("/predict", files={"file": ("frame.png", image_bytes(), "image/png")})

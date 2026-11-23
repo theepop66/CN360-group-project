@@ -1,0 +1,1601 @@
+{
+  "frozenAt": "2026-11-03T14:07:08.667029+00:00",
+  "planSha256": "c3184563f7f00e8c3ac7e201036d185f05da912888d1d5ef7e8acee38e816632",
+  "plan": {
+    "version": 1,
+    "modelPolicy": "Existing q8 weights and native library unchanged; CUDA0, hybrid, six threads",
+    "heldoutIndices": [
+      "010",
+      "011"
+    ],
+    "repetitions": 3,
+    "imageMaxSide": 448,
+    "crops": {
+      "full": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "central80": [
+        0.1,
+        0.1,
+        0.9,
+        0.9
+      ]
+    },
+    "conditions": [
+      {
+        "id": "bottle-broken-large",
+        "category": "bottle",
+        "label": "broken_large",
+        "originalTarget": "broken glass on the bottle rim",
+        "clearTarget": "chipped or missing glass at the edge of the bottle opening"
+      },
+      {
+        "id": "bottle-broken-small",
+        "category": "bottle",
+        "label": "broken_small",
+        "originalTarget": "broken glass on the bottle rim",
+        "clearTarget": "chipped or missing glass at the edge of the bottle opening"
+      },
+      {
+        "id": "metal-nut-scratch",
+        "category": "metal_nut",
+        "label": "scratch",
+        "originalTarget": "scratch on the metal nut",
+        "clearTarget": "a scratch mark on the metal surface of the nut"
+      },
+      {
+        "id": "metal-nut-bent",
+        "category": "metal_nut",
+        "label": "bent",
+        "originalTarget": "bent edge of the metal nut",
+        "clearTarget": "a bent or deformed outer edge of the metal nut"
+      },
+      {
+        "id": "hazelnut-crack",
+        "category": "hazelnut",
+        "label": "crack",
+        "originalTarget": "crack in the hazelnut shell",
+        "clearTarget": "a split or fracture in the hazelnut shell"
+      },
+      {
+        "id": "hazelnut-hole",
+        "category": "hazelnut",
+        "label": "hole",
+        "originalTarget": "hole in the hazelnut shell",
+        "clearTarget": "a puncture hole in the hazelnut shell"
+      },
+      {
+        "id": "capsule-crack",
+        "category": "capsule",
+        "label": "crack",
+        "originalTarget": "crack in the capsule",
+        "clearTarget": "a crack or split in the capsule casing"
+      },
+      {
+        "id": "capsule-squeeze",
+        "category": "capsule",
+        "label": "squeeze",
+        "originalTarget": "dented area on the capsule",
+        "clearTarget": "a crushed or dented section of the capsule casing"
+      }
+    ]
+  },
+  "datasetRevision": "c75b39616f84db43677bcc8228caaafaf5096d7f",
+  "images": [
+    {
+      "id": "bottle__good__000",
+      "split": "development",
+      "category": "bottle",
+      "label": "good",
+      "hasDefect": false,
+      "originalSha256": "9e7bfe658efe9b6db2607a96405b4ac6880936eaf93b89c85bcd311122ceb57b",
+      "sourcePath": "bottle/test/good/000.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/bottle/test/good/000.png",
+      "maskFile": null,
+      "maskSha256": null,
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            900,
+            900
+          ],
+          "originalWidth": 900,
+          "originalHeight": 900,
+          "file": "inputs/development/bottle__good__000__full.jpg",
+          "sha256": "9bc1ffdadedc9e6639449cb647c24233118e7d52df303b89cf7e19bca799c68d"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            90,
+            90,
+            810,
+            810
+          ],
+          "originalWidth": 900,
+          "originalHeight": 900,
+          "file": "inputs/development/bottle__good__000__central80.jpg",
+          "sha256": "57516d10b0ea47c58202c2df2e94c9c737ba2c45ba0f3b3a97d9f130d42dce1f"
+        }
+      }
+    },
+    {
+      "id": "bottle__broken_large__000",
+      "split": "development",
+      "category": "bottle",
+      "label": "broken_large",
+      "hasDefect": true,
+      "originalSha256": "11a691a06a33dd78c5fcab6a822caa48c0d72f27f660e19f5abd9b5aa392b0eb",
+      "sourcePath": "bottle/test/broken_large/000.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/bottle/test/broken_large/000.png",
+      "maskFile": "masks/development/bottle__broken_large__000.png",
+      "maskSha256": "e0c99ed15df25c67ad48505a3c50682172d49115650b8d0bdafa687e3c48c7c5",
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            900,
+            900
+          ],
+          "originalWidth": 900,
+          "originalHeight": 900,
+          "file": "inputs/development/bottle__broken_large__000__full.jpg",
+          "sha256": "203585e5e3e3b69c95fcbdf4a3dc1c809393e04aae2a140f669cb7bc85e8cead"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            90,
+            90,
+            810,
+            810
+          ],
+          "originalWidth": 900,
+          "originalHeight": 900,
+          "file": "inputs/development/bottle__broken_large__000__central80.jpg",
+          "sha256": "5e1ef614579354cda7cad3e46cdfd1f57c433a90cdfa7127d256322cf188438a"
+        }
+      }
+    },
+    {
+      "id": "bottle__broken_small__000",
+      "split": "development",
+      "category": "bottle",
+      "label": "broken_small",
+      "hasDefect": true,
+      "originalSha256": "05b96e1102fba8cc19bf60e17d33a0830247df2bbba56cae3df100336392941e",
+      "sourcePath": "bottle/test/broken_small/000.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/bottle/test/broken_small/000.png",
+      "maskFile": "masks/development/bottle__broken_small__000.png",
+      "maskSha256": "e869e1c4a70db5f15fa178e69b2163c830298447296e62cb65e96cdab6aa8564",
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            900,
+            900
+          ],
+          "originalWidth": 900,
+          "originalHeight": 900,
+          "file": "inputs/development/bottle__broken_small__000__full.jpg",
+          "sha256": "96b69942f144b6894685c6dbea70219b49058d129637fc1d9280b62bdb58182c"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            90,
+            90,
+            810,
+            810
+          ],
+          "originalWidth": 900,
+          "originalHeight": 900,
+          "file": "inputs/development/bottle__broken_small__000__central80.jpg",
+          "sha256": "7eec45b177b05f82a6aa7de552f978c685183223cd65e667bd863f96eb0fce33"
+        }
+      }
+    },
+    {
+      "id": "metal_nut__good__000",
+      "split": "development",
+      "category": "metal_nut",
+      "label": "good",
+      "hasDefect": false,
+      "originalSha256": "d7ca543f04733fb91ac02e18d0fbf06dcff554a1b1ad754173c42d10bb026bb6",
+      "sourcePath": "metal_nut/test/good/000.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/metal_nut/test/good/000.png",
+      "maskFile": null,
+      "maskSha256": null,
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            700,
+            700
+          ],
+          "originalWidth": 700,
+          "originalHeight": 700,
+          "file": "inputs/development/metal_nut__good__000__full.jpg",
+          "sha256": "a7d9da263fbe3344cd3c11360784db286c00f13ad48f05f55197cbaa019e1c54"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            70,
+            70,
+            630,
+            630
+          ],
+          "originalWidth": 700,
+          "originalHeight": 700,
+          "file": "inputs/development/metal_nut__good__000__central80.jpg",
+          "sha256": "d0ec64bffc32e5965977ccab054cb81e0904ddaa141757af5a4ce79195a87351"
+        }
+      }
+    },
+    {
+      "id": "metal_nut__scratch__000",
+      "split": "development",
+      "category": "metal_nut",
+      "label": "scratch",
+      "hasDefect": true,
+      "originalSha256": "1e5637c3409d05709eae62c7254f38900afa296902b1626e5902a5a2a4095f3d",
+      "sourcePath": "metal_nut/test/scratch/000.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/metal_nut/test/scratch/000.png",
+      "maskFile": "masks/development/metal_nut__scratch__000.png",
+      "maskSha256": "627a9f61b8f7d4ed7edfb5379be7a8fc31329f0e53b59960fcb1e0179e7b2376",
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            700,
+            700
+          ],
+          "originalWidth": 700,
+          "originalHeight": 700,
+          "file": "inputs/development/metal_nut__scratch__000__full.jpg",
+          "sha256": "0af2792af973b4c6fa022a061d76c875a537a1af5a2cb61a7601f80ee4267030"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            70,
+            70,
+            630,
+            630
+          ],
+          "originalWidth": 700,
+          "originalHeight": 700,
+          "file": "inputs/development/metal_nut__scratch__000__central80.jpg",
+          "sha256": "4bb909c4960cc3c0862e5442091f3e30736a6735a1b4f5e8476b30d1ebea319d"
+        }
+      }
+    },
+    {
+      "id": "metal_nut__bent__000",
+      "split": "development",
+      "category": "metal_nut",
+      "label": "bent",
+      "hasDefect": true,
+      "originalSha256": "602cceb099d5aa10a416f31cd6370ef9d8c810118f4ada9dbc9c28e91a889e0b",
+      "sourcePath": "metal_nut/test/bent/000.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/metal_nut/test/bent/000.png",
+      "maskFile": "masks/development/metal_nut__bent__000.png",
+      "maskSha256": "2ba625f7fa1357d3d31b84c39f38b5a2ddc546d751f3186388d0b7a4be150938",
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            700,
+            700
+          ],
+          "originalWidth": 700,
+          "originalHeight": 700,
+          "file": "inputs/development/metal_nut__bent__000__full.jpg",
+          "sha256": "366bec9bd5b5eaac98f33d6422af1e72223dc36fbb260683e1112800858d5ebf"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            70,
+            70,
+            630,
+            630
+          ],
+          "originalWidth": 700,
+          "originalHeight": 700,
+          "file": "inputs/development/metal_nut__bent__000__central80.jpg",
+          "sha256": "507622f3fcd432ab94fa1144c3b40c68d28395efaefef9f95e8679ef0bc10a24"
+        }
+      }
+    },
+    {
+      "id": "hazelnut__good__000",
+      "split": "development",
+      "category": "hazelnut",
+      "label": "good",
+      "hasDefect": false,
+      "originalSha256": "32034b75a2dca53cff86c4833e00a25cd65939859820e96ce9b980359cb08955",
+      "sourcePath": "hazelnut/test/good/000.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/hazelnut/test/good/000.png",
+      "maskFile": null,
+      "maskSha256": null,
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            1024,
+            1024
+          ],
+          "originalWidth": 1024,
+          "originalHeight": 1024,
+          "file": "inputs/development/hazelnut__good__000__full.jpg",
+          "sha256": "0dbf168ffd92b69001d4969f3b5d8d48b0969fdcee23a8f5addbb461d93e0685"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            102,
+            102,
+            922,
+            922
+          ],
+          "originalWidth": 1024,
+          "originalHeight": 1024,
+          "file": "inputs/development/hazelnut__good__000__central80.jpg",
+          "sha256": "e46f19a0f05856c330a7e760505286e065a99e341605caab9936476108a0c1ed"
+        }
+      }
+    },
+    {
+      "id": "hazelnut__crack__000",
+      "split": "development",
+      "category": "hazelnut",
+      "label": "crack",
+      "hasDefect": true,
+      "originalSha256": "e26b54282b6b11286760905ca2880af594561b606dfa0643859d6ee6027cf8c2",
+      "sourcePath": "hazelnut/test/crack/000.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/hazelnut/test/crack/000.png",
+      "maskFile": "masks/development/hazelnut__crack__000.png",
+      "maskSha256": "299566b57b84b9d466f4f7f50a8210e0bd0ff2a4ac5922f456d00cd9169cfbb4",
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            1024,
+            1024
+          ],
+          "originalWidth": 1024,
+          "originalHeight": 1024,
+          "file": "inputs/development/hazelnut__crack__000__full.jpg",
+          "sha256": "525cbdfb8c271f7cb7f9964ff6eab32708fa73e792967a76f3a5083a000ec29b"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            102,
+            102,
+            922,
+            922
+          ],
+          "originalWidth": 1024,
+          "originalHeight": 1024,
+          "file": "inputs/development/hazelnut__crack__000__central80.jpg",
+          "sha256": "3737e874f7ac5d415d295288601b633638ef2b630701e1461375f8f36917499e"
+        }
+      }
+    },
+    {
+      "id": "hazelnut__hole__000",
+      "split": "development",
+      "category": "hazelnut",
+      "label": "hole",
+      "hasDefect": true,
+      "originalSha256": "b9a1a102db263079fec8bc9836f182253dced9ca178957b7e9bef05cba3312c2",
+      "sourcePath": "hazelnut/test/hole/000.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/hazelnut/test/hole/000.png",
+      "maskFile": "masks/development/hazelnut__hole__000.png",
+      "maskSha256": "0db752dd6620c7c7493fe8b150e2a706d4c851a15a27c919e545552850e85018",
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            1024,
+            1024
+          ],
+          "originalWidth": 1024,
+          "originalHeight": 1024,
+          "file": "inputs/development/hazelnut__hole__000__full.jpg",
+          "sha256": "18cc025ae97113760b2fcc1e8f82c65281a825fc237edbf25fc9e7cdc5708986"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            102,
+            102,
+            922,
+            922
+          ],
+          "originalWidth": 1024,
+          "originalHeight": 1024,
+          "file": "inputs/development/hazelnut__hole__000__central80.jpg",
+          "sha256": "49bc317cc7402734b3f3d66f6aa0fb6b6f046d20f7f6f943e9a0f9c45f7e5d59"
+        }
+      }
+    },
+    {
+      "id": "capsule__good__000",
+      "split": "development",
+      "category": "capsule",
+      "label": "good",
+      "hasDefect": false,
+      "originalSha256": "86366d544a0182b04fdeacb62c9b23af8c72af24d35eaafeb8c210f603174728",
+      "sourcePath": "capsule/test/good/000.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/capsule/test/good/000.png",
+      "maskFile": null,
+      "maskSha256": null,
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            1000,
+            1000
+          ],
+          "originalWidth": 1000,
+          "originalHeight": 1000,
+          "file": "inputs/development/capsule__good__000__full.jpg",
+          "sha256": "1c5168880adcd026f71a7de36578fe971397306a3320ea800e1ba5c2ef49f5c1"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            100,
+            100,
+            900,
+            900
+          ],
+          "originalWidth": 1000,
+          "originalHeight": 1000,
+          "file": "inputs/development/capsule__good__000__central80.jpg",
+          "sha256": "f2b965da877f3087f79e16a9cca2f370dd80dfaa4b61416a3390f25d5ac9c066"
+        }
+      }
+    },
+    {
+      "id": "capsule__crack__000",
+      "split": "development",
+      "category": "capsule",
+      "label": "crack",
+      "hasDefect": true,
+      "originalSha256": "6462a533da731a19e4df05fc1815719b94603aee341a2ac620add75ec2334ef4",
+      "sourcePath": "capsule/test/crack/000.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/capsule/test/crack/000.png",
+      "maskFile": "masks/development/capsule__crack__000.png",
+      "maskSha256": "650a3bca9dda64b435441238a0d0fd6e4db4ec3cd74f25a5c152e6a2333beb2d",
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            1000,
+            1000
+          ],
+          "originalWidth": 1000,
+          "originalHeight": 1000,
+          "file": "inputs/development/capsule__crack__000__full.jpg",
+          "sha256": "f31b58f0bfe669ee7fc4f22432e31876e14af84a44826e360c973437b105b093"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            100,
+            100,
+            900,
+            900
+          ],
+          "originalWidth": 1000,
+          "originalHeight": 1000,
+          "file": "inputs/development/capsule__crack__000__central80.jpg",
+          "sha256": "1a02772b87e719cfb1132a91f0a88d33bb70ecc9c33b2361f4a6f47dd22bdf5c"
+        }
+      }
+    },
+    {
+      "id": "capsule__squeeze__000",
+      "split": "development",
+      "category": "capsule",
+      "label": "squeeze",
+      "hasDefect": true,
+      "originalSha256": "28e839bfc1dcc9c8c811d0f3817fb7c1184147883f5fefbb7b6fef787e69dc9a",
+      "sourcePath": "capsule/test/squeeze/000.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/capsule/test/squeeze/000.png",
+      "maskFile": "masks/development/capsule__squeeze__000.png",
+      "maskSha256": "974ab89ac5b4f0f768f38c3faecdbe4c7ad6ea75821cf905a62a5cafd440bdb9",
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            1000,
+            1000
+          ],
+          "originalWidth": 1000,
+          "originalHeight": 1000,
+          "file": "inputs/development/capsule__squeeze__000__full.jpg",
+          "sha256": "b9b5fe3a1edd299e9d00ce7f6ec4eb26dba54b390e97ef4d1875f0d8f5eeb4d0"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            100,
+            100,
+            900,
+            900
+          ],
+          "originalWidth": 1000,
+          "originalHeight": 1000,
+          "file": "inputs/development/capsule__squeeze__000__central80.jpg",
+          "sha256": "2cd0ca1834d11069f8b6ad1aad499f96ff5642f3943ce5e6ba8a3e151a5f7b8b"
+        }
+      }
+    },
+    {
+      "id": "bottle__good__010",
+      "split": "heldout",
+      "category": "bottle",
+      "label": "good",
+      "hasDefect": false,
+      "originalSha256": "b31ddd1a297e85ad505f8d8b1b2df94452ab22a5d5482f500db920635356f963",
+      "sourcePath": "bottle/test/good/010.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/bottle/test/good/010.png",
+      "maskFile": null,
+      "maskSha256": null,
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            900,
+            900
+          ],
+          "originalWidth": 900,
+          "originalHeight": 900,
+          "file": "inputs/heldout/bottle__good__010__full.jpg",
+          "sha256": "85ee937087e8bd706abaa2862c8e701b0fdb95eee14be9893ac51609c9a7e194"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            90,
+            90,
+            810,
+            810
+          ],
+          "originalWidth": 900,
+          "originalHeight": 900,
+          "file": "inputs/heldout/bottle__good__010__central80.jpg",
+          "sha256": "88e28db5451d107c5553499bbcdd59a6dd9272c4d57306177398ea5470e415e7"
+        }
+      }
+    },
+    {
+      "id": "bottle__good__011",
+      "split": "heldout",
+      "category": "bottle",
+      "label": "good",
+      "hasDefect": false,
+      "originalSha256": "17033f7fb5f93eee444224d7dd9482a6444c526e0f68591a21b12b4d356cbb8a",
+      "sourcePath": "bottle/test/good/011.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/bottle/test/good/011.png",
+      "maskFile": null,
+      "maskSha256": null,
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            900,
+            900
+          ],
+          "originalWidth": 900,
+          "originalHeight": 900,
+          "file": "inputs/heldout/bottle__good__011__full.jpg",
+          "sha256": "87ade535c61fc427e23e9def35650959af4249991b9a6385fd2f25d1cbd150fa"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            90,
+            90,
+            810,
+            810
+          ],
+          "originalWidth": 900,
+          "originalHeight": 900,
+          "file": "inputs/heldout/bottle__good__011__central80.jpg",
+          "sha256": "34601ceeb2f356c9deabd55a49efb95a6e019f5a4b87041819dd07229f2d625e"
+        }
+      }
+    },
+    {
+      "id": "bottle__broken_large__010",
+      "split": "heldout",
+      "category": "bottle",
+      "label": "broken_large",
+      "hasDefect": true,
+      "originalSha256": "cac8b9cc86de2513a673453689e927a2c70a86b2f4961df2e70d795aad9fc0c6",
+      "sourcePath": "bottle/test/broken_large/010.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/bottle/test/broken_large/010.png",
+      "maskFile": "masks/heldout/bottle__broken_large__010.png",
+      "maskSha256": "7de90f9b811ebf6e2ada321b572048cfd1d41acf98596f167f6be295dadbf9b9",
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            900,
+            900
+          ],
+          "originalWidth": 900,
+          "originalHeight": 900,
+          "file": "inputs/heldout/bottle__broken_large__010__full.jpg",
+          "sha256": "02029113ad5975a3d3df2e719bf1a99b20deb4a4e7689e10c1b9dd6587c70167"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            90,
+            90,
+            810,
+            810
+          ],
+          "originalWidth": 900,
+          "originalHeight": 900,
+          "file": "inputs/heldout/bottle__broken_large__010__central80.jpg",
+          "sha256": "09986bd9cf1355b7c96a21904c7dd40c311ccad78a5a9ccbe2ff67e7b9533962"
+        }
+      }
+    },
+    {
+      "id": "bottle__broken_large__011",
+      "split": "heldout",
+      "category": "bottle",
+      "label": "broken_large",
+      "hasDefect": true,
+      "originalSha256": "d1819a2167952638c4826a78d3d081fdf26e5a923f3868713af122f5b1d8eddb",
+      "sourcePath": "bottle/test/broken_large/011.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/bottle/test/broken_large/011.png",
+      "maskFile": "masks/heldout/bottle__broken_large__011.png",
+      "maskSha256": "5d0ce72f47849a34cff1cfe53ba824a3a3136b4037cdda41a34385d304fa64f3",
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            900,
+            900
+          ],
+          "originalWidth": 900,
+          "originalHeight": 900,
+          "file": "inputs/heldout/bottle__broken_large__011__full.jpg",
+          "sha256": "e949260e00d6236892ce627fc007cc1b56ad98afc20b12e3b172e3d89043e733"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            90,
+            90,
+            810,
+            810
+          ],
+          "originalWidth": 900,
+          "originalHeight": 900,
+          "file": "inputs/heldout/bottle__broken_large__011__central80.jpg",
+          "sha256": "aca9185631b89f59637ff9857decaf59be3c23e78f3510046ac8e18820461020"
+        }
+      }
+    },
+    {
+      "id": "bottle__broken_small__010",
+      "split": "heldout",
+      "category": "bottle",
+      "label": "broken_small",
+      "hasDefect": true,
+      "originalSha256": "21cd62dad2af2a7841c2ed469ab0909385805fa67d4ee7ba4b8dd6417c6ea95c",
+      "sourcePath": "bottle/test/broken_small/010.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/bottle/test/broken_small/010.png",
+      "maskFile": "masks/heldout/bottle__broken_small__010.png",
+      "maskSha256": "b7896d8a2dd1209ebc3a22a2e9be80bcbc6e51040a2f18e25c8dba6015c2cf1d",
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            900,
+            900
+          ],
+          "originalWidth": 900,
+          "originalHeight": 900,
+          "file": "inputs/heldout/bottle__broken_small__010__full.jpg",
+          "sha256": "9115e39a3f1e064ef8767d728755c3710e680765fc7c6bc5b15c42d0087b0792"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            90,
+            90,
+            810,
+            810
+          ],
+          "originalWidth": 900,
+          "originalHeight": 900,
+          "file": "inputs/heldout/bottle__broken_small__010__central80.jpg",
+          "sha256": "630fc73a09d906f71d4ea7209ee9d6039763d119c99a9c577d8684eaf94bd270"
+        }
+      }
+    },
+    {
+      "id": "bottle__broken_small__011",
+      "split": "heldout",
+      "category": "bottle",
+      "label": "broken_small",
+      "hasDefect": true,
+      "originalSha256": "0b864bfc835768c65992b235c435e397480cfadeed57ea3884e234a2b473a9c9",
+      "sourcePath": "bottle/test/broken_small/011.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/bottle/test/broken_small/011.png",
+      "maskFile": "masks/heldout/bottle__broken_small__011.png",
+      "maskSha256": "cf1a458b5f09a3b2c6f637c78d0b3f78b352f369677fc6882c84ad4bc6d831a8",
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            900,
+            900
+          ],
+          "originalWidth": 900,
+          "originalHeight": 900,
+          "file": "inputs/heldout/bottle__broken_small__011__full.jpg",
+          "sha256": "ffe81ca2c8e7ca562cd08bc5c81a16f9629c7d94e6f5d224286960c85867494e"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            90,
+            90,
+            810,
+            810
+          ],
+          "originalWidth": 900,
+          "originalHeight": 900,
+          "file": "inputs/heldout/bottle__broken_small__011__central80.jpg",
+          "sha256": "dbf962f07cc195c661e20b127fce09b79ddc15bf86c72993b569f3653799bd8a"
+        }
+      }
+    },
+    {
+      "id": "metal_nut__good__010",
+      "split": "heldout",
+      "category": "metal_nut",
+      "label": "good",
+      "hasDefect": false,
+      "originalSha256": "f77e35d23046cdcd10d647d4eeeff54be41faa94371e07f526d169ccf234bcb3",
+      "sourcePath": "metal_nut/test/good/010.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/metal_nut/test/good/010.png",
+      "maskFile": null,
+      "maskSha256": null,
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            700,
+            700
+          ],
+          "originalWidth": 700,
+          "originalHeight": 700,
+          "file": "inputs/heldout/metal_nut__good__010__full.jpg",
+          "sha256": "494c0c37375e19bae61c67bec7e27c5ea01c41b7f141be4c41312266e79fb2a8"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            70,
+            70,
+            630,
+            630
+          ],
+          "originalWidth": 700,
+          "originalHeight": 700,
+          "file": "inputs/heldout/metal_nut__good__010__central80.jpg",
+          "sha256": "a926b16ed437962177c41cae119ae741edc75584ff0cf7f9025ef825e663f2d3"
+        }
+      }
+    },
+    {
+      "id": "metal_nut__good__011",
+      "split": "heldout",
+      "category": "metal_nut",
+      "label": "good",
+      "hasDefect": false,
+      "originalSha256": "79283964b757e67af9699abc3ffc26ad45d4aeed5de0b0f9b7fb6cac3d2dae0d",
+      "sourcePath": "metal_nut/test/good/011.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/metal_nut/test/good/011.png",
+      "maskFile": null,
+      "maskSha256": null,
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            700,
+            700
+          ],
+          "originalWidth": 700,
+          "originalHeight": 700,
+          "file": "inputs/heldout/metal_nut__good__011__full.jpg",
+          "sha256": "f743d96848b309616ff75ce20e5d4dbe7451930187dcf77982bc2a1b4579bee8"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            70,
+            70,
+            630,
+            630
+          ],
+          "originalWidth": 700,
+          "originalHeight": 700,
+          "file": "inputs/heldout/metal_nut__good__011__central80.jpg",
+          "sha256": "eeff29b85d9bb2916969e2d97a164f5f5df22a4a2e39881ea206407a83a9aaeb"
+        }
+      }
+    },
+    {
+      "id": "metal_nut__scratch__010",
+      "split": "heldout",
+      "category": "metal_nut",
+      "label": "scratch",
+      "hasDefect": true,
+      "originalSha256": "49b7f5e443fc22fb47ce7edf303623893e7791c2687213e98f9a2d80579e83ea",
+      "sourcePath": "metal_nut/test/scratch/010.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/metal_nut/test/scratch/010.png",
+      "maskFile": "masks/heldout/metal_nut__scratch__010.png",
+      "maskSha256": "0d9ef4d0002fea1ac5930c4d889945283edd18527d345c455fd2f6b3a316c837",
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            700,
+            700
+          ],
+          "originalWidth": 700,
+          "originalHeight": 700,
+          "file": "inputs/heldout/metal_nut__scratch__010__full.jpg",
+          "sha256": "11f730a9a23c501e6fea697a004183fd422af6ab078e99221af292c2d7894834"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            70,
+            70,
+            630,
+            630
+          ],
+          "originalWidth": 700,
+          "originalHeight": 700,
+          "file": "inputs/heldout/metal_nut__scratch__010__central80.jpg",
+          "sha256": "efd8a650430fa2e0197f480e561190855460b5d540f3a275b6863a1b506b8c5e"
+        }
+      }
+    },
+    {
+      "id": "metal_nut__scratch__011",
+      "split": "heldout",
+      "category": "metal_nut",
+      "label": "scratch",
+      "hasDefect": true,
+      "originalSha256": "af11f5a1ce2cc39e54cf25ec42eeaf45d9fcac91c181744efead9df70789cb7b",
+      "sourcePath": "metal_nut/test/scratch/011.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/metal_nut/test/scratch/011.png",
+      "maskFile": "masks/heldout/metal_nut__scratch__011.png",
+      "maskSha256": "2234b3aaa1597c2e97b3b7b79e3e03388bf8b7706a2958e3e3c2996e4fb3e1f2",
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            700,
+            700
+          ],
+          "originalWidth": 700,
+          "originalHeight": 700,
+          "file": "inputs/heldout/metal_nut__scratch__011__full.jpg",
+          "sha256": "99a9fc361d774f03ac156342c28302f9736f85f41e04c0b5c5144aa5f17619ba"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            70,
+            70,
+            630,
+            630
+          ],
+          "originalWidth": 700,
+          "originalHeight": 700,
+          "file": "inputs/heldout/metal_nut__scratch__011__central80.jpg",
+          "sha256": "fbe1aaa128d6fbd3c534064b843c3c1c89cf9389e9f6e8dc3da9ec0e28f4f9e7"
+        }
+      }
+    },
+    {
+      "id": "metal_nut__bent__010",
+      "split": "heldout",
+      "category": "metal_nut",
+      "label": "bent",
+      "hasDefect": true,
+      "originalSha256": "aeeb8141c7dcbdac4a4dda19b8ddd23a8cf3be7c1b60b0f26ab2a465adb976c3",
+      "sourcePath": "metal_nut/test/bent/010.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/metal_nut/test/bent/010.png",
+      "maskFile": "masks/heldout/metal_nut__bent__010.png",
+      "maskSha256": "f61ee6ae92ff457ce8342751413a3c071b61691e9bcb18de2ecb395d0ef5c97f",
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            700,
+            700
+          ],
+          "originalWidth": 700,
+          "originalHeight": 700,
+          "file": "inputs/heldout/metal_nut__bent__010__full.jpg",
+          "sha256": "93ea74ed6cef18affd2cc898bfeea347a397ed17eb17174549887ff55a933348"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            70,
+            70,
+            630,
+            630
+          ],
+          "originalWidth": 700,
+          "originalHeight": 700,
+          "file": "inputs/heldout/metal_nut__bent__010__central80.jpg",
+          "sha256": "2b999dd5a5a81c6cb2a743547295e4545d88da0780402e8290613adabe129751"
+        }
+      }
+    },
+    {
+      "id": "metal_nut__bent__011",
+      "split": "heldout",
+      "category": "metal_nut",
+      "label": "bent",
+      "hasDefect": true,
+      "originalSha256": "74bf23df92b90626e99c2c7c78f526c203ff0f1c0a1d6a6d785ae689a8c2d4a8",
+      "sourcePath": "metal_nut/test/bent/011.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/metal_nut/test/bent/011.png",
+      "maskFile": "masks/heldout/metal_nut__bent__011.png",
+      "maskSha256": "7214e5c903d1abdf942160322c63a3a88edee2574d6175089c3a02f76387d6c6",
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            700,
+            700
+          ],
+          "originalWidth": 700,
+          "originalHeight": 700,
+          "file": "inputs/heldout/metal_nut__bent__011__full.jpg",
+          "sha256": "f95d9ae23b977d5e3a05b10687f7da9ccf56a26b3428d8526cf0db9cffc317c5"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            70,
+            70,
+            630,
+            630
+          ],
+          "originalWidth": 700,
+          "originalHeight": 700,
+          "file": "inputs/heldout/metal_nut__bent__011__central80.jpg",
+          "sha256": "339e09f5241f54c3ba1638e70a2e4e7318990bd154388febdccfb797982c59e7"
+        }
+      }
+    },
+    {
+      "id": "hazelnut__good__010",
+      "split": "heldout",
+      "category": "hazelnut",
+      "label": "good",
+      "hasDefect": false,
+      "originalSha256": "b7299fd3b5f3791ed98fa5a54a55ee1471b7dd54b56b903a0309246f973c3163",
+      "sourcePath": "hazelnut/test/good/010.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/hazelnut/test/good/010.png",
+      "maskFile": null,
+      "maskSha256": null,
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            1024,
+            1024
+          ],
+          "originalWidth": 1024,
+          "originalHeight": 1024,
+          "file": "inputs/heldout/hazelnut__good__010__full.jpg",
+          "sha256": "26c9d17bea4c4a60680fbbfed8cbce9c7a29d84aaea227e8642132d00aa27a74"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            102,
+            102,
+            922,
+            922
+          ],
+          "originalWidth": 1024,
+          "originalHeight": 1024,
+          "file": "inputs/heldout/hazelnut__good__010__central80.jpg",
+          "sha256": "ea50833ecdbe3de936c8002153270460557a9ac72f8177f89013db0eeeac38d4"
+        }
+      }
+    },
+    {
+      "id": "hazelnut__good__011",
+      "split": "heldout",
+      "category": "hazelnut",
+      "label": "good",
+      "hasDefect": false,
+      "originalSha256": "1f894dfe85923cb67e2fe1407dded8d1481c25e21f31dba959eee2f22a4669c5",
+      "sourcePath": "hazelnut/test/good/011.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/hazelnut/test/good/011.png",
+      "maskFile": null,
+      "maskSha256": null,
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            1024,
+            1024
+          ],
+          "originalWidth": 1024,
+          "originalHeight": 1024,
+          "file": "inputs/heldout/hazelnut__good__011__full.jpg",
+          "sha256": "d62a96d215bf847390face6fb60846af28134342343a0d6c0c42c647579a18df"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            102,
+            102,
+            922,
+            922
+          ],
+          "originalWidth": 1024,
+          "originalHeight": 1024,
+          "file": "inputs/heldout/hazelnut__good__011__central80.jpg",
+          "sha256": "57f7c8a30806677ffcd680eb8811748e28e6597b74f6b03bb267c0768427fbd6"
+        }
+      }
+    },
+    {
+      "id": "hazelnut__crack__010",
+      "split": "heldout",
+      "category": "hazelnut",
+      "label": "crack",
+      "hasDefect": true,
+      "originalSha256": "39cadf02608a7a36041a2326c2a2c09dca5b0ccb44a7570bc71b70dee5bfdada",
+      "sourcePath": "hazelnut/test/crack/010.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/hazelnut/test/crack/010.png",
+      "maskFile": "masks/heldout/hazelnut__crack__010.png",
+      "maskSha256": "b3f5034afe3b2cd311582a2381a180e178e4c45f6f3637805ec284e0df8cb7b4",
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            1024,
+            1024
+          ],
+          "originalWidth": 1024,
+          "originalHeight": 1024,
+          "file": "inputs/heldout/hazelnut__crack__010__full.jpg",
+          "sha256": "1199f9da16e360dd97f6c441d1f96e0429b360c05db8b6568ef31cdba4517101"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            102,
+            102,
+            922,
+            922
+          ],
+          "originalWidth": 1024,
+          "originalHeight": 1024,
+          "file": "inputs/heldout/hazelnut__crack__010__central80.jpg",
+          "sha256": "276de53bd84f32a15b5f82ce89fb2e00dc21a7537254eb270cf25c46601ef809"
+        }
+      }
+    },
+    {
+      "id": "hazelnut__crack__011",
+      "split": "heldout",
+      "category": "hazelnut",
+      "label": "crack",
+      "hasDefect": true,
+      "originalSha256": "c83d9f85a2c0cfbaa407b41bc667ca56e4c66274f3fc2d503be2e799a12f955e",
+      "sourcePath": "hazelnut/test/crack/011.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/hazelnut/test/crack/011.png",
+      "maskFile": "masks/heldout/hazelnut__crack__011.png",
+      "maskSha256": "220745c39f88c5a6b7034991ce23799fff882a8c27005b44767ef730b5236794",
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            1024,
+            1024
+          ],
+          "originalWidth": 1024,
+          "originalHeight": 1024,
+          "file": "inputs/heldout/hazelnut__crack__011__full.jpg",
+          "sha256": "af76c22102d98ff45751fb064ad45a2d84b3c108c4372bbea628cb30b912d960"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            102,
+            102,
+            922,
+            922
+          ],
+          "originalWidth": 1024,
+          "originalHeight": 1024,
+          "file": "inputs/heldout/hazelnut__crack__011__central80.jpg",
+          "sha256": "b8e7d3e0637d4002f87436a790d9d8e5bf2f60e4b98279a3efb55612c984605b"
+        }
+      }
+    },
+    {
+      "id": "hazelnut__hole__010",
+      "split": "heldout",
+      "category": "hazelnut",
+      "label": "hole",
+      "hasDefect": true,
+      "originalSha256": "b0db81b6c3b05ca4e62383b2a827d35aa488a187a563828a56ea68778f64f35f",
+      "sourcePath": "hazelnut/test/hole/010.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/hazelnut/test/hole/010.png",
+      "maskFile": "masks/heldout/hazelnut__hole__010.png",
+      "maskSha256": "ee52ac561c00ba99e05678d3a2764ed0c2eef85c99f361d4621539c9ea009fd3",
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            1024,
+            1024
+          ],
+          "originalWidth": 1024,
+          "originalHeight": 1024,
+          "file": "inputs/heldout/hazelnut__hole__010__full.jpg",
+          "sha256": "f8b40f161337caeadc6011cef08dfdfa7903e6367b8b1dcbd02334abccb97b15"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            102,
+            102,
+            922,
+            922
+          ],
+          "originalWidth": 1024,
+          "originalHeight": 1024,
+          "file": "inputs/heldout/hazelnut__hole__010__central80.jpg",
+          "sha256": "0fefdf7c463c0ca8021fc75ef8d9b05742ccb9a3a8541a9258faadc593986a3d"
+        }
+      }
+    },
+    {
+      "id": "hazelnut__hole__011",
+      "split": "heldout",
+      "category": "hazelnut",
+      "label": "hole",
+      "hasDefect": true,
+      "originalSha256": "cb0185418d152ea6626d41039ad5c78714dcb9e68a2da3726cbac239ebd8029a",
+      "sourcePath": "hazelnut/test/hole/011.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/hazelnut/test/hole/011.png",
+      "maskFile": "masks/heldout/hazelnut__hole__011.png",
+      "maskSha256": "66f4d9934e9a2718c9399b94a8b0e39d37f2b59dcf1e44d462bb75df7072a8c3",
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            1024,
+            1024
+          ],
+          "originalWidth": 1024,
+          "originalHeight": 1024,
+          "file": "inputs/heldout/hazelnut__hole__011__full.jpg",
+          "sha256": "fe381b36825a8a61ece5f6a8a317819eb13a726d6f65cbdb96a39bba7bccd920"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            102,
+            102,
+            922,
+            922
+          ],
+          "originalWidth": 1024,
+          "originalHeight": 1024,
+          "file": "inputs/heldout/hazelnut__hole__011__central80.jpg",
+          "sha256": "eb9a6e715d0d25d7208c9e6c3ac1d9bb4acadbe9b4a9b90f0fc8053d7bd0b512"
+        }
+      }
+    },
+    {
+      "id": "capsule__good__010",
+      "split": "heldout",
+      "category": "capsule",
+      "label": "good",
+      "hasDefect": false,
+      "originalSha256": "3e1d45837e483b3a95a66aabd9c19947691f14fd54b020723f42fad08a62c922",
+      "sourcePath": "capsule/test/good/010.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/capsule/test/good/010.png",
+      "maskFile": null,
+      "maskSha256": null,
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            1000,
+            1000
+          ],
+          "originalWidth": 1000,
+          "originalHeight": 1000,
+          "file": "inputs/heldout/capsule__good__010__full.jpg",
+          "sha256": "18528c7192ff4a1a909a8ac5475c20bc6b186507a1c481194cdd2e55a4874915"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            100,
+            100,
+            900,
+            900
+          ],
+          "originalWidth": 1000,
+          "originalHeight": 1000,
+          "file": "inputs/heldout/capsule__good__010__central80.jpg",
+          "sha256": "2b938ffe51914547507217b084218dac59cc040bb9a0839768744f9a770edc76"
+        }
+      }
+    },
+    {
+      "id": "capsule__good__011",
+      "split": "heldout",
+      "category": "capsule",
+      "label": "good",
+      "hasDefect": false,
+      "originalSha256": "f4d1ddcfc0389391a704e4f4c9ab71457195d844a2e7d4b7f2c0692898d0d227",
+      "sourcePath": "capsule/test/good/011.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/capsule/test/good/011.png",
+      "maskFile": null,
+      "maskSha256": null,
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            1000,
+            1000
+          ],
+          "originalWidth": 1000,
+          "originalHeight": 1000,
+          "file": "inputs/heldout/capsule__good__011__full.jpg",
+          "sha256": "ca305fa2c2f75cc982052758fda52244493d0eaadf312d9090a62e4344472edb"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            100,
+            100,
+            900,
+            900
+          ],
+          "originalWidth": 1000,
+          "originalHeight": 1000,
+          "file": "inputs/heldout/capsule__good__011__central80.jpg",
+          "sha256": "cc083be3acb09356f27994fa3eb208eb70601e3aea6f286b57e2aa1223cae669"
+        }
+      }
+    },
+    {
+      "id": "capsule__crack__010",
+      "split": "heldout",
+      "category": "capsule",
+      "label": "crack",
+      "hasDefect": true,
+      "originalSha256": "e6b6bf744e2d563ce02319699a30fa25e2a23dae26fd09901b9f3c3cf74cdce6",
+      "sourcePath": "capsule/test/crack/010.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/capsule/test/crack/010.png",
+      "maskFile": "masks/heldout/capsule__crack__010.png",
+      "maskSha256": "8b253e644237d63686295c52bb0b829027117731234851aafec6071325a92d56",
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            1000,
+            1000
+          ],
+          "originalWidth": 1000,
+          "originalHeight": 1000,
+          "file": "inputs/heldout/capsule__crack__010__full.jpg",
+          "sha256": "8596ba5de2e2354ad2237550c60f2efd4dbeccbe7ea85ac4d41a0b63c5b2ab6a"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            100,
+            100,
+            900,
+            900
+          ],
+          "originalWidth": 1000,
+          "originalHeight": 1000,
+          "file": "inputs/heldout/capsule__crack__010__central80.jpg",
+          "sha256": "0e7887e60497818b2e910bd582d8490f298e936ef879a380d9495cb424e1592d"
+        }
+      }
+    },
+    {
+      "id": "capsule__crack__011",
+      "split": "heldout",
+      "category": "capsule",
+      "label": "crack",
+      "hasDefect": true,
+      "originalSha256": "f414406fd3a64283e0540349e11a2a1f7f6e705a9c1e50fd649c372562832e7f",
+      "sourcePath": "capsule/test/crack/011.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/capsule/test/crack/011.png",
+      "maskFile": "masks/heldout/capsule__crack__011.png",
+      "maskSha256": "a2a81c47ee4ba95f50c6322cdb98153e01710731e891c6a3108040673e0f50ec",
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            1000,
+            1000
+          ],
+          "originalWidth": 1000,
+          "originalHeight": 1000,
+          "file": "inputs/heldout/capsule__crack__011__full.jpg",
+          "sha256": "aa008b5b21d027509a23e8583c97b0a7d7e56092119975307a765d020572223d"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            100,
+            100,
+            900,
+            900
+          ],
+          "originalWidth": 1000,
+          "originalHeight": 1000,
+          "file": "inputs/heldout/capsule__crack__011__central80.jpg",
+          "sha256": "52f3f004fc9597bbf2cb9ad117ce905fc3e5229b7da18afa1b81f3390569a0ea"
+        }
+      }
+    },
+    {
+      "id": "capsule__squeeze__010",
+      "split": "heldout",
+      "category": "capsule",
+      "label": "squeeze",
+      "hasDefect": true,
+      "originalSha256": "5981c80512292dc9e1805b9a0cf9590146a70f188347bd9a356b8d3dd3dff30f",
+      "sourcePath": "capsule/test/squeeze/010.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/capsule/test/squeeze/010.png",
+      "maskFile": "masks/heldout/capsule__squeeze__010.png",
+      "maskSha256": "bbab4ab0cf4765e0a54f627a6335c883c31f0501d21ab8f242982a0cc3415e1e",
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            1000,
+            1000
+          ],
+          "originalWidth": 1000,
+          "originalHeight": 1000,
+          "file": "inputs/heldout/capsule__squeeze__010__full.jpg",
+          "sha256": "beff789b3da3056f06c32add02288a26b57384981b10362988eb4b2210982ffb"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            100,
+            100,
+            900,
+            900
+          ],
+          "originalWidth": 1000,
+          "originalHeight": 1000,
+          "file": "inputs/heldout/capsule__squeeze__010__central80.jpg",
+          "sha256": "519fde1d041113f7dc3f3202090045726063d389166ae2b8e862e59bee0f60e8"
+        }
+      }
+    },
+    {
+      "id": "capsule__squeeze__011",
+      "split": "heldout",
+      "category": "capsule",
+      "label": "squeeze",
+      "hasDefect": true,
+      "originalSha256": "46e573a917f738d07564eec5cf5ab0a3c6d4b4f0fe6373e62f0a06603260ce24",
+      "sourcePath": "capsule/test/squeeze/011.png",
+      "sourceUrl": "https://huggingface.co/datasets/foersben/mvtec-ad/resolve/c75b39616f84db43677bcc8228caaafaf5096d7f/capsule/test/squeeze/011.png",
+      "maskFile": "masks/heldout/capsule__squeeze__011.png",
+      "maskSha256": "adb60baa7a075dc8f21111f983871af3972326ca6822f225d1baaf88bbc05949",
+      "views": {
+        "full": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            0,
+            0,
+            1000,
+            1000
+          ],
+          "originalWidth": 1000,
+          "originalHeight": 1000,
+          "file": "inputs/heldout/capsule__squeeze__011__full.jpg",
+          "sha256": "7a4e58ef4258d6d0dc506beda98872a4e297c3b81f9129b4147ba903ea1b3d2f"
+        },
+        "central80": {
+          "width": 448,
+          "height": 448,
+          "cropPixels": [
+            100,
+            100,
+            900,
+            900
+          ],
+          "originalWidth": 1000,
+          "originalHeight": 1000,
+          "file": "inputs/heldout/capsule__squeeze__011__central80.jpg",
+          "sha256": "9f3f5f7724092f6963c12cd3d49594a0f6acbb14e46db28af64f978e7875bdff"
+        }
+      }
+    }
+  ]
+}

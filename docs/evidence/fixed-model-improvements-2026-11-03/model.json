@@ -1,0 +1,9 @@
+{
+  "modelSha256": "0909d8a1aba584b482d501baae032611d1559878be1b7f6606ba516687c5380d",
+  "librarySha256": "c7170d830fb0c1f8c6c224643b4050678b3740c9b46cec4032d19f1d8cb5663c",
+  "backend": "CUDA0",
+  "mode": "hybrid",
+  "threads": 6,
+  "imageMaxSide": 448,
+  "sourceRevision": "77376ab332de918220f7a7e391542eefb5407c9f"
+}

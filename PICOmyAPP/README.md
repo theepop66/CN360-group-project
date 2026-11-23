@@ -98,3 +98,11 @@ npm test
 The tests cover payload parsing, result ordering, normalized coordinates, validation, letterbox-aware box scaling, prompt payloads, HTTP errors, and request timeouts.
 
 Before a demo, also smoke-test on the physical Pico 4: rotate/resize the view, disconnect and restore Wi-Fi, verify that stale boxes clear, submit a prompt through the real n8n CORS policy, and compare one known box against the inference snapshot.
+
+## Item-bound manual Verdicts
+
+Reject/Pass first read the configured controller's `/status`, require an active
+awaiting item, and submit its unchanged session/item with the action. The board's
+original deadline remains authoritative. Old/mismatched acknowledgements display
+unknown acceptance; manual angle/sweep keep their Manual/idle constraints.
+See [the shared controller contract](../360ControlUnit/README.md).

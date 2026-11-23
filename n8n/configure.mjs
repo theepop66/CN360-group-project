@@ -7,6 +7,15 @@ import { resolveVerdictBudget, resolveCoverageThreshold } from "./lib/inspection
 const here = dirname(fileURLToPath(import.meta.url));
 
 export function configureWorkflows(config, supabaseKey) {
+  if (config.inspectionPolicy !== undefined && (config.inspectionPolicy?.version !== 1 ||
+      config.inspectionPolicy.enabled !== true || !Array.isArray(config.inspectionPolicy.rules))) {
+    throw new Error("inspectionPolicy must be an enabled version 1 guarded policy");
+  }
+  const useStoredCredential = config.supabaseCredentialId !== undefined;
+  if (useStoredCredential && (typeof config.supabaseCredentialId !== "string" ||
+      !/^[A-Za-z0-9_-]+$/.test(config.supabaseCredentialId) || config.supabaseCredentialId.includes("REPLACE_"))) {
+    throw new Error("Set a valid stored Supabase credential ID");
+  }
   const mappings = new Map();
   for (const [key, original] of [
     ["modelBaseUrl", `http://${PLACEHOLDERS.modelHost}`],
@@ -21,15 +30,20 @@ export function configureWorkflows(config, supabaseKey) {
     }
     mappings.set(original, url.origin);
   }
-  if (!supabaseKey || supabaseKey.includes("REPLACE_") || !/^[A-Za-z0-9_-]+$/.test(config.snapshotBucket ?? "")) {
-    throw new Error("Set CN360_SUPABASE_SERVICE_ROLE_KEY and snapshotBucket locally");
+  if ((!useStoredCredential && (!supabaseKey || supabaseKey.includes("REPLACE_"))) || !/^[A-Za-z0-9_-]+$/.test(config.snapshotBucket ?? "")) {
+    throw new Error("Set a stored Supabase credential or local service key, and snapshotBucket");
   }
   const threshold = resolveCoverageThreshold(config.coverageThreshold);
   const budget = resolveVerdictBudget(config.modelTimeoutMs);
   if (!threshold.readable || threshold.defaulted || !budget.readable || !budget.fits) {
     throw new Error("Explicit coverageThreshold and modelTimeoutMs must satisfy the Verdict Window");
   }
-  mappings.set(PLACEHOLDERS.supabaseKey, supabaseKey);
+  mappings.set(PLACEHOLDERS.supabaseKey, useStoredCredential ? "__CN360_CREDENTIAL__" : supabaseKey);
+  const relayIngestToken = config.relayIngestToken ?? "";
+  if (typeof relayIngestToken !== "string" || !/^[A-Za-z0-9._~-]*$/.test(relayIngestToken) || relayIngestToken.includes("REPLACE_")) {
+    throw new Error("relayIngestToken must be empty or use only letters, digits, '.', '_', '~' and '-'");
+  }
+  mappings.set(PLACEHOLDERS.relayIngestToken, relayIngestToken);
   mappings.set(PLACEHOLDERS.snapshotBucket, config.snapshotBucket);
   mappings.set(PLACEHOLDERS.coverageThreshold, String(threshold.value));
   mappings.set(PLACEHOLDERS.modelTimeoutMs, String(budget.modelTimeoutMs));
@@ -46,7 +60,39 @@ export function configureWorkflows(config, supabaseKey) {
       if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, replace(item)]));
       return value;
     };
-    return [name, replace(workflow)];
+    const configured = replace(workflow);
+    if (config.inspectionPolicy) {
+      const decisionNode = configured.nodes.find(node => node.name === "decide-inspection");
+      if (decisionNode) decisionNode.parameters.jsCode = decisionNode.parameters.jsCode.replace(
+        "const inspectionPolicy = null; // configured inspection policy",
+        () => "const inspectionPolicy = " + JSON.stringify(config.inspectionPolicy) + "; // configured inspection policy");
+    }
+    const monitoring = configured.nodes.find(node => node.name === "publish-monitoring");
+    if (monitoring && config.telemetryBaseUrl) {
+      const url = new URL(config.telemetryBaseUrl);
+      if (!["http:", "https:"].includes(url.protocol) || url.hostname === "0.0.0.0" || url.username || url.password || url.search || url.hash || url.pathname !== "/") {
+        throw new Error("Set a usable origin for telemetryBaseUrl");
+      }
+      monitoring.disabled = false;
+      monitoring.parameters.url = url.origin + "/events";
+      monitoring.parameters.jsonBody = monitoring.parameters.jsonBody.replace("monitoringProfile: 'inspection'", () => "monitoringProfile: " + JSON.stringify(config.monitoringProfile ?? "inspection"));
+      if (config.reviewFrameBaseUrl) {
+        const reviewUrl = new URL(config.reviewFrameBaseUrl);
+        if (!["http:", "https:"].includes(reviewUrl.protocol) || reviewUrl.username || reviewUrl.password) throw new Error("Invalid review frame origin");
+        monitoring.parameters.jsonBody = monitoring.parameters.jsonBody.replace("reviewFrameBaseUrl: null", () => "reviewFrameBaseUrl: " + JSON.stringify(reviewUrl.href));
+      }
+    }
+    if (useStoredCredential) {
+      for (const node of configured.nodes) {
+        const headers = node.parameters.headerParameters?.parameters;
+        if (!headers?.some(header => header.name.toLowerCase() === "apikey")) continue;
+        node.parameters.headerParameters.parameters = headers.filter(header => !["apikey", "authorization"].includes(header.name.toLowerCase()));
+        node.parameters.authentication = "predefinedCredentialType";
+        node.parameters.nodeCredentialType = "supabaseApi";
+        node.credentials = { supabaseApi: { id: config.supabaseCredentialId, name: config.supabaseCredentialName ?? "CN360 Supabase" } };
+      }
+    }
+    return [name, configured];
   }));
 }
 
@@ -56,5 +102,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const output = join(here, "workflows-local");
   mkdirSync(output, { recursive: true });
   for (const [name, workflow] of Object.entries(workflows)) writeFileSync(join(output, name), JSON.stringify(workflow, null, 2) + "\n");
-  console.log("Configured inactive workflows in workflows-local/. Contains local credentials; do not share or commit these files.");
+  console.log(config.supabaseCredentialId !== undefined
+    ? "Configured inactive workflows in workflows-local/ using stored Supabase credentials; no service key is included."
+    : "Configured inactive workflows in workflows-local/. Contains local credentials; do not share or commit these files.");
 }

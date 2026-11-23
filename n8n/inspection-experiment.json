@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "modelPolicy": "Existing q8 weights and native library unchanged; CUDA0, hybrid, six threads",
+  "heldoutIndices": ["010", "011"],
+  "repetitions": 3,
+  "imageMaxSide": 448,
+  "crops": {"full": [0, 0, 1, 1], "central80": [0.1, 0.1, 0.9, 0.9]},
+  "conditions": [
+    {"id": "bottle-broken-large", "category": "bottle", "label": "broken_large", "originalTarget": "broken glass on the bottle rim", "clearTarget": "chipped or missing glass at the edge of the bottle opening"},
+    {"id": "bottle-broken-small", "category": "bottle", "label": "broken_small", "originalTarget": "broken glass on the bottle rim", "clearTarget": "chipped or missing glass at the edge of the bottle opening"},
+    {"id": "metal-nut-scratch", "category": "metal_nut", "label": "scratch", "originalTarget": "scratch on the metal nut", "clearTarget": "a scratch mark on the metal surface of the nut"},
+    {"id": "metal-nut-bent", "category": "metal_nut", "label": "bent", "originalTarget": "bent edge of the metal nut", "clearTarget": "a bent or deformed outer edge of the metal nut"},
+    {"id": "hazelnut-crack", "category": "hazelnut", "label": "crack", "originalTarget": "crack in the hazelnut shell", "clearTarget": "a split or fracture in the hazelnut shell"},
+    {"id": "hazelnut-hole", "category": "hazelnut", "label": "hole", "originalTarget": "hole in the hazelnut shell", "clearTarget": "a puncture hole in the hazelnut shell"},
+    {"id": "capsule-crack", "category": "capsule", "label": "crack", "originalTarget": "crack in the capsule", "clearTarget": "a crack or split in the capsule casing"},
+    {"id": "capsule-squeeze", "category": "capsule", "label": "squeeze", "originalTarget": "dented area on the capsule", "clearTarget": "a crushed or dented section of the capsule casing"}
+  ]
+}

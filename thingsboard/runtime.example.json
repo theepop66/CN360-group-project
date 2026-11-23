@@ -1,0 +1,13 @@
+{
+  "origin": "http://127.0.0.1:9090",
+  "deviceToken": "REPLACE_DEVICE_ACCESS_TOKEN",
+  "host": "0.0.0.0",
+  "port": 8106,
+  "database": ".runtime/events.sqlite",
+  "probes": {
+    "model": "http://127.0.0.1:8105/health",
+    "capture": "http://127.0.0.1:8104/health",
+    "relay": "http://127.0.0.1:8081/health",
+    "n8n": "http://127.0.0.1:5680/healthz/readiness"
+  }
+}

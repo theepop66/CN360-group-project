@@ -1,0 +1,8 @@
+{
+  "python": "C:/path/to/python.exe",
+  "modelProfile": "controlled",
+  "ambient": false,
+  "offline": true,
+  "healthIntervalSeconds": 10,
+  "telemetryBaseUrl": "http://host.docker.internal:8106"
+}

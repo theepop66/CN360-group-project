@@ -1,3 +1,4 @@
 runtime.local.json
+software-bench.local.json
 workflows-local/
 .runtime/

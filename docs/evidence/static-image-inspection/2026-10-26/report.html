@@ -1,0 +1,368 @@
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CN360 static-picture test evidence</title><style>body{font:16px/1.5 system-ui;margin:30px;background:#f6f5f1;color:#222}header{max-width:1000px}main{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}article{background:white;padding:16px;border:1px solid #ddd;border-radius:8px}svg{display:block;width:100%;aspect-ratio:1;height:auto;background:#eee}h3{overflow-wrap:anywhere;font-size:16px}pre{white-space:pre-wrap;overflow-wrap:anywhere}details{margin:18px 0}</style><header><h1>Static-picture inspection results</h1><p>Red: model boxes. Green dashed: ground-truth defect bounding rectangle. Pictures are review thumbnails; inference used separately hashed inputs.</p><p>Model profile: diagnostic; maximum served side: 448 px (0 preserves original size). Diagnostic results do not approve the production model deadline.</p><div style="display:flex;flex-wrap:wrap;gap:28px;margin:24px 0"><div><strong style="display:block;font-size:30px">37/37</strong>Controlled scenarios passed</div><div><strong style="display:block;font-size:30px">150</strong>Sequential case attempts</div><div><strong style="display:block;font-size:30px">101 / 49</strong>Inspection results / errors</div><div><strong style="display:block;font-size:30px">3</strong>Fresh-worker timeouts</div></div><p><strong>Controller acceptance failed:</strong> deadline-3000, deadline-3100, stale-A-pass-during-B, stale-A-reject-during-B. These are virtual-time checks; hardware acceptance remains separate.</p><details><summary>Timing and acceptance details</summary><pre>{
+  &quot;scope&quot;: &quot;Real isolated n8n webhooks; still-image capture substitute; recording actuator/database/storage/relay. Physical acceptance and actual DB/Pico delivery remain unverified. Measurement-only model service; this run cannot establish the production service&#x27;s 1100 ms deadline. Existing localhost:5678 exports were inspected read-only; the test runtime uses current repository graphs. Installed workflow drift is listed separately.&quot;,
+  &quot;controlledCases&quot;: 37,
+  &quot;controlledFailed&quot;: [],
+  &quot;controllerFailedRequirements&quot;: [
+    &quot;deadline-3000&quot;,
+    &quot;deadline-3100&quot;,
+    &quot;stale-A-pass-during-B&quot;,
+    &quot;stale-A-reject-during-B&quot;
+  ],
+  &quot;coldRequests&quot;: 3,
+  &quot;coldTimeouts&quot;: 3,
+  &quot;productionWarmRun&quot;: &quot;blocked: fresh production worker did not complete its first prediction; diagnostic repetitions run separately&quot;,
+  &quot;modelSettings&quot;: {
+    &quot;threshold&quot;: 0.005,
+    &quot;n8nModelTimeoutMs&quot;: 1200,
+    &quot;controllerWindowMs&quot;: 3000,
+    &quot;jpegQuality&quot;: 95,
+    &quot;jpegSubsampling&quot;: 0,
+    &quot;repetitions&quot;: 10,
+    &quot;maxSide&quot;: 448
+  },
+  &quot;modelSummary&quot;: {
+    &quot;count&quot;: 150,
+    &quot;successes&quot;: 101,
+    &quot;failures&quot;: 49,
+    &quot;timeouts&quot;: 45,
+    &quot;verdictWindowMisses&quot;: 0,
+    &quot;missingVerdictReceipts&quot;: 3,
+    &quot;allAttempts&quot;: {
+      &quot;count&quot;: 147,
+      &quot;p50Ms&quot;: 1224.8377000000037,
+      &quot;p95Ms&quot;: 1432.1884000000136,
+      &quot;maxMs&quot;: 1607.0701999999947
+    },
+    &quot;successfulOnly&quot;: {
+      &quot;count&quot;: 101,
+      &quot;p50Ms&quot;: 1173.5827999999747,
+      &quot;p95Ms&quot;: 1382.3400000000256,
+      &quot;maxMs&quot;: 1430.7362999999896
+    },
+    &quot;note&quot;: &quot;All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance.&quot;
+  },
+  &quot;modelSummaryByCase&quot;: {
+    &quot;bottle__good__000-1&quot;: {
+      &quot;count&quot;: 10,
+      &quot;successes&quot;: 0,
+      &quot;failures&quot;: 10,
+      &quot;timeouts&quot;: 10,
+      &quot;verdictWindowMisses&quot;: 0,
+      &quot;missingVerdictReceipts&quot;: 0,
+      &quot;allAttempts&quot;: {
+        &quot;count&quot;: 10,
+        &quot;p50Ms&quot;: 1417.6796000000031,
+        &quot;p95Ms&quot;: 1607.0701999999947,
+        &quot;maxMs&quot;: 1607.0701999999947
+      },
+      &quot;successfulOnly&quot;: {
+        &quot;count&quot;: 0,
+        &quot;p50Ms&quot;: null,
+        &quot;p95Ms&quot;: null,
+        &quot;maxMs&quot;: null
+      },
+      &quot;note&quot;: &quot;All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance.&quot;
+    },
+    &quot;bottle__broken_large__000-1&quot;: {
+      &quot;count&quot;: 10,
+      &quot;successes&quot;: 5,
+      &quot;failures&quot;: 5,
+      &quot;timeouts&quot;: 5,
+      &quot;verdictWindowMisses&quot;: 0,
+      &quot;missingVerdictReceipts&quot;: 0,
+      &quot;allAttempts&quot;: {
+        &quot;count&quot;: 10,
+        &quot;p50Ms&quot;: 1385.0425999999861,
+        &quot;p95Ms&quot;: 1431.300899999973,
+        &quot;maxMs&quot;: 1431.300899999973
+      },
+      &quot;successfulOnly&quot;: {
+        &quot;count&quot;: 5,
+        &quot;p50Ms&quot;: 1378.7527000000118,
+        &quot;p95Ms&quot;: 1393.6617000000042,
+        &quot;maxMs&quot;: 1393.6617000000042
+      },
+      &quot;note&quot;: &quot;All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance.&quot;
+    },
+    &quot;bottle__broken_small__000-1&quot;: {
+      &quot;count&quot;: 10,
+      &quot;successes&quot;: 0,
+      &quot;failures&quot;: 10,
+      &quot;timeouts&quot;: 10,
+      &quot;verdictWindowMisses&quot;: 0,
+      &quot;missingVerdictReceipts&quot;: 0,
+      &quot;allAttempts&quot;: {
+        &quot;count&quot;: 10,
+        &quot;p50Ms&quot;: 1400.4936000000162,
+        &quot;p95Ms&quot;: 1420.473100000003,
+        &quot;maxMs&quot;: 1420.473100000003
+      },
+      &quot;successfulOnly&quot;: {
+        &quot;count&quot;: 0,
+        &quot;p50Ms&quot;: null,
+        &quot;p95Ms&quot;: null,
+        &quot;maxMs&quot;: null
+      },
+      &quot;note&quot;: &quot;All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance.&quot;
+    },
+    &quot;metal_nut__good__000-1&quot;: {
+      &quot;count&quot;: 10,
+      &quot;successes&quot;: 8,
+      &quot;failures&quot;: 2,
+      &quot;timeouts&quot;: 1,
+      &quot;verdictWindowMisses&quot;: 0,
+      &quot;missingVerdictReceipts&quot;: 1,
+      &quot;allAttempts&quot;: {
+        &quot;count&quot;: 9,
+        &quot;p50Ms&quot;: 1379.4234999999753,
+        &quot;p95Ms&quot;: 1386.0887999999686,
+        &quot;maxMs&quot;: 1386.0887999999686
+      },
+      &quot;successfulOnly&quot;: {
+        &quot;count&quot;: 8,
+        &quot;p50Ms&quot;: 1368.1100000000006,
+        &quot;p95Ms&quot;: 1386.0887999999686,
+        &quot;maxMs&quot;: 1386.0887999999686
+      },
+      &quot;note&quot;: &quot;All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance.&quot;
+    },
+    &quot;metal_nut__good__000-2&quot;: {
+      &quot;count&quot;: 10,
+      &quot;successes&quot;: 6,
+      &quot;failures&quot;: 4,
+      &quot;timeouts&quot;: 3,
+      &quot;verdictWindowMisses&quot;: 0,
+      &quot;missingVerdictReceipts&quot;: 1,
+      &quot;allAttempts&quot;: {
+        &quot;count&quot;: 9,
+        &quot;p50Ms&quot;: 1376.1898999999976,
+        &quot;p95Ms&quot;: 1432.1884000000136,
+        &quot;maxMs&quot;: 1432.1884000000136
+      },
+      &quot;successfulOnly&quot;: {
+        &quot;count&quot;: 6,
+        &quot;p50Ms&quot;: 1364.94200000001,
+        &quot;p95Ms&quot;: 1430.7362999999896,
+        &quot;maxMs&quot;: 1430.7362999999896
+      },
+      &quot;note&quot;: &quot;All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance.&quot;
+    },
+    &quot;metal_nut__scratch__000-1&quot;: {
+      &quot;count&quot;: 10,
+      &quot;successes&quot;: 9,
+      &quot;failures&quot;: 1,
+      &quot;timeouts&quot;: 1,
+      &quot;verdictWindowMisses&quot;: 0,
+      &quot;missingVerdictReceipts&quot;: 0,
+      &quot;allAttempts&quot;: {
+        &quot;count&quot;: 10,
+        &quot;p50Ms&quot;: 1188.7799000000232,
+        &quot;p95Ms&quot;: 1459.1361999999936,
+        &quot;maxMs&quot;: 1459.1361999999936
+      },
+      &quot;successfulOnly&quot;: {
+        &quot;count&quot;: 9,
+        &quot;p50Ms&quot;: 1188.7799000000232,
+        &quot;p95Ms&quot;: 1263.3523999999743,
+        &quot;maxMs&quot;: 1263.3523999999743
+      },
+      &quot;note&quot;: &quot;All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance.&quot;
+    },
+    &quot;metal_nut__bent__000-1&quot;: {
+      &quot;count&quot;: 10,
+      &quot;successes&quot;: 0,
+      &quot;failures&quot;: 10,
+      &quot;timeouts&quot;: 10,
+      &quot;verdictWindowMisses&quot;: 0,
+      &quot;missingVerdictReceipts&quot;: 0,
+      &quot;allAttempts&quot;: {
+        &quot;count&quot;: 10,
+        &quot;p50Ms&quot;: 1382.0894000000262,
+        &quot;p95Ms&quot;: 1413.5673000000243,
+        &quot;maxMs&quot;: 1413.5673000000243
+      },
+      &quot;successfulOnly&quot;: {
+        &quot;count&quot;: 0,
+        &quot;p50Ms&quot;: null,
+        &quot;p95Ms&quot;: null,
+        &quot;maxMs&quot;: null
+      },
+      &quot;note&quot;: &quot;All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance.&quot;
+    },
+    &quot;hazelnut__good__000-1&quot;: {
+      &quot;count&quot;: 10,
+      &quot;successes&quot;: 9,
+      &quot;failures&quot;: 1,
+      &quot;timeouts&quot;: 0,
+      &quot;verdictWindowMisses&quot;: 0,
+      &quot;missingVerdictReceipts&quot;: 1,
+      &quot;allAttempts&quot;: {
+        &quot;count&quot;: 9,
+        &quot;p50Ms&quot;: 1130.4723999999987,
+        &quot;p95Ms&quot;: 1173.5827999999747,
+        &quot;maxMs&quot;: 1173.5827999999747
+      },
+      &quot;successfulOnly&quot;: {
+        &quot;count&quot;: 9,
+        &quot;p50Ms&quot;: 1130.4723999999987,
+        &quot;p95Ms&quot;: 1173.5827999999747,
+        &quot;maxMs&quot;: 1173.5827999999747
+      },
+      &quot;note&quot;: &quot;All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance.&quot;
+    },
+    &quot;hazelnut__good__000-2&quot;: {
+      &quot;count&quot;: 10,
+      &quot;successes&quot;: 9,
+      &quot;failures&quot;: 1,
+      &quot;timeouts&quot;: 0,
+      &quot;verdictWindowMisses&quot;: 0,
+      &quot;missingVerdictReceipts&quot;: 0,
+      &quot;allAttempts&quot;: {
+        &quot;count&quot;: 10,
+        &quot;p50Ms&quot;: 1133.4856,
+        &quot;p95Ms&quot;: 1309.8641999999527,
+        &quot;maxMs&quot;: 1309.8641999999527
+      },
+      &quot;successfulOnly&quot;: {
+        &quot;count&quot;: 9,
+        &quot;p50Ms&quot;: 1143.1417000000074,
+        &quot;p95Ms&quot;: 1309.8641999999527,
+        &quot;maxMs&quot;: 1309.8641999999527
+      },
+      &quot;note&quot;: &quot;All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance.&quot;
+    },
+    &quot;hazelnut__crack__000-1&quot;: {
+      &quot;count&quot;: 10,
+      &quot;successes&quot;: 9,
+      &quot;failures&quot;: 1,
+      &quot;timeouts&quot;: 1,
+      &quot;verdictWindowMisses&quot;: 0,
+      &quot;missingVerdictReceipts&quot;: 0,
+      &quot;allAttempts&quot;: {
+        &quot;count&quot;: 10,
+        &quot;p50Ms&quot;: 1155.3526999999885,
+        &quot;p95Ms&quot;: 1420.2670000000508,
+        &quot;maxMs&quot;: 1420.2670000000508
+      },
+      &quot;successfulOnly&quot;: {
+        &quot;count&quot;: 9,
+        &quot;p50Ms&quot;: 1155.3526999999885,
+        &quot;p95Ms&quot;: 1212.2689000000246,
+        &quot;maxMs&quot;: 1212.2689000000246
+      },
+      &quot;note&quot;: &quot;All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance.&quot;
+    },
+    &quot;hazelnut__hole__000-1&quot;: {
+      &quot;count&quot;: 10,
+      &quot;successes&quot;: 9,
+      &quot;failures&quot;: 1,
+      &quot;timeouts&quot;: 1,
+      &quot;verdictWindowMisses&quot;: 0,
+      &quot;missingVerdictReceipts&quot;: 0,
+      &quot;allAttempts&quot;: {
+        &quot;count&quot;: 10,
+        &quot;p50Ms&quot;: 1221.0131999999867,
+        &quot;p95Ms&quot;: 1369.9066999999923,
+        &quot;maxMs&quot;: 1369.9066999999923
+      },
+      &quot;successfulOnly&quot;: {
+        &quot;count&quot;: 9,
+        &quot;p50Ms&quot;: 1221.0131999999867,
+        &quot;p95Ms&quot;: 1263.7837999999756,
+        &quot;maxMs&quot;: 1263.7837999999756
+      },
+      &quot;note&quot;: &quot;All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance.&quot;
+    },
+    &quot;capsule__good__000-1&quot;: {
+      &quot;count&quot;: 10,
+      &quot;successes&quot;: 8,
+      &quot;failures&quot;: 2,
+      &quot;timeouts&quot;: 2,
+      &quot;verdictWindowMisses&quot;: 0,
+      &quot;missingVerdictReceipts&quot;: 0,
+      &quot;allAttempts&quot;: {
+        &quot;count&quot;: 10,
+        &quot;p50Ms&quot;: 1185.9891000000061,
+        &quot;p95Ms&quot;: 1494.2962000000116,
+        &quot;maxMs&quot;: 1494.2962000000116
+      },
+      &quot;successfulOnly&quot;: {
+        &quot;count&quot;: 8,
+        &quot;p50Ms&quot;: 1177.9876999999979,
+        &quot;p95Ms&quot;: 1321.1582000000053,
+        &quot;maxMs&quot;: 1321.1582000000053
+      },
+      &quot;note&quot;: &quot;All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance.&quot;
+    },
+    &quot;capsule__good__000-2&quot;: {
+      &quot;count&quot;: 10,
+      &quot;successes&quot;: 10,
+      &quot;failures&quot;: 0,
+      &quot;timeouts&quot;: 0,
+      &quot;verdictWindowMisses&quot;: 0,
+      &quot;missingVerdictReceipts&quot;: 0,
+      &quot;allAttempts&quot;: {
+        &quot;count&quot;: 10,
+        &quot;p50Ms&quot;: 1119.1509000000078,
+        &quot;p95Ms&quot;: 1235.5056999999797,
+        &quot;maxMs&quot;: 1235.5056999999797
+      },
+      &quot;successfulOnly&quot;: {
+        &quot;count&quot;: 10,
+        &quot;p50Ms&quot;: 1119.1509000000078,
+        &quot;p95Ms&quot;: 1235.5056999999797,
+        &quot;maxMs&quot;: 1235.5056999999797
+      },
+      &quot;note&quot;: &quot;All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance.&quot;
+    },
+    &quot;capsule__crack__000-1&quot;: {
+      &quot;count&quot;: 10,
+      &quot;successes&quot;: 10,
+      &quot;failures&quot;: 0,
+      &quot;timeouts&quot;: 0,
+      &quot;verdictWindowMisses&quot;: 0,
+      &quot;missingVerdictReceipts&quot;: 0,
+      &quot;allAttempts&quot;: {
+        &quot;count&quot;: 10,
+        &quot;p50Ms&quot;: 1135.422000000006,
+        &quot;p95Ms&quot;: 1196.4433999999892,
+        &quot;maxMs&quot;: 1196.4433999999892
+      },
+      &quot;successfulOnly&quot;: {
+        &quot;count&quot;: 10,
+        &quot;p50Ms&quot;: 1135.422000000006,
+        &quot;p95Ms&quot;: 1196.4433999999892,
+        &quot;maxMs&quot;: 1196.4433999999892
+      },
+      &quot;note&quot;: &quot;All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance.&quot;
+    },
+    &quot;capsule__squeeze__000-1&quot;: {
+      &quot;count&quot;: 10,
+      &quot;successes&quot;: 9,
+      &quot;failures&quot;: 1,
+      &quot;timeouts&quot;: 1,
+      &quot;verdictWindowMisses&quot;: 0,
+      &quot;missingVerdictReceipts&quot;: 0,
+      &quot;allAttempts&quot;: {
+        &quot;count&quot;: 10,
+        &quot;p50Ms&quot;: 1114.4765999999945,
+        &quot;p95Ms&quot;: 1596.2522999999928,
+        &quot;maxMs&quot;: 1596.2522999999928
+      },
+      &quot;successfulOnly&quot;: {
+        &quot;count&quot;: 9,
+        &quot;p50Ms&quot;: 1114.4765999999945,
+        &quot;p95Ms&quot;: 1212.263500000001,
+        &quot;maxMs&quot;: 1212.263500000001
+      },
+      &quot;note&quot;: &quot;All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance.&quot;
+    }
+  },
+  &quot;modelFatalError&quot;: null,
+  &quot;limits&quot;: [
+    &quot;12 source photographs are a smoke set; no general accuracy claim&quot;,
+    &quot;Any returned box is not proof of correct defect localization&quot;,
+    &quot;IoU is against the mask&#x27;s bounding rectangle and is descriptive, not an acceptance threshold&quot;,
+    &quot;No physical actuation, real DB or Pico delivery is established by the recording receivers&quot;
+  ]
+}</pre></details></header><main><article><svg viewBox="0 0 448 448"><image href="assets/bottle__good__000.jpg" width="448" height="448"/><rect x="58.2399979" y="219.520004" width="16.127998299999994" height="48.831986" fill="none" stroke="#db3030" stroke-width="2"/><rect x="66.3040009" y="164.863998" width="12.543998699999989" height="50.624009" fill="none" stroke="#db3030" stroke-width="2"/><rect x="74.3679962" y="280.895996" width="23.744003300000003" height="39.87200899999999" fill="none" stroke="#db3030" stroke-width="2"/><rect x="94.5279999" y="120.511993" width="25.983993100000006" height="16.128005999999985" fill="none" stroke="#db3030" stroke-width="2"/><rect x="96.3199997" y="345.856018" width="52.864006300000014" height="17.023986999999977" fill="none" stroke="#db3030" stroke-width="2"/><rect x="142.016006" y="67.647995" width="44.35200499999999" height="26.880004900000003" fill="none" stroke="#db3030" stroke-width="2"/><rect x="149.184006" y="379.007996" width="93.18400499999998" height="9.855987000000027" fill="none" stroke="#db3030" stroke-width="2"/><rect x="192.639999" y="66.3040009" width="47.040009" height="13.888000399999996" fill="none" stroke="#db3030" stroke-width="2"/><rect x="244.160004" y="74.3679962" width="76.60800100000003" height="35.39200580000001" fill="none" stroke="#db3030" stroke-width="2"/><rect x="268.35199" y="358.847992" width="71.23202500000002" height="16.128021000000047" fill="none" stroke="#db3030" stroke-width="2"/><rect x="339.584015" y="135.744003" width="30.911986999999954" height="34.04800400000002" fill="none" stroke="#db3030" stroke-width="2"/><rect x="348.544006" y="287.167999" width="30.463989999999967" height="28.223998999999992" fill="none" stroke="#db3030" stroke-width="2"/><rect x="362.880005" y="164.863998" width="16.12799100000001" height="41.66400199999998" fill="none" stroke="#db3030" stroke-width="2"/></svg><h3>bottle__good__000-1</h3><p>broken glass on the bottle rim</p><p>Dataset: normal; model: success; boxes: 13</p><p>Best defect-rectangle IoU: n/a</p></article><article><svg viewBox="0 0 448 448"><image href="assets/bottle__broken_large__000.jpg" width="448" height="448"/><rect x="175.615997" y="315.391998" width="75.712006" height="63.61599799999999" fill="none" stroke="#db3030" stroke-width="2"/><rect x="319.872009" y="216.384003" width="65.85598800000002" height="34.94399999999999" fill="none" stroke="#db3030" stroke-width="2"/><rect x="320.768005" y="143.807999" width="30.91201799999999" height="94.975998" fill="none" stroke="#db3030" stroke-width="2"/><rect x="345.856018" y="149.184006" width="24.63998399999997" height="70.33599799999999" fill="none" stroke="#db3030" stroke-width="2"/><rect x="174" y="142" width="210" height="266" fill="none" stroke="#00a35d" stroke-dasharray="6 3" stroke-width="2"/></svg><h3>bottle__broken_large__000-1</h3><p>broken glass on the bottle rim</p><p>Dataset: defective; model: success; boxes: 4</p><p>Best defect-rectangle IoU: 0.086</p></article><article><svg viewBox="0 0 448 448"><image href="assets/bottle__broken_small__000.jpg" width="448" height="448"/><rect x="70.3359985" y="287.167999" width="34.4960025" height="28.223998999999992" fill="none" stroke="#db3030" stroke-width="2"/><rect x="71.2319946" y="120.511993" width="38.52800740000001" height="86.01600699999999" fill="none" stroke="#db3030" stroke-width="2"/><rect x="106.176003" y="280.895996" width="14.33599000000001" height="21.056029999999964" fill="none" stroke="#db3030" stroke-width="2"/><rect x="120.511993" y="267.455994" width="21.504013" height="24.192016000000024" fill="none" stroke="#db3030" stroke-width="2"/><rect x="120.511993" y="70.3359985" width="181.44003299999997" height="50.1759945" fill="none" stroke="#db3030" stroke-width="2"/><rect x="301.952026" y="366.015991" width="25.08798300000001" height="19.71200600000003" fill="none" stroke="#db3030" stroke-width="2"/><rect x="307.328003" y="85.5680008" width="51.51998899999995" height="34.94399220000001" fill="none" stroke="#db3030" stroke-width="2"/><rect x="327.040009" y="339.584015" width="24.640014000000008" height="23.29598999999996" fill="none" stroke="#db3030" stroke-width="2"/><rect x="351.680023" y="312.70401" width="37.18396000000001" height="33.15200800000002" fill="none" stroke="#db3030" stroke-width="2"/><rect x="366.015991" y="168.447998" width="21.504029000000003" height="39.87200899999999" fill="none" stroke="#db3030" stroke-width="2"/><rect x="99" y="262" width="47" height="55" fill="none" stroke="#00a35d" stroke-dasharray="6 3" stroke-width="2"/></svg><h3>bottle__broken_small__000-1</h3><p>broken glass on the bottle rim</p><p>Dataset: defective; model: success; boxes: 10</p><p>Best defect-rectangle IoU: 0.201</p></article><article><svg viewBox="0 0 448 448"><image href="assets/metal_nut__good__000.jpg" width="448" height="448"/><rect x="37.1839981" y="287.167999" width="57.3440018" height="83.32800299999997" fill="none" stroke="#db3030" stroke-width="2"/><rect x="43.9039993" y="39.8720016" width="52.416000399999994" height="129.9200054" fill="none" stroke="#db3030" stroke-width="2"/><rect x="94.5279999" y="351.680023" width="89.1519931" height="52.86398300000002" fill="none" stroke="#db3030" stroke-width="2"/><rect x="265.216003" y="45.2480011" width="142.911988" height="161.27999889999998" fill="none" stroke="#db3030" stroke-width="2"/><rect x="342.272003" y="268.35199" width="59.13601700000004" height="142.911987" fill="none" stroke="#db3030" stroke-width="2"/></svg><h3>metal_nut__good__000-1</h3><p>scratch on the metal nut</p><p>Dataset: normal; model: success; boxes: 5</p><p>Best defect-rectangle IoU: n/a</p></article><article><svg viewBox="0 0 448 448"><image href="assets/metal_nut__good__000.jpg" width="448" height="448"/><rect x="37.1839981" y="282.23999" width="57.3440018" height="124.09600900000004" fill="none" stroke="#db3030" stroke-width="2"/><rect x="42.5599976" y="39.8720016" width="55.55200189999999" height="147.8400044" fill="none" stroke="#db3030" stroke-width="2"/><rect x="265.216003" y="45.2480011" width="142.911988" height="170.2400059" fill="none" stroke="#db3030" stroke-width="2"/><rect x="347.64801" y="268.35199" width="55.103973999999994" height="142.911987" fill="none" stroke="#db3030" stroke-width="2"/></svg><h3>metal_nut__good__000-2</h3><p>bent edge of the metal nut</p><p>Dataset: normal; model: success; boxes: 4</p><p>Best defect-rectangle IoU: n/a</p></article><article><svg viewBox="0 0 448 448"><image href="assets/metal_nut__scratch__000.jpg" width="448" height="448"/><rect x="48.8320007" y="258.944" width="362.43197630000003" height="154.11199999999997" fill="none" stroke="#db3030" stroke-width="2"/><rect x="220" y="261" width="110" height="89" fill="none" stroke="#00a35d" stroke-dasharray="6 3" stroke-width="2"/></svg><h3>metal_nut__scratch__000-1</h3><p>scratch on the metal nut</p><p>Dataset: defective; model: success; boxes: 1</p><p>Best defect-rectangle IoU: 0.175</p></article><article><svg viewBox="0 0 448 448"><image href="assets/metal_nut__bent__000.jpg" width="448" height="448"/><rect x="30.9119987" y="64.064003" width="198.01599530000001" height="155.45600100000001" fill="none" stroke="#db3030" stroke-width="2"/><rect x="59.5839996" y="361.088013" width="159.9360044" height="58.239990000000034" fill="none" stroke="#db3030" stroke-width="2"/><rect x="228.927994" y="30.9119987" width="156.800003" height="192.1920053" fill="none" stroke="#db3030" stroke-width="2"/><rect x="361.088013" y="114.239998" width="65.40798899999999" height="149.63201099999998" fill="none" stroke="#db3030" stroke-width="2"/><rect x="157" y="24" width="270" height="240" fill="none" stroke="#00a35d" stroke-dasharray="6 3" stroke-width="2"/></svg><h3>metal_nut__bent__000-1</h3><p>bent edge of the metal nut</p><p>Dataset: defective; model: success; boxes: 4</p><p>Best defect-rectangle IoU: 0.465</p></article><article><svg viewBox="0 0 448 448"><image href="assets/hazelnut__good__000.jpg" width="448" height="448"/><rect x="61.8239975" y="67.647995" width="154.56000550000002" height="200.70399500000002" fill="none" stroke="#db3030" stroke-width="2"/></svg><h3>hazelnut__good__000-1</h3><p>crack in the hazelnut shell</p><p>Dataset: normal; model: success; boxes: 1</p><p>Best defect-rectangle IoU: n/a</p></article><article><svg viewBox="0 0 448 448"><image href="assets/hazelnut__good__000.jpg" width="448" height="448"/><rect x="61.8239975" y="66.3040009" width="154.56000550000002" height="203.8399811" fill="none" stroke="#db3030" stroke-width="2"/></svg><h3>hazelnut__good__000-2</h3><p>hole in the hazelnut shell</p><p>Dataset: normal; model: success; boxes: 1</p><p>Best defect-rectangle IoU: n/a</p></article><article><svg viewBox="0 0 448 448"><image href="assets/hazelnut__crack__000.jpg" width="448" height="448"/><rect x="111.103996" y="138.880005" width="88.25600500000002" height="46.591995" fill="none" stroke="#db3030" stroke-width="2"/><rect x="108" y="118" width="248" height="117" fill="none" stroke="#00a35d" stroke-dasharray="6 3" stroke-width="2"/></svg><h3>hazelnut__crack__000-1</h3><p>crack in the hazelnut shell</p><p>Dataset: defective; model: success; boxes: 1</p><p>Best defect-rectangle IoU: 0.142</p></article><article><svg viewBox="0 0 448 448"><image href="assets/hazelnut__hole__000.jpg" width="448" height="448"/><rect x="232.511993" y="172.928009" width="31.360016" height="26.431992000000008" fill="none" stroke="#db3030" stroke-width="2"/><rect x="191" y="154" width="76" height="57" fill="none" stroke="#00a35d" stroke-dasharray="6 3" stroke-width="2"/></svg><h3>hazelnut__hole__000-1</h3><p>hole in the hazelnut shell</p><p>Dataset: defective; model: success; boxes: 1</p><p>Best defect-rectangle IoU: 0.191</p></article><article><svg viewBox="0 0 448 448"><image href="assets/capsule__good__000.jpg" width="448" height="448"/><rect x="229.376007" y="160.384003" width="190.847992" height="121.85598699999997" fill="none" stroke="#db3030" stroke-width="2"/></svg><h3>capsule__good__000-1</h3><p>crack in the capsule</p><p>Dataset: normal; model: success; boxes: 1</p><p>Best defect-rectangle IoU: n/a</p></article><article><svg viewBox="0 0 448 448"><image href="assets/capsule__good__000.jpg" width="448" height="448"/><rect x="228.927994" y="164.863998" width="191.29600499999998" height="117.37599199999997" fill="none" stroke="#db3030" stroke-width="2"/></svg><h3>capsule__good__000-2</h3><p>dented area on the capsule</p><p>Dataset: normal; model: success; boxes: 1</p><p>Best defect-rectangle IoU: n/a</p></article><article><svg viewBox="0 0 448 448"><image href="assets/capsule__crack__000.jpg" width="448" height="448"/><rect x="320" y="269" width="77" height="11" fill="none" stroke="#00a35d" stroke-dasharray="6 3" stroke-width="2"/></svg><h3>capsule__crack__000-1</h3><p>crack in the capsule</p><p>Dataset: defective; model: success; boxes: 0</p><p>Best defect-rectangle IoU: n/a</p></article><article><svg viewBox="0 0 448 448"><image href="assets/capsule__squeeze__000.jpg" width="448" height="448"/><rect x="226.23999" y="155.007996" width="191.29599" height="139.32800300000002" fill="none" stroke="#db3030" stroke-width="2"/><rect x="228" y="154" width="144" height="142" fill="none" stroke="#00a35d" stroke-dasharray="6 3" stroke-width="2"/></svg><h3>capsule__squeeze__000-1</h3><p>dented area on the capsule</p><p>Dataset: defective; model: success; boxes: 1</p><p>Best defect-rectangle IoU: 0.742</p></article></main><footer><p>MVTec AD: Bergmann et al., CVPR 2019 / IJCV 2021. Source pictures and thumbnails: <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>. Thumbnails are resized/JPEG derivatives; box overlays added for review.</p></footer>

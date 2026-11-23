@@ -1,0 +1,76 @@
+{
+  "environment": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.13.12",
+    "model_file": "locate-anything-q8_0.gguf",
+    "model_bytes": 6259931712,
+    "image_sha256": "74b0c61828abf9c34abcaef98e33d0512e72427975827ef36c41c73e4df479e5",
+    "image_bytes": 112,
+    "prompt": "Locate all the instances that matches the following description: cat.",
+    "threads": 6,
+    "mode": "hybrid",
+    "backend_requested": "CUDA0"
+  },
+  "benchmark_only_timeout_seconds": 120,
+  "baseline": [
+    {
+      "request_ms": 13395.631299999877,
+      "backend": "CUDA0",
+      "native_log": "ggml_cuda_init: found 1 CUDA devices (Total VRAM: 6143 MiB):\n  Device 0: NVIDIA GeForce RTX 3060 Laptop GPU, compute capability 8.6, VMM: yes, VRAM: 6143 MiB\n[la] la::Backend using device: CUDA0\n[la] offload_weights: 768 weights -> CUDA0 (2 host-read tensors kept on CPU)\n0 detections\n",
+      "detections": []
+    }
+  ],
+  "resident": [
+    {
+      "http_ms": 156.23469999991357,
+      "status": "success",
+      "prompt_used": "Locate all the instances that matches the following description: cat.",
+      "detections": [],
+      "frame_width": 32,
+      "frame_height": 32,
+      "backend": "CUDA0",
+      "peak_working_set_bytes": 6802456576,
+      "timings_ms": {
+        "inference": 153.72600000000602,
+        "image_handling": 0.09249999993699021,
+        "request": 154.54360000012457
+      }
+    }
+  ],
+  "errors": [],
+  "scope": "real model HTTP only; no Pi, ESP32, database or relay acceptance",
+  "server_log": "C:\\Users\\ASUS\\OneDrive\\Desktop\\CN360-group-project\\n8n\\.runtime\\ticket07-benchmark.log",
+  "health": {
+    "status": "ok",
+    "backend": "CUDA0",
+    "busy": false,
+    "warmup_ms": 444.9939999999515,
+    "warmup": {
+      "width": 32,
+      "height": 32,
+      "sha256": "74b0c61828abf9c34abcaef98e33d0512e72427975827ef36c41c73e4df479e5",
+      "prompt": "Locate all the instances that matches the following description: defect."
+    },
+    "startup_ms": 10422.968200000014
+  },
+  "startup_ms": 12571.263499999986,
+  "prompt_update": {
+    "status": "updated",
+    "current_prompt": "Locate all the instances that matches the following description: cat."
+  },
+  "blank_prompt_status": 400,
+  "invalid_image_status": 400,
+  "baseline_total": {
+    "samples": 1,
+    "p50_ms": 13395.631299999877,
+    "p95_ms": 13395.631299999877,
+    "max_ms": 13395.631299999877
+  },
+  "resident_http": {
+    "samples": 1,
+    "p50_ms": 156.23469999991357,
+    "p95_ms": 156.23469999991357,
+    "max_ms": 156.23469999991357
+  },
+  "note": "Small-sample descriptive percentiles; resident samples begin after the separately recorded startup/warm-up and include the first admitted prediction. Baseline total includes process/model startup. Native timing includes vision preprocessing and decode."
+}

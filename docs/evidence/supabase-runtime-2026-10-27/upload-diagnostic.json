@@ -1,0 +1,8 @@
+{
+  "profile": "One direct host-side upload using Python urllib; diagnostic, not a latency distribution",
+  "status": 200,
+  "elapsedMs": 532,
+  "bytes": 243330,
+  "objectKey": "cn360-test-snapshots/direct-diagnostic-1793085685.jpg",
+  "objectId": "531a001e-f519-43bc-8406-6b48e8f321d8"
+}

@@ -3,6 +3,9 @@ import io
 import math
 import os
 import time
+import logging
+import hashlib
+from pathlib import Path
 from contextlib import asynccontextmanager
 from typing import Any, AsyncIterator
 
@@ -21,20 +24,79 @@ def failure(reason: str, code: int = 503) -> JSONResponse:
     return JSONResponse({"status": "error", "reason": reason}, status_code=code)
 
 
-def create_app(*, model: Model | None = None, request_timeout: float | None = None) -> FastAPI:
+def create_app(*, model: Model | None = None, request_timeout: float | None = None,
+               warmup_image: bytes | None = None, warmup_timeout: float | None = None,
+               recovery_delay: float = 5) -> FastAPI:
     engine: Model = model if model is not None else ResidentWorker()
     timeout = request_timeout if request_timeout is not None else float(os.environ.get("CN360_MODEL_REQUEST_TIMEOUT", "1.1"))
     if not math.isfinite(timeout) or timeout <= 0:
         raise ValueError("request timeout must be finite and positive")
+    warming_timeout = warmup_timeout if warmup_timeout is not None else float(os.environ.get("CN360_MODEL_WARMUP_TIMEOUT", "60"))
+    if not math.isfinite(warming_timeout) or warming_timeout <= 0 or not math.isfinite(recovery_delay) or recovery_delay <= 0:
+        raise ValueError("warm-up timeout and recovery delay must be finite and positive")
     lock = asyncio.Lock()
     current_prompt = "Locate all the instances that matches the following description: defect."
+    readiness = "model_loading"
+    warmup_ms: float | None = None
+    warmup_context: dict[str, Any] | None = None
+
+    async def prepare() -> None:
+        nonlocal readiness, warmup_ms, warmup_context
+        readiness = "model_loading"
+        warmup_ms = None
+        warmup_context = None
+        try:
+            data = warmup_image
+            if data is None:
+                path = os.environ.get("CN360_MODEL_WARMUP_IMAGE")
+                if not path:
+                    raise ModelFailure("model_warmup_image_missing")
+                data = Path(path).read_bytes()
+            if len(data) > MAX_UPLOAD_BYTES:
+                raise ModelFailure("model_warmup_failed")
+            with Image.open(io.BytesIO(data)) as image:
+                if image.width * image.height > MAX_IMAGE_PIXELS:
+                    raise ModelFailure("model_warmup_failed")
+                warmup_context = {"width": image.width, "height": image.height, "sha256": hashlib.sha256(data).hexdigest(), "prompt": current_prompt}
+                image.verify()
+            await engine.start()
+            if not engine.ready:
+                readiness = engine.error or "model_load_failed"
+                return
+            readiness = "model_warming"
+            started = time.perf_counter()
+            async with asyncio.timeout(warming_timeout):
+                result = await engine.predict(data, warmup_context["prompt"], warming_timeout)
+            if not isinstance(result.get("detections"), list) or not engine.ready:
+                raise ModelFailure("model_warmup_failed")
+            warmup_ms = (time.perf_counter() - started) * 1000
+            readiness = "ready"
+        except (TimeoutError, OSError, ValueError, ModelFailure, Image.DecompressionBombError) as exc:
+            readiness = "model_warmup_timeout" if isinstance(exc, TimeoutError) else (
+                exc.reason if isinstance(exc, ModelFailure) and exc.reason == "model_warmup_image_missing" else "model_warmup_failed")
+            logging.getLogger(__name__).warning("Warm-up unavailable: %s", readiness)
+            await engine.close()
+
+    async def maintain_readiness() -> None:
+        nonlocal readiness
+        while True:
+            if readiness != "ready" or not engine.ready:
+                async with lock:
+                    await engine.close()
+                    await prepare()
+            await asyncio.sleep(recovery_delay)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-        await engine.start()
+        recovery = asyncio.create_task(maintain_readiness())
         try:
             yield
         finally:
+            recovery.cancel()
+            try:
+                await recovery
+            except asyncio.CancelledError:
+                pass
             await engine.close()
 
     app = FastAPI(title="CN360 resident LocateAnything", lifespan=lifespan)
@@ -45,9 +107,11 @@ def create_app(*, model: Model | None = None, request_timeout: float | None = No
 
     @app.get("/health")
     async def health() -> JSONResponse:
-        if not engine.ready:
-            return failure(engine.error or "model_not_ready")
-        return JSONResponse({"status": "ok", "backend": engine.backend, "busy": lock.locked()})
+        if readiness != "ready" or not engine.ready:
+            return failure(readiness if readiness != "ready" else engine.error or "model_worker_exited")
+        return JSONResponse({"status": "ok", "backend": engine.backend, "busy": lock.locked(),
+                             "warmup_ms": warmup_ms, "warmup": warmup_context,
+                             "startup_ms": getattr(engine, "startup_ms", None)})
 
     @app.get("/get_prompt")
     async def get_prompt() -> dict[str, str]:
@@ -63,9 +127,10 @@ def create_app(*, model: Model | None = None, request_timeout: float | None = No
 
     @app.post("/predict")
     async def predict(request: Request, file: UploadFile = File(...), prompt: str | None = Form(None)) -> JSONResponse:
+        nonlocal readiness
         started = time.perf_counter()
-        if not engine.ready:
-            return failure(engine.error or "model_not_ready")
+        if readiness != "ready" or not engine.ready:
+            return failure(readiness if readiness != "ready" else engine.error or "model_worker_exited")
         if lock.locked():
             return failure("model_busy")
         # No unbounded queue: a shared native context is never entered twice.
@@ -110,6 +175,8 @@ def create_app(*, model: Model | None = None, request_timeout: float | None = No
                     pass
                 raise
             except ModelFailure as exc:
+                readiness = exc.reason
+                await engine.close()
                 return failure(exc.reason, 504 if exc.reason == "model_timeout" else 503)
             # Native JSON is not trusted to turn malformed geometry into a pass.
             detections = result.get("detections")

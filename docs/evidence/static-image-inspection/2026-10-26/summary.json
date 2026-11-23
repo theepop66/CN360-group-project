@@ -1,0 +1,505 @@
+{
+  "scope": "Real isolated n8n webhooks; still-image capture substitute; recording actuator/database/storage/relay. Physical acceptance and actual DB/Pico delivery remain unverified. Measurement-only model service; this run cannot establish the production service's 1100 ms deadline. Existing localhost:5678 exports were inspected read-only; the test runtime uses current repository graphs. Installed workflow drift is listed separately.",
+  "controlledCases": 37,
+  "controlledFailed": [],
+  "controllerFailedRequirements": [
+    "deadline-3000",
+    "deadline-3100",
+    "stale-A-pass-during-B",
+    "stale-A-reject-during-B"
+  ],
+  "coldRequests": 3,
+  "coldTimeouts": 3,
+  "productionWarmRun": "blocked: fresh production worker did not complete its first prediction; diagnostic repetitions run separately",
+  "modelSettings": {
+    "threshold": 0.005,
+    "n8nModelTimeoutMs": 1200,
+    "controllerWindowMs": 3000,
+    "jpegQuality": 95,
+    "jpegSubsampling": 0,
+    "repetitions": 10,
+    "maxSide": 448
+  },
+  "modelSummary": {
+    "count": 150,
+    "successes": 101,
+    "failures": 49,
+    "timeouts": 45,
+    "verdictWindowMisses": 0,
+    "missingVerdictReceipts": 3,
+    "allAttempts": {
+      "count": 147,
+      "p50Ms": 1224.8377000000037,
+      "p95Ms": 1432.1884000000136,
+      "maxMs": 1607.0701999999947
+    },
+    "successfulOnly": {
+      "count": 101,
+      "p50Ms": 1173.5827999999747,
+      "p95Ms": 1382.3400000000256,
+      "maxMs": 1430.7362999999896
+    },
+    "note": "All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance."
+  },
+  "modelSummaryByCase": {
+    "bottle__good__000-1": {
+      "count": 10,
+      "successes": 0,
+      "failures": 10,
+      "timeouts": 10,
+      "verdictWindowMisses": 0,
+      "missingVerdictReceipts": 0,
+      "allAttempts": {
+        "count": 10,
+        "p50Ms": 1417.6796000000031,
+        "p95Ms": 1607.0701999999947,
+        "maxMs": 1607.0701999999947
+      },
+      "successfulOnly": {
+        "count": 0,
+        "p50Ms": null,
+        "p95Ms": null,
+        "maxMs": null
+      },
+      "note": "All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance."
+    },
+    "bottle__broken_large__000-1": {
+      "count": 10,
+      "successes": 5,
+      "failures": 5,
+      "timeouts": 5,
+      "verdictWindowMisses": 0,
+      "missingVerdictReceipts": 0,
+      "allAttempts": {
+        "count": 10,
+        "p50Ms": 1385.0425999999861,
+        "p95Ms": 1431.300899999973,
+        "maxMs": 1431.300899999973
+      },
+      "successfulOnly": {
+        "count": 5,
+        "p50Ms": 1378.7527000000118,
+        "p95Ms": 1393.6617000000042,
+        "maxMs": 1393.6617000000042
+      },
+      "note": "All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance."
+    },
+    "bottle__broken_small__000-1": {
+      "count": 10,
+      "successes": 0,
+      "failures": 10,
+      "timeouts": 10,
+      "verdictWindowMisses": 0,
+      "missingVerdictReceipts": 0,
+      "allAttempts": {
+        "count": 10,
+        "p50Ms": 1400.4936000000162,
+        "p95Ms": 1420.473100000003,
+        "maxMs": 1420.473100000003
+      },
+      "successfulOnly": {
+        "count": 0,
+        "p50Ms": null,
+        "p95Ms": null,
+        "maxMs": null
+      },
+      "note": "All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance."
+    },
+    "metal_nut__good__000-1": {
+      "count": 10,
+      "successes": 8,
+      "failures": 2,
+      "timeouts": 1,
+      "verdictWindowMisses": 0,
+      "missingVerdictReceipts": 1,
+      "allAttempts": {
+        "count": 9,
+        "p50Ms": 1379.4234999999753,
+        "p95Ms": 1386.0887999999686,
+        "maxMs": 1386.0887999999686
+      },
+      "successfulOnly": {
+        "count": 8,
+        "p50Ms": 1368.1100000000006,
+        "p95Ms": 1386.0887999999686,
+        "maxMs": 1386.0887999999686
+      },
+      "note": "All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance."
+    },
+    "metal_nut__good__000-2": {
+      "count": 10,
+      "successes": 6,
+      "failures": 4,
+      "timeouts": 3,
+      "verdictWindowMisses": 0,
+      "missingVerdictReceipts": 1,
+      "allAttempts": {
+        "count": 9,
+        "p50Ms": 1376.1898999999976,
+        "p95Ms": 1432.1884000000136,
+        "maxMs": 1432.1884000000136
+      },
+      "successfulOnly": {
+        "count": 6,
+        "p50Ms": 1364.94200000001,
+        "p95Ms": 1430.7362999999896,
+        "maxMs": 1430.7362999999896
+      },
+      "note": "All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance."
+    },
+    "metal_nut__scratch__000-1": {
+      "count": 10,
+      "successes": 9,
+      "failures": 1,
+      "timeouts": 1,
+      "verdictWindowMisses": 0,
+      "missingVerdictReceipts": 0,
+      "allAttempts": {
+        "count": 10,
+        "p50Ms": 1188.7799000000232,
+        "p95Ms": 1459.1361999999936,
+        "maxMs": 1459.1361999999936
+      },
+      "successfulOnly": {
+        "count": 9,
+        "p50Ms": 1188.7799000000232,
+        "p95Ms": 1263.3523999999743,
+        "maxMs": 1263.3523999999743
+      },
+      "note": "All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance."
+    },
+    "metal_nut__bent__000-1": {
+      "count": 10,
+      "successes": 0,
+      "failures": 10,
+      "timeouts": 10,
+      "verdictWindowMisses": 0,
+      "missingVerdictReceipts": 0,
+      "allAttempts": {
+        "count": 10,
+        "p50Ms": 1382.0894000000262,
+        "p95Ms": 1413.5673000000243,
+        "maxMs": 1413.5673000000243
+      },
+      "successfulOnly": {
+        "count": 0,
+        "p50Ms": null,
+        "p95Ms": null,
+        "maxMs": null
+      },
+      "note": "All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance."
+    },
+    "hazelnut__good__000-1": {
+      "count": 10,
+      "successes": 9,
+      "failures": 1,
+      "timeouts": 0,
+      "verdictWindowMisses": 0,
+      "missingVerdictReceipts": 1,
+      "allAttempts": {
+        "count": 9,
+        "p50Ms": 1130.4723999999987,
+        "p95Ms": 1173.5827999999747,
+        "maxMs": 1173.5827999999747
+      },
+      "successfulOnly": {
+        "count": 9,
+        "p50Ms": 1130.4723999999987,
+        "p95Ms": 1173.5827999999747,
+        "maxMs": 1173.5827999999747
+      },
+      "note": "All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance."
+    },
+    "hazelnut__good__000-2": {
+      "count": 10,
+      "successes": 9,
+      "failures": 1,
+      "timeouts": 0,
+      "verdictWindowMisses": 0,
+      "missingVerdictReceipts": 0,
+      "allAttempts": {
+        "count": 10,
+        "p50Ms": 1133.4856,
+        "p95Ms": 1309.8641999999527,
+        "maxMs": 1309.8641999999527
+      },
+      "successfulOnly": {
+        "count": 9,
+        "p50Ms": 1143.1417000000074,
+        "p95Ms": 1309.8641999999527,
+        "maxMs": 1309.8641999999527
+      },
+      "note": "All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance."
+    },
+    "hazelnut__crack__000-1": {
+      "count": 10,
+      "successes": 9,
+      "failures": 1,
+      "timeouts": 1,
+      "verdictWindowMisses": 0,
+      "missingVerdictReceipts": 0,
+      "allAttempts": {
+        "count": 10,
+        "p50Ms": 1155.3526999999885,
+        "p95Ms": 1420.2670000000508,
+        "maxMs": 1420.2670000000508
+      },
+      "successfulOnly": {
+        "count": 9,
+        "p50Ms": 1155.3526999999885,
+        "p95Ms": 1212.2689000000246,
+        "maxMs": 1212.2689000000246
+      },
+      "note": "All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance."
+    },
+    "hazelnut__hole__000-1": {
+      "count": 10,
+      "successes": 9,
+      "failures": 1,
+      "timeouts": 1,
+      "verdictWindowMisses": 0,
+      "missingVerdictReceipts": 0,
+      "allAttempts": {
+        "count": 10,
+        "p50Ms": 1221.0131999999867,
+        "p95Ms": 1369.9066999999923,
+        "maxMs": 1369.9066999999923
+      },
+      "successfulOnly": {
+        "count": 9,
+        "p50Ms": 1221.0131999999867,
+        "p95Ms": 1263.7837999999756,
+        "maxMs": 1263.7837999999756
+      },
+      "note": "All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance."
+    },
+    "capsule__good__000-1": {
+      "count": 10,
+      "successes": 8,
+      "failures": 2,
+      "timeouts": 2,
+      "verdictWindowMisses": 0,
+      "missingVerdictReceipts": 0,
+      "allAttempts": {
+        "count": 10,
+        "p50Ms": 1185.9891000000061,
+        "p95Ms": 1494.2962000000116,
+        "maxMs": 1494.2962000000116
+      },
+      "successfulOnly": {
+        "count": 8,
+        "p50Ms": 1177.9876999999979,
+        "p95Ms": 1321.1582000000053,
+        "maxMs": 1321.1582000000053
+      },
+      "note": "All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance."
+    },
+    "capsule__good__000-2": {
+      "count": 10,
+      "successes": 10,
+      "failures": 0,
+      "timeouts": 0,
+      "verdictWindowMisses": 0,
+      "missingVerdictReceipts": 0,
+      "allAttempts": {
+        "count": 10,
+        "p50Ms": 1119.1509000000078,
+        "p95Ms": 1235.5056999999797,
+        "maxMs": 1235.5056999999797
+      },
+      "successfulOnly": {
+        "count": 10,
+        "p50Ms": 1119.1509000000078,
+        "p95Ms": 1235.5056999999797,
+        "maxMs": 1235.5056999999797
+      },
+      "note": "All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance."
+    },
+    "capsule__crack__000-1": {
+      "count": 10,
+      "successes": 10,
+      "failures": 0,
+      "timeouts": 0,
+      "verdictWindowMisses": 0,
+      "missingVerdictReceipts": 0,
+      "allAttempts": {
+        "count": 10,
+        "p50Ms": 1135.422000000006,
+        "p95Ms": 1196.4433999999892,
+        "maxMs": 1196.4433999999892
+      },
+      "successfulOnly": {
+        "count": 10,
+        "p50Ms": 1135.422000000006,
+        "p95Ms": 1196.4433999999892,
+        "maxMs": 1196.4433999999892
+      },
+      "note": "All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance."
+    },
+    "capsule__squeeze__000-1": {
+      "count": 10,
+      "successes": 9,
+      "failures": 1,
+      "timeouts": 1,
+      "verdictWindowMisses": 0,
+      "missingVerdictReceipts": 0,
+      "allAttempts": {
+        "count": 10,
+        "p50Ms": 1114.4765999999945,
+        "p95Ms": 1596.2522999999928,
+        "maxMs": 1596.2522999999928
+      },
+      "successfulOnly": {
+        "count": 9,
+        "p50Ms": 1114.4765999999945,
+        "p95Ms": 1212.263500000001,
+        "maxMs": 1212.263500000001
+      },
+      "note": "All-attempt times include failed/censored observations; successful-only values exclude errors. Stub receipt is not physical acceptance."
+    }
+  },
+  "modelFatalError": null,
+  "observations": [
+    {
+      "caseId": "bottle__good__000-1",
+      "hasDefect": false,
+      "target": "broken glass on the bottle rim",
+      "modelStatus": "success",
+      "detectedBoxes": 13,
+      "bestGroundTruthBoundingRectangleIoU": null,
+      "elapsedMs": 2138.284200000002
+    },
+    {
+      "caseId": "bottle__broken_large__000-1",
+      "hasDefect": true,
+      "target": "broken glass on the bottle rim",
+      "modelStatus": "success",
+      "detectedBoxes": 4,
+      "bestGroundTruthBoundingRectangleIoU": 0.08622439710476168,
+      "elapsedMs": 1201.4474999999984
+    },
+    {
+      "caseId": "bottle__broken_small__000-1",
+      "hasDefect": true,
+      "target": "broken glass on the bottle rim",
+      "modelStatus": "success",
+      "detectedBoxes": 10,
+      "bestGroundTruthBoundingRectangleIoU": 0.20124774721864935,
+      "elapsedMs": 1574.3297999999995
+    },
+    {
+      "caseId": "metal_nut__good__000-1",
+      "hasDefect": false,
+      "target": "scratch on the metal nut",
+      "modelStatus": "success",
+      "detectedBoxes": 5,
+      "bestGroundTruthBoundingRectangleIoU": null,
+      "elapsedMs": 1221.0768000000025
+    },
+    {
+      "caseId": "metal_nut__good__000-2",
+      "hasDefect": false,
+      "target": "bent edge of the metal nut",
+      "modelStatus": "success",
+      "detectedBoxes": 4,
+      "bestGroundTruthBoundingRectangleIoU": null,
+      "elapsedMs": 1182.6497999999992
+    },
+    {
+      "caseId": "metal_nut__scratch__000-1",
+      "hasDefect": true,
+      "target": "scratch on the metal nut",
+      "modelStatus": "success",
+      "detectedBoxes": 1,
+      "bestGroundTruthBoundingRectangleIoU": 0.17527490000698268,
+      "elapsedMs": 984.8273000000008
+    },
+    {
+      "caseId": "metal_nut__bent__000-1",
+      "hasDefect": true,
+      "target": "bent edge of the metal nut",
+      "modelStatus": "success",
+      "detectedBoxes": 4,
+      "bestGroundTruthBoundingRectangleIoU": 0.46505720690765456,
+      "elapsedMs": 1207.2206000000006
+    },
+    {
+      "caseId": "hazelnut__good__000-1",
+      "hasDefect": false,
+      "target": "crack in the hazelnut shell",
+      "modelStatus": "success",
+      "detectedBoxes": 1,
+      "bestGroundTruthBoundingRectangleIoU": null,
+      "elapsedMs": 927.4092999999993
+    },
+    {
+      "caseId": "hazelnut__good__000-2",
+      "hasDefect": false,
+      "target": "hole in the hazelnut shell",
+      "modelStatus": "success",
+      "detectedBoxes": 1,
+      "bestGroundTruthBoundingRectangleIoU": null,
+      "elapsedMs": 932.2920999999988
+    },
+    {
+      "caseId": "hazelnut__crack__000-1",
+      "hasDefect": true,
+      "target": "crack in the hazelnut shell",
+      "modelStatus": "success",
+      "detectedBoxes": 1,
+      "bestGroundTruthBoundingRectangleIoU": 0.1417157204190783,
+      "elapsedMs": 965.5260999999955
+    },
+    {
+      "caseId": "hazelnut__hole__000-1",
+      "hasDefect": true,
+      "target": "hole in the hazelnut shell",
+      "modelStatus": "success",
+      "detectedBoxes": 1,
+      "bestGroundTruthBoundingRectangleIoU": 0.19134526593533527,
+      "elapsedMs": 1021.3715000000011
+    },
+    {
+      "caseId": "capsule__good__000-1",
+      "hasDefect": false,
+      "target": "crack in the capsule",
+      "modelStatus": "success",
+      "detectedBoxes": 1,
+      "bestGroundTruthBoundingRectangleIoU": null,
+      "elapsedMs": 996.3120999999956
+    },
+    {
+      "caseId": "capsule__good__000-2",
+      "hasDefect": false,
+      "target": "dented area on the capsule",
+      "modelStatus": "success",
+      "detectedBoxes": 1,
+      "bestGroundTruthBoundingRectangleIoU": null,
+      "elapsedMs": 930.887999999999
+    },
+    {
+      "caseId": "capsule__crack__000-1",
+      "hasDefect": true,
+      "target": "crack in the capsule",
+      "modelStatus": "success",
+      "detectedBoxes": 0,
+      "bestGroundTruthBoundingRectangleIoU": null,
+      "elapsedMs": 933.812300000005
+    },
+    {
+      "caseId": "capsule__squeeze__000-1",
+      "hasDefect": true,
+      "target": "dented area on the capsule",
+      "modelStatus": "success",
+      "detectedBoxes": 1,
+      "bestGroundTruthBoundingRectangleIoU": 0.7420477778563607,
+      "elapsedMs": 925.3273000000045
+    }
+  ],
+  "limits": [
+    "12 source photographs are a smoke set; no general accuracy claim",
+    "Any returned box is not proof of correct defect localization",
+    "IoU is against the mask's bounding rectangle and is descriptive, not an acceptance threshold",
+    "No physical actuation, real DB or Pico delivery is established by the recording receivers"
+  ]
+}

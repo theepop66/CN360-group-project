@@ -1,5 +1,7 @@
 # Local LocateAnything integration, resident inference, and pass/reject/error results
 
+> Current contract update (2026-10-26): [Item-bound Verdicts and deadline-safe inspection](item-verdict-deadline-safety.md) supersedes the historical auto-pass, action-only Verdict, unpaired manual dispatch, pre-verdict snapshot upload and load-only readiness assumptions below. Use the current n8n/controller/model guides for implementation.
+
 ## Problem Statement
 
 The operator has a local LocateAnything C++ installation and can open the local n8n editor at http://localhost:5678/home/workflows, but does not know how to connect the model to the inspection project. They want a simple final inspection result and are concerned that producing an annotated image takes too long. After comparing alternatives, the operator agreed to retain LocateAnything and its Pico Detection geometry, display `pass`, `reject`, or `error`, and prioritize resident inference before considering a different model.

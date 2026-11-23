@@ -1,0 +1,232 @@
+{
+  "lockedAt": "2026-11-03T14:13:24.369Z",
+  "inputsSha256": "f8bc8e6d3b31329287876d3db8fc3dd9310c52efc8ced64a1a04d7c475135596",
+  "developmentSha256": "a72390fe1b3faebdb80977e4607a6330a29efd72a115e6febffc1acba7d2eadc",
+  "scope": "Settings selected from development images only, before any held-out model request",
+  "rules": [
+    {
+      "id": "bottle-broken-large",
+      "variant": {
+        "id": "central80-clear",
+        "crop": "central80",
+        "prompt": "clear"
+      },
+      "target": "chipped or missing glass at the edge of the bottle opening",
+      "instruction": "Locate all the instances that matches the following description: chipped or missing glass at the edge of the bottle opening.",
+      "preparationProfile": "bottle-broken-large/central80",
+      "width": 448,
+      "height": 448,
+      "threshold": 0.005,
+      "development": {
+        "variant": "central80-clear",
+        "threshold": 0.005,
+        "errors": 0,
+        "missedDefects": 0,
+        "falseRejects": 0,
+        "timing": {
+          "count": 2,
+          "p50Ms": 966.6443999999974,
+          "p95Ms": 1002.7487000000037,
+          "maxMs": 1002.7487000000037
+        }
+      },
+      "automaticApproval": false
+    },
+    {
+      "id": "bottle-broken-small",
+      "variant": {
+        "id": "full-clear",
+        "crop": "full",
+        "prompt": "clear"
+      },
+      "target": "chipped or missing glass at the edge of the bottle opening",
+      "instruction": "Locate all the instances that matches the following description: chipped or missing glass at the edge of the bottle opening.",
+      "preparationProfile": "bottle-broken-small/full",
+      "width": 448,
+      "height": 448,
+      "threshold": 0.005,
+      "development": {
+        "variant": "full-clear",
+        "threshold": 0.005,
+        "errors": 0,
+        "missedDefects": 0,
+        "falseRejects": 0,
+        "timing": {
+          "count": 2,
+          "p50Ms": 971.6180999999997,
+          "p95Ms": 1064.4474999999948,
+          "maxMs": 1064.4474999999948
+        }
+      },
+      "automaticApproval": false
+    },
+    {
+      "id": "metal-nut-scratch",
+      "variant": {
+        "id": "full-original",
+        "crop": "full",
+        "prompt": "original"
+      },
+      "target": "scratch on the metal nut",
+      "instruction": "Locate all the instances that matches the following description: scratch on the metal nut.",
+      "preparationProfile": "metal-nut-scratch/full",
+      "width": 448,
+      "height": 448,
+      "threshold": 0.25823198677756676,
+      "development": {
+        "variant": "full-original",
+        "threshold": 0.25823198677756676,
+        "errors": 0,
+        "missedDefects": 0,
+        "falseRejects": 0,
+        "timing": {
+          "count": 2,
+          "p50Ms": 983.1967999999979,
+          "p95Ms": 1160.129399999998,
+          "maxMs": 1160.129399999998
+        }
+      },
+      "automaticApproval": false
+    },
+    {
+      "id": "metal-nut-bent",
+      "variant": {
+        "id": "full-original",
+        "crop": "full",
+        "prompt": "original"
+      },
+      "target": "bent edge of the metal nut",
+      "instruction": "Locate all the instances that matches the following description: bent edge of the metal nut.",
+      "preparationProfile": "metal-nut-bent/full",
+      "width": 448,
+      "height": 448,
+      "threshold": 0.31776548564665213,
+      "development": {
+        "variant": "full-original",
+        "threshold": 0.31776548564665213,
+        "errors": 0,
+        "missedDefects": 0,
+        "falseRejects": 0,
+        "timing": {
+          "count": 2,
+          "p50Ms": 1234.5144999999902,
+          "p95Ms": 1234.5544000000082,
+          "maxMs": 1234.5544000000082
+        }
+      },
+      "automaticApproval": false
+    },
+    {
+      "id": "hazelnut-crack",
+      "variant": {
+        "id": "central80-clear",
+        "crop": "central80",
+        "prompt": "clear"
+      },
+      "target": "a split or fracture in the hazelnut shell",
+      "instruction": "Locate all the instances that matches the following description: a split or fracture in the hazelnut shell.",
+      "preparationProfile": "hazelnut-crack/central80",
+      "width": 448,
+      "height": 448,
+      "threshold": 0.005,
+      "development": {
+        "variant": "central80-clear",
+        "threshold": 0.005,
+        "errors": 0,
+        "missedDefects": 0,
+        "falseRejects": 1,
+        "timing": {
+          "count": 2,
+          "p50Ms": 918.8908999999985,
+          "p95Ms": 920.852899999998,
+          "maxMs": 920.852899999998
+        }
+      },
+      "automaticApproval": false
+    },
+    {
+      "id": "hazelnut-hole",
+      "variant": {
+        "id": "central80-clear",
+        "crop": "central80",
+        "prompt": "clear"
+      },
+      "target": "a puncture hole in the hazelnut shell",
+      "instruction": "Locate all the instances that matches the following description: a puncture hole in the hazelnut shell.",
+      "preparationProfile": "hazelnut-hole/central80",
+      "width": 448,
+      "height": 448,
+      "threshold": 0.005,
+      "development": {
+        "variant": "central80-clear",
+        "threshold": 0.005,
+        "errors": 0,
+        "missedDefects": 0,
+        "falseRejects": 1,
+        "timing": {
+          "count": 2,
+          "p50Ms": 935.5500999999931,
+          "p95Ms": 980.3160000000062,
+          "maxMs": 980.3160000000062
+        }
+      },
+      "automaticApproval": false
+    },
+    {
+      "id": "capsule-crack",
+      "variant": {
+        "id": "central80-original",
+        "crop": "central80",
+        "prompt": "original"
+      },
+      "target": "crack in the capsule",
+      "instruction": "Locate all the instances that matches the following description: crack in the capsule.",
+      "preparationProfile": "capsule-crack/central80",
+      "width": 448,
+      "height": 448,
+      "threshold": 0.005,
+      "development": {
+        "variant": "central80-original",
+        "threshold": 0.005,
+        "errors": 0,
+        "missedDefects": 0,
+        "falseRejects": 1,
+        "timing": {
+          "count": 2,
+          "p50Ms": 951.4806000000099,
+          "p95Ms": 1021.0712000000058,
+          "maxMs": 1021.0712000000058
+        }
+      },
+      "automaticApproval": false
+    },
+    {
+      "id": "capsule-squeeze",
+      "variant": {
+        "id": "full-original",
+        "crop": "full",
+        "prompt": "original"
+      },
+      "target": "dented area on the capsule",
+      "instruction": "Locate all the instances that matches the following description: dented area on the capsule.",
+      "preparationProfile": "capsule-squeeze/full",
+      "width": 448,
+      "height": 448,
+      "threshold": 0.12233549560825874,
+      "development": {
+        "variant": "full-original",
+        "threshold": 0.12233549560825874,
+        "errors": 0,
+        "missedDefects": 0,
+        "falseRejects": 0,
+        "timing": {
+          "count": 2,
+          "p50Ms": 939.8093999999983,
+          "p95Ms": 963.5298000000039,
+          "maxMs": 963.5298000000039
+        }
+      },
+      "automaticApproval": false
+    }
+  ]
+}

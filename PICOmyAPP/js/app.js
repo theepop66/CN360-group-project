@@ -311,7 +311,7 @@ function connectWebSocket() {
       latestResult = parsed;
       const count = parsed.detections.length;
       const eventTime = parsed.timestamp ? new Date(parsed.timestamp) : new Date();
-      elements.summary.textContent = count === 0
+      elements.summary.textContent = parsed.reviewRequired ? "Human review required · controller reject · model suggestion: " + (parsed.modelSuggestion ?? "unavailable") : count === 0
         ? "AI reports no detections"
         : `${count} detection${count === 1 ? "" : "s"} · ${eventTime.toLocaleTimeString()}`;
       setStatus(elements.socketStatus, "AI data: receiving", "ok");
@@ -457,9 +457,12 @@ async function runServoAction(trigger, action, describeSuccess) {
 
   try {
     const result = await action();
-    if (result?.accepted === false) {
+    if (result?.accepted === null || result?.accepted === undefined) {
+      elements.servoFeedback.className = "feedback feedback--error";
+      elements.servoFeedback.textContent = "Control acceptance is unknown. Check the current item before trying again.";
+    } else if (result.accepted === false) {
       elements.servoFeedback.className = "feedback";
-      elements.servoFeedback.textContent = "Control unit ignored this request (wrong mode, or mid-cycle).";
+      elements.servoFeedback.textContent = `Control unit ignored this request (${result.reason ?? "wrong mode, or mid-cycle"}).`;
     } else {
       elements.servoFeedback.className = "feedback feedback--ok";
       elements.servoFeedback.textContent = describeSuccess(result);

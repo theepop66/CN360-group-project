@@ -1,0 +1,346 @@
+{
+  "algorithm": "SHA-256",
+  "baseRevision": "9caf8e59e66ae696d90bb17bebfe72f33fffbc33",
+  "files": {
+    "360ControlUnit/lib/ControlUnitState/ControlUnitState.cpp": {
+      "sha256": "f8c3e3251b8aabd96f16bb3d637dd40ce9dc168a302a3cd773af84289bbbd49c",
+      "format": "UTF-8 with LF line endings"
+    },
+    "360ControlUnit/lib/ControlUnitState/ControlUnitState.h": {
+      "sha256": "d3dbfa5ef6efd3178c35c78bc75e86ea6ecd1c5c04cc68a97ca79d24b66e0219",
+      "format": "UTF-8 with LF line endings"
+    },
+    "360ControlUnit/test/host/controller_adapter.cpp": {
+      "sha256": "2842d8e503890ffdc27eff2568f68419be40d8d7b7b218737c445cb0868f6df9",
+      "format": "UTF-8 with LF line endings"
+    },
+    "detection-relay/.gitignore": {
+      "sha256": "a8db166167d30d2c36fa95cc3163e77a4bc33205ede3b81a368750f25ded3879",
+      "format": "UTF-8 with LF line endings"
+    },
+    "detection-relay/README.md": {
+      "sha256": "82412420a2d09a85403d9f7e3e80883affe111d0cfb7bea683fa542b36fbae60",
+      "format": "UTF-8 with LF line endings"
+    },
+    "detection-relay/deploy/cn360-relay.service": {
+      "sha256": "012bdfde25581c338d864cff3c80fd217cb9a59a033f98680f7cfdca7969925d",
+      "format": "UTF-8 with LF line endings"
+    },
+    "detection-relay/deploy/relay.env.example": {
+      "sha256": "3d6fbf3c9b639992dc1b5cb870af50ff9c40e442f5b55617db64509ed4438682",
+      "format": "UTF-8 with LF line endings"
+    },
+    "detection-relay/lib/config.mjs": {
+      "sha256": "4fcae7c52fba1b341d47df5689fb6eb5361fd3ca2576f4b02157d17409fdb87a",
+      "format": "UTF-8 with LF line endings"
+    },
+    "detection-relay/lib/relay.mjs": {
+      "sha256": "2c1cd607b9eadc61e383a83d3094eb657006c83188cd7af821299c93ba896d28",
+      "format": "UTF-8 with LF line endings"
+    },
+    "detection-relay/package-lock.json": {
+      "sha256": "5dc021d9113c6def0dab2c9696566b1b34f1a07f71083da3b03a3dfc79e1205e",
+      "format": "UTF-8 with LF line endings"
+    },
+    "detection-relay/package.json": {
+      "sha256": "f923dec761518afa43d7ed251197773ac032af1362bee9b2dbc61407ed49b641",
+      "format": "UTF-8 with LF line endings"
+    },
+    "detection-relay/server.mjs": {
+      "sha256": "1da1351ed9dd31a83019acf641c18b930de5042af5ff91dd29a0acf85e41544a",
+      "format": "UTF-8 with LF line endings"
+    },
+    "detection-relay/test/config.test.mjs": {
+      "sha256": "7e78e1098edbaa735120e160242f7080b725443d5872ec7874088974def04f6d",
+      "format": "UTF-8 with LF line endings"
+    },
+    "detection-relay/test/contract.test.mjs": {
+      "sha256": "805916fbbfbcafd3a1ee865aaa20acce1a1432aebba6a41ced927dc5c7878708",
+      "format": "UTF-8 with LF line endings"
+    },
+    "detection-relay/test/helpers.mjs": {
+      "sha256": "5d3a3e778fe3b83bdd90cace6bb05833b092676d8caa555d7b2f5a5dac4e9f54",
+      "format": "UTF-8 with LF line endings"
+    },
+    "detection-relay/test/relay.test.mjs": {
+      "sha256": "2948ab62b1af0a3a9a175c7bd88dca0a600e9db09ab5ddfbd770ec6380bc0ca4",
+      "format": "UTF-8 with LF line endings"
+    },
+    "docs/evidence/issue17-software-closure-2026-10-28/README.md": {
+      "sha256": "243e2889f1d5cbed7ae06a6154fe3c0c8af76cc87596bc6d7da304ee626cb3bf",
+      "format": "UTF-8 with LF line endings"
+    },
+    "docs/evidence/issue17-software-closure-2026-10-28/aborted-startup-check.json": {
+      "sha256": "9775a5314e7c7406c39bea99313c0d853148f2e2071946007a4e67492c52e19e",
+      "format": "UTF-8 with LF line endings"
+    },
+    "docs/evidence/issue17-software-closure-2026-10-28/active-runtime.json": {
+      "sha256": "f6e8bc2078d29c960cd835d34ecea4beb308734b411e18b145a87d4f3806ab5e",
+      "format": "UTF-8 with LF line endings"
+    },
+    "docs/evidence/issue17-software-closure-2026-10-28/deployed-acceptance-10.json": {
+      "sha256": "2399e3a8574e4db9499e343a8f544e5a497a9d6d093da9c0b63fcad4802f305a",
+      "format": "UTF-8 with LF line endings"
+    },
+    "docs/evidence/issue17-software-closure-2026-10-28/earlier-observer-failure.json": {
+      "sha256": "c0192e8ca1b3bb90c5cc65fb5c826a7b68953de30a3d0c035222330b13487df4",
+      "format": "UTF-8 with LF line endings"
+    },
+    "docs/evidence/issue17-software-closure-2026-10-28/earlier-overlapping-runtime-failures.json": {
+      "sha256": "18a7b68bb1a91b90788181b121a8bbfd6f215bccbffd4c87e2b8d09737f282d5",
+      "format": "UTF-8 with LF line endings"
+    },
+    "docs/evidence/issue17-software-closure-2026-10-28/earlier-watchdog-failure.json": {
+      "sha256": "cfafb1575c46c9f48f13d5714d3cbc2ad7c24105cc66dcb77657021252d712d9",
+      "format": "UTF-8 with LF line endings"
+    },
+    "docs/evidence/issue17-software-closure-2026-10-28/isolated-stress-59.json": {
+      "sha256": "770631c1072176eeba2c729367f3a9814a27806276d4535aed9748cb13c4f056",
+      "format": "UTF-8 with LF line endings"
+    },
+    "docs/evidence/issue17-software-closure-2026-10-28/postgres-idempotency-6.json": {
+      "sha256": "f1bc9b0844f7cea79d0a2497e7b25656edbac2e30d5072011ac57dabf2446813",
+      "format": "UTF-8 with LF line endings"
+    },
+    "docs/evidence/issue17-software-closure-2026-10-28/relay-tests-22.log": {
+      "sha256": "1717a2c773c6483c8c4c0fb0eaf9577aeacbc01758c4a362c47c878cffb791ae",
+      "format": "UTF-8 with LF line endings"
+    },
+    "docs/evidence/issue17-software-closure-2026-10-28/unit-tests-216.log": {
+      "sha256": "58739086ddfa0256b73339cb23c882645381fb75c82dffe89f60a250a5eecb4a",
+      "format": "UTF-8 with LF line endings"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/README.md": {
+      "sha256": "1ab4ba955f68b3b4a6d655bea33a389ed66e4e36d2bfb5991045d38d9043369f",
+      "format": "UTF-8 with LF line endings"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/annotated/bottle__broken_large__000-1.png": {
+      "sha256": "b2eb78de9896997279f24e3825157257ca9c0a7d0176e205dac46c3faa8cd8e3",
+      "format": "raw bytes"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/annotated/bottle__broken_small__000-1.png": {
+      "sha256": "cc53a0c4be4513eb4a1eb3a49f000666c8720aec315d700c4846138d9c1edd01",
+      "format": "raw bytes"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/annotated/bottle__good__000-1.png": {
+      "sha256": "51c95c0d6f4b1355241fe4d8dea61826140514efad6d8471976f55d3ad343025",
+      "format": "raw bytes"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/annotated/capsule__crack__000-1.png": {
+      "sha256": "9247616e5decf6458505fbc8771cc11fcadfa95fa8a3a7cd476585cb29628abc",
+      "format": "raw bytes"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/annotated/capsule__good__000-1.png": {
+      "sha256": "6cce67646a5401702a468d75508ab5e55ac8c9e49faebc9943e9141621785396",
+      "format": "raw bytes"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/annotated/capsule__good__000-2.png": {
+      "sha256": "c1259b8b4a712841bc62e5b005619e089bfed0aeaa5abf55f5994e3caab141fd",
+      "format": "raw bytes"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/annotated/capsule__squeeze__000-1.png": {
+      "sha256": "f40d60e374bf42c51110fef5a8c3ff5f8c791b8f376cd35dcb246fe1ea9f8fc4",
+      "format": "raw bytes"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/annotated/hazelnut__crack__000-1.png": {
+      "sha256": "5b940c9b4ccbf91ca7d1463b05f514f6b9283597136650def14c8c949df9cf2e",
+      "format": "raw bytes"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/annotated/hazelnut__good__000-1.png": {
+      "sha256": "a254917622df0830c74a8ded6260bbe63849c5f5a2ce1bbf22b9443db00b322e",
+      "format": "raw bytes"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/annotated/hazelnut__good__000-2.png": {
+      "sha256": "d87a14c3e2c898d6a499dc687fb1cdfe6f4cc579a6d258f1f1d43e39e343f469",
+      "format": "raw bytes"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/annotated/hazelnut__hole__000-1.png": {
+      "sha256": "35cf0b69578f375e1a7c8788ae07d43885b7496be96b9ab9e6d062ffd33629b0",
+      "format": "raw bytes"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/annotated/metal_nut__bent__000-1.png": {
+      "sha256": "5cc834713b5e4137a2a48a08d46dff324af1cc6c1efc71a5b1af992335a46e8c",
+      "format": "raw bytes"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/annotated/metal_nut__good__000-1.png": {
+      "sha256": "990235668c408112e9b026153c987eb6c426e78eb2ff1f4d69907974272d78ed",
+      "format": "raw bytes"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/annotated/metal_nut__good__000-2.png": {
+      "sha256": "99087a9fdd25388318b6e4b013410156e81bc4ef1415dc6c525a4a01c55c0494",
+      "format": "raw bytes"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/annotated/metal_nut__scratch__000-1.png": {
+      "sha256": "98e891bd0f3c4a37b46f60d6ea7f0bdd57f9aa362cc1efa0121eba495e84a6c0",
+      "format": "raw bytes"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/fresh-run.json": {
+      "sha256": "02c3da15aa1c7a269e3bbfab67200a29f8114361fb564f34baa8e91cdf11fda0",
+      "format": "UTF-8 with LF line endings"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/images/bottle__broken_large__000.jpg": {
+      "sha256": "203585e5e3e3b69c95fcbdf4a3dc1c809393e04aae2a140f669cb7bc85e8cead",
+      "format": "raw bytes"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/images/bottle__broken_small__000.jpg": {
+      "sha256": "96b69942f144b6894685c6dbea70219b49058d129637fc1d9280b62bdb58182c",
+      "format": "raw bytes"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/images/bottle__good__000.jpg": {
+      "sha256": "9bc1ffdadedc9e6639449cb647c24233118e7d52df303b89cf7e19bca799c68d",
+      "format": "raw bytes"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/images/capsule__crack__000.jpg": {
+      "sha256": "f31b58f0bfe669ee7fc4f22432e31876e14af84a44826e360c973437b105b093",
+      "format": "raw bytes"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/images/capsule__good__000.jpg": {
+      "sha256": "1c5168880adcd026f71a7de36578fe971397306a3320ea800e1ba5c2ef49f5c1",
+      "format": "raw bytes"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/images/capsule__squeeze__000.jpg": {
+      "sha256": "b9b5fe3a1edd299e9d00ce7f6ec4eb26dba54b390e97ef4d1875f0d8f5eeb4d0",
+      "format": "raw bytes"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/images/hazelnut__crack__000.jpg": {
+      "sha256": "525cbdfb8c271f7cb7f9964ff6eab32708fa73e792967a76f3a5083a000ec29b",
+      "format": "raw bytes"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/images/hazelnut__good__000.jpg": {
+      "sha256": "0dbf168ffd92b69001d4969f3b5d8d48b0969fdcee23a8f5addbb461d93e0685",
+      "format": "raw bytes"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/images/hazelnut__hole__000.jpg": {
+      "sha256": "18cc025ae97113760b2fcc1e8f82c65281a825fc237edbf25fc9e7cdc5708986",
+      "format": "raw bytes"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/images/metal_nut__bent__000.jpg": {
+      "sha256": "366bec9bd5b5eaac98f33d6422af1e72223dc36fbb260683e1112800858d5ebf",
+      "format": "raw bytes"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/images/metal_nut__good__000.jpg": {
+      "sha256": "a7d9da263fbe3344cd3c11360784db286c00f13ad48f05f55197cbaa019e1c54",
+      "format": "raw bytes"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/images/metal_nut__scratch__000.jpg": {
+      "sha256": "0af2792af973b4c6fa022a061d76c875a537a1af5a2cb61a7601f80ee4267030",
+      "format": "raw bytes"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/index.html": {
+      "sha256": "101abd776789e53e61b9b0ac088593ce716a276237901c45c0fae8d06c31d461",
+      "format": "UTF-8 with LF line endings"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/model-responses.json": {
+      "sha256": "9331acdced63c360caed2ba26135a29d6a956b94c1f69659fd7a1a4341b742ca",
+      "format": "UTF-8 with LF line endings"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/native-service.log": {
+      "sha256": "3e29beb07f029f7b926ded08620fed516deadfd4ea5fafaae3572b7bc4f043f4",
+      "format": "UTF-8 with LF line endings"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/results.json": {
+      "sha256": "66f4aa1f707e16155ea9a8c5a2b72bac5a2e9299c0493d37f2a26dd022ff1448",
+      "format": "UTF-8 with LF line endings"
+    },
+    "docs/evidence/real-model-gallery-2026-10-28/sample-results.png": {
+      "sha256": "260d597b46512074af1173413468ae3478c83788b40588231b47c5edc05dd4fc",
+      "format": "raw bytes"
+    },
+    "n8n/.gitignore": {
+      "sha256": "c34da73afc89f5278c4a603c26ee1d32910ad19f607f234a9f90cc3a83d47e28",
+      "format": "UTF-8 with LF line endings"
+    },
+    "n8n/README.md": {
+      "sha256": "19b436771dc90d7473aab3e860802a4c0b3f602b63b866407721d54f9d63966b",
+      "format": "UTF-8 with LF line endings"
+    },
+    "n8n/SOFTWARE-BENCH.md": {
+      "sha256": "7cf48273fb397da5e6ca78452b9d02eb29171345202cc7defc5afeaa92238943",
+      "format": "UTF-8 with LF line endings"
+    },
+    "n8n/lib/inspection-logic.mjs": {
+      "sha256": "65121f8bf775dd36bdf5deea5324a1a2c649fdbd2bc8d56ec10f59af7578e22c",
+      "format": "UTF-8 with LF line endings"
+    },
+    "n8n/lib/inspection-test-runtime.mjs": {
+      "sha256": "ee4580b1656f9f8f7f5f6269033c75dfe79c261f128e43ed095fb09708898647",
+      "format": "UTF-8 with LF line endings"
+    },
+    "n8n/lib/software-bench.mjs": {
+      "sha256": "ad445826e58f77181be8f63bda83c3cf410e3239f492a768ae92633c66f46739",
+      "format": "UTF-8 with LF line endings"
+    },
+    "n8n/lib/static-inspection.mjs": {
+      "sha256": "b95175dcd66520d112a025ccaa4ab6bad0207984cac256e384cbbc4bbd339c8f",
+      "format": "UTF-8 with LF line endings"
+    },
+    "n8n/lib/workflow-definitions.mjs": {
+      "sha256": "065f6509c3be9676a4221d91ee8a64e71e251a6539122ed2a3b2eda6faee8ac3",
+      "format": "UTF-8 with LF line endings"
+    },
+    "n8n/scripts/accept-software-bench.mjs": {
+      "sha256": "36c7dc9667b1071c92073a736ec60e105a1ced6a803ca98109d8d0cf0c53628a",
+      "format": "UTF-8 with LF line endings"
+    },
+    "n8n/scripts/render-model-gallery.py": {
+      "sha256": "fda50f0ce28dcff57a1a24affa42001827e93a6ee6cd3a4d9c479838c0e96815",
+      "format": "UTF-8 with LF line endings"
+    },
+    "n8n/scripts/software-bench.mjs": {
+      "sha256": "5b85e10e1afc24810f25c11c8a42d99b291ccd49d7557856182b31ee06810f35",
+      "format": "UTF-8 with LF line endings"
+    },
+    "n8n/scripts/start-software-bench.ps1": {
+      "sha256": "8335c04c6d2645c58706a349fdc19438cbbf3ea94210b8edac8572c16d0b708e",
+      "format": "UTF-8 with LF line endings"
+    },
+    "n8n/scripts/static-inspection.mjs": {
+      "sha256": "0347f9c509ea2b308aa366e4868479044fae593cb4d3069d105602ffe9cb6bca",
+      "format": "UTF-8 with LF line endings"
+    },
+    "n8n/scripts/stop-software-bench.ps1": {
+      "sha256": "ee018e6d93d0169eca0891e2b3814a3f927b6c9667355bf527fe2f7be8ad00ac",
+      "format": "UTF-8 with LF line endings"
+    },
+    "n8n/scripts/test-idempotency.py": {
+      "sha256": "dbfb55bddae95af9b75ced764c86ff1e6c3041bd41498f81ecbd137ae99c24bf",
+      "format": "UTF-8 with LF line endings"
+    },
+    "n8n/software-bench.example.json": {
+      "sha256": "f3844355c6113a3a12f49f7fa76a0e4062774a573e0ad3facc364dd1e2769613",
+      "format": "UTF-8 with LF line endings"
+    },
+    "n8n/sql/002-idempotent-inspections.sql": {
+      "sha256": "93a0bbd5d3a5eeaf5593ab7e3c9625b20e873e1b87470f8975927be8d6675bcb",
+      "format": "UTF-8 with LF line endings"
+    },
+    "n8n/test/software-bench.test.mjs": {
+      "sha256": "7f517f076f8e47500feea059349edf891ef4709111c19ea4e8b6d5a1ccb08694",
+      "format": "UTF-8 with LF line endings"
+    },
+    "n8n/test/static-inspection.test.mjs": {
+      "sha256": "d882500e41610ea62afb04d4c7822351396e4c95816706ed9313d40de21fe83c",
+      "format": "UTF-8 with LF line endings"
+    },
+    "n8n/test/workflows.test.mjs": {
+      "sha256": "bf9f0ed63420f03cd04fa1d91c7aa0604a7a20c469498660d5845d1bdf6264b9",
+      "format": "UTF-8 with LF line endings"
+    },
+    "n8n/workflows/01-inspection-loop.json": {
+      "sha256": "0915c8be367a518ead15409359642e6cd6b69896727e8e9c8bcc4c12396b41ea",
+      "format": "UTF-8 with LF line endings"
+    },
+    "n8n/workflows/02-prompt-capture.json": {
+      "sha256": "554af58b837ce0c1f306dccaf4ef6a6ee2dab63cbeceb808fca6dc3a33b0cee9",
+      "format": "UTF-8 with LF line endings"
+    },
+    "n8n/workflows/03-health-watchdog.json": {
+      "sha256": "0b9ebc8ff3bd3d36bd7cb7d8f0a1df3a74b06620d0123aa1ae61ff5f5013f4dd",
+      "format": "UTF-8 with LF line endings"
+    },
+    "pico-webapp/js/overlay.js": {
+      "sha256": "10d1c082bd54bf31323c1e61a520d9adf9172ae261834b6cc4bd6008e3580386",
+      "format": "UTF-8 with LF line endings"
+    }
+  }
+}

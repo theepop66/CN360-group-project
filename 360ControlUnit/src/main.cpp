@@ -4,6 +4,12 @@
 #include <ESP32Servo.h>
 #include <ArduinoJson.h>
 #include <esp_task_wdt.h>
+#include <esp_system.h>
+#include <atomic>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#include <freertos/queue.h>
+#include <freertos/semphr.h>
 
 #include "secrets.h"
 #include "ControlUnitState.h"
@@ -17,11 +23,19 @@ using namespace controlunit;
 #define PIN_BUZZER     21
 #define PIN_LED_RED    22
 #define PIN_LED_GREEN  23
+static const int conveyorPins[] = {32, 33, 25, 26};
+static const uint8_t conveyorSteps[] = {0x1, 0x3, 0x2, 0x6, 0x4, 0xc, 0x8, 0x9};
+static int conveyorPhase = 0;
+static uint32_t conveyorStepAt = 0;
+static uint32_t conveyorSequence = 0;
+static uint32_t conveyorLease = 0;
+static uint32_t conveyorLeaseAt = 0;
+static const uint32_t conveyorLeaseMs = 400;
 
 // ---- Static network configuration (adjust to your LAN) ----
-IPAddress staticIp(192, 168, 1, 50);
-IPAddress gateway(192, 168, 1, 1);
-IPAddress subnet(255, 255, 255, 0);
+IPAddress staticIp(172, 20, 10, 5);
+IPAddress gateway(172, 20, 10, 1);
+IPAddress subnet(255, 255, 255, 240);
 IPAddress dns(8, 8, 8, 8);
 
 const uint32_t WIFI_RETRY_INTERVAL_MS = 5000;
@@ -30,6 +44,15 @@ WebServer server(80);
 Servo rejectServo;
 ControlUnit machine;
 Config machineConfig;
+SemaphoreHandle_t machineMutex;
+QueueHandle_t notificationQueue;
+struct Notification { char payload[256]; };
+std::atomic<uint32_t> notifyFailures{0};
+
+// No automatic admission until reject/retention has been validated on the bench.
+#ifndef CN360_BENCH_ADMISSION_ENABLED
+#define CN360_BENCH_ADMISSION_ENABLED 0
+#endif
 
 // ---- Outbound notify (n8n webhook), parsed from N8N_NOTIFY_URL ----
 String notifyHost;
@@ -42,10 +65,12 @@ class NotifySender {
 
   void fire(const String& payload) {
     if (busy()) {
+      ++notifyFailures;
       return;
     }
     request_ = buildRequest(payload);
     stage_ = Stage::Connecting;
+    responseLine_ = "";
     startedAt_ = millis();
   }
 
@@ -59,7 +84,7 @@ class NotifySender {
     }
     switch (stage_) {
       case Stage::Connecting:
-        if (client_.connect(notifyHost.c_str(), notifyPort)) {
+        if (client_.connect(notifyHost.c_str(), notifyPort, 100)) {
           stage_ = Stage::Sending;
         } else {
           abort_();
@@ -70,11 +95,12 @@ class NotifySender {
         stage_ = Stage::Draining;
         break;
       case Stage::Draining:
-        while (client_.available()) {
-          client_.read();
+        for (int read = 0; read < 256 && client_.available(); ++read) {
+          const char c = static_cast<char>(client_.read());
+          if (!responseLine_.endsWith("\n") && responseLine_.length() < 100) responseLine_ += c;
         }
         if (!client_.connected()) {
-          abort_();
+          abort_(responseLine_.startsWith("HTTP/1.1 200 ") || responseLine_.startsWith("HTTP/1.0 200 "));
         }
         break;
       default:
@@ -123,7 +149,8 @@ class NotifySender {
     return r;
   }
 
-  void abort_() {
+  void abort_(bool delivered = false) {
+    if (!delivered) ++notifyFailures;
     client_.stop();
     stage_ = Stage::Idle;
   }
@@ -132,6 +159,7 @@ class NotifySender {
   Stage stage_ = Stage::Idle;
   unsigned long startedAt_ = 0;
   String request_;
+  String responseLine_;
 };
 
 NotifySender notifySender;
@@ -154,7 +182,15 @@ static void applyAll(Action* out, uint8_t n) {
     const Action& a = out[i];
     switch (a.kind) {
       case Action::Kind::Notify:
-        notifySender.fire("{\"event\":\"item_detected\"}");
+        {
+          Notification message{};
+          const auto& item = machine.itemIdentity();
+          snprintf(message.payload, sizeof(message.payload),
+                   "{\"event\":\"item_detected\",\"controller_session\":\"%s\",\"item_id\":\"%s\",\"verdict_window_ms\":%lu}",
+                   item.controllerSession.c_str(), item.itemId.c_str(),
+                   static_cast<unsigned long>(machineConfig.verdictTimeoutMs));
+          if (xQueueSend(notificationQueue, &message, 0) != pdTRUE) ++notifyFailures;
+        }
         break;
       case Action::Kind::ServoAngle:
 #ifdef ACTUATOR_RELAY
@@ -211,37 +247,42 @@ static void handlePreflight() {
 static void handleVerdict() {
   Action out[4];
   JsonDocument req;
-  deserializeJson(req, server.arg("plain"));
+  const auto error = deserializeJson(req, server.arg("plain"));
   const char* action = req["action"] | "";
-  bool rejected = false;
-
-  uint8_t n = 0;
-  if (strcmp(action, "reject") == 0) {
-    rejected = true;
-    n = machine.acceptVerdict(millis(), Verdict::Reject, out, 4);
-  } else if (strcmp(action, "pass") == 0) {
-    n = machine.acceptVerdict(millis(), Verdict::Pass, out, 4);
+  const char* session = req["controller_session"] | "";
+  const char* item = req["item_id"] | "";
+  const ItemIdentity submitted{std::string(session, req["controller_session"].as<JsonString>().size()),
+                               std::string(item, req["item_id"].as<JsonString>().size())};
+  const size_t actionLength = req["action"].as<JsonString>().size();
+  const bool valid = !error && req["action"].is<const char*>() &&
+      req["controller_session"].is<const char*>() && req["item_id"].is<const char*>() &&
+      validItemIdentity(submitted) &&
+      ((actionLength == 4 && strcmp(action, "pass") == 0) ||
+       (actionLength == 6 && strcmp(action, "reject") == 0));
+  VerdictReceipt receipt;
+  receipt.reason = ReceiptReason::InvalidRequest;
+  if (valid) {
+    xSemaphoreTake(machineMutex, portMAX_DELAY);
+    receipt = machine.acceptVerdict(millis(), submitted,
+        strcmp(action, "pass") == 0 ? Verdict::Pass : Verdict::Reject, out, 4);
+    applyAll(out, receipt.actionCount);
+    xSemaphoreGive(machineMutex);
   }
-  applyAll(out, n);
-
   JsonDocument res;
-  res["accepted"] = (n > 0);
-  if (n > 0) {
-    res["status"] = rejected ? "rejected" : "passed";
-  } else {
-    res["status"] = "ignored";
-  }
-  sendJson(200, res);
+  res["accepted"] = receipt.accepted;
+  res["status"] = receipt.accepted ? (strcmp(action, "pass") == 0 ? "passed" : "rejected") : "ignored";
+  res["reason"] = receiptReasonName(receipt.reason);
+  res["controller_session"] = req["controller_session"];
+  res["item_id"] = req["item_id"];
+  sendJson(valid ? 200 : 400, res);
 }
 
 static void handleReject() {
-  Action out[4];
-  uint8_t n = machine.acceptVerdict(millis(), Verdict::Reject, out, 4);
-  applyAll(out, n);
-
   JsonDocument res;
-  res["status"] = (n > 0) ? "rejected" : "ignored";
-  sendJson(200, res);
+  res["accepted"] = false;
+  res["status"] = "ignored";
+  res["reason"] = "item_identity_required";
+  sendJson(400, res);
 }
 
 static void handleMode() {
@@ -250,6 +291,7 @@ static void handleMode() {
   const char* requested = req["mode"] | "";
 
   bool accepted = false;
+  xSemaphoreTake(machineMutex, portMAX_DELAY);
   if (strcmp(requested, "manual") == 0) {
     accepted = machine.setMode(millis(), Mode::Manual);
   } else if (strcmp(requested, "auto") == 0) {
@@ -259,6 +301,7 @@ static void handleMode() {
   JsonDocument res;
   res["accepted"] = accepted;
   res["mode"] = modeName(machine.mode());
+  xSemaphoreGive(machineMutex);
   sendJson(200, res);
 }
 
@@ -267,26 +310,78 @@ static void handleServo() {
   uint8_t n = 0;
   JsonDocument req;
   deserializeJson(req, server.arg("plain"));
-
+  xSemaphoreTake(machineMutex, portMAX_DELAY);
   if (req["sweep"] | false) {
     n = machine.manualSweep(millis(), out, 4);
   } else if (req["angle"].is<int>()) {
     n = machine.manualAngle(millis(), req["angle"].as<int>(), out, 4);
   }
   applyAll(out, n);
+  xSemaphoreGive(machineMutex);
 
   JsonDocument res;
   res["accepted"] = (n > 0);
   sendJson(200, res);
 }
 
+static void handleConveyor() {
+  JsonDocument req;
+  const auto error = deserializeJson(req, server.arg("plain"));
+  const bool valid = !error && req["direction"].is<int>() &&
+      req["direction"].as<int>() >= -1 && req["direction"].as<int>() <= 1 &&
+      req["sequence"].is<uint32_t>() && req["lease"].is<uint32_t>() && req["controller_session"].is<const char*>();
+  bool accepted = false;
+  xSemaphoreTake(machineMutex, portMAX_DELAY);
+  if (valid && conveyorLease != 0 && millis() - conveyorLeaseAt < conveyorLeaseMs &&
+      req["lease"].as<uint32_t>() == conveyorLease &&
+      machine.itemIdentity().controllerSession == req["controller_session"].as<const char*>() &&
+      req["sequence"].as<uint32_t>() > conveyorSequence) {
+    conveyorSequence = req["sequence"].as<uint32_t>();
+    accepted = machine.conveyorCommand(millis(), req["direction"].as<int>());
+    const uint32_t previousLease = conveyorLease;
+    conveyorLease = esp_random() | 1;
+    if (conveyorLease == previousLease) conveyorLease ^= 2;
+    conveyorLeaseAt = millis();
+  }
+  JsonDocument res;
+  res["accepted"] = accepted;
+  res["controller_session"] = String(machine.itemIdentity().controllerSession.c_str());
+  res["conveyor_sequence"] = conveyorSequence;
+  res["lease"] = conveyorLease;
+  xSemaphoreGive(machineMutex);
+  sendJson(valid ? 200 : 400, res);
+}
+
+static void handleConveyorLease() {
+  JsonDocument res;
+  xSemaphoreTake(machineMutex, portMAX_DELAY);
+  machine.expireConveyor();
+  conveyorLease = esp_random() | 1;
+  conveyorLeaseAt = millis();
+  res["controller_session"] = String(machine.itemIdentity().controllerSession.c_str());
+  res["conveyor_sequence"] = conveyorSequence;
+  res["lease"] = conveyorLease;
+  xSemaphoreGive(machineMutex);
+  sendJson(200, res);
+}
+
 static void handleStatus() {
   JsonDocument res;
+  xSemaphoreTake(machineMutex, portMAX_DELAY);
   res["item_present"] = machine.itemPresent();
   res["state"] = stateName(machine.state());
   res["mode"] = modeName(machine.mode());
   res["pass_count"] = machine.passCount();
   res["reject_count"] = machine.rejectCount();
+  res["controller_session"] = String(machine.itemIdentity().controllerSession.c_str());
+  res["conveyor_sequence"] = conveyorSequence;
+  res["item_id"] = String(machine.itemIdentity().itemId.c_str());
+  res["resolution_reason"] = machine.resolutionReason();
+  res["admission_ready"] = machine.admissionReady();
+  res["automatic_admission_enabled"] = machineConfig.admissionEnabled;
+  res["verdict_window_ms"] = machineConfig.verdictTimeoutMs;
+  res["notify_failures"] = notifyFailures.load();
+  xSemaphoreGive(machineMutex);
   sendJson(200, res);
 }
 
@@ -300,10 +395,42 @@ static void handleHealth() {
 // ---- Setup / loop ----
 static unsigned long lastWifiAttemptMs = 0;
 
+// This task owns local progress independently of HTTP/DNS/socket stalls.
+static void controlTask(void*) {
+  esp_task_wdt_add(NULL);
+  for (;;) {
+    esp_task_wdt_reset();
+    Action out[4];
+    xSemaphoreTake(machineMutex, portMAX_DELAY);
+    if (conveyorLease && millis() - conveyorLeaseAt >= conveyorLeaseMs) {
+      conveyorLease = 0;
+      machine.expireConveyor();
+    }
+    const auto n = machine.step(millis(), digitalRead(PIN_IR_SENSOR) == LOW, out, 4);
+    applyAll(out, n);
+    const int direction = machine.conveyorDirection(millis());
+    if (direction == 0) {
+      for (int pin : conveyorPins) digitalWrite(pin, LOW);
+    } else if (millis() - conveyorStepAt >= 3) {
+      conveyorStepAt = millis();
+      conveyorPhase = (conveyorPhase - direction + 8) % 8;
+      for (int i = 0; i < 4; ++i) {
+        digitalWrite(conveyorPins[i], (conveyorSteps[conveyorPhase] & (1 << i)) ? HIGH : LOW);
+      }
+    }
+    xSemaphoreGive(machineMutex);
+    vTaskDelay(pdMS_TO_TICKS(1));
+  }
+}
+
 void setup() {
   Serial.begin(115200);
 
   pinMode(PIN_IR_SENSOR, INPUT_PULLUP);
+  for (int pin : conveyorPins) {
+    pinMode(pin, OUTPUT);
+    digitalWrite(pin, LOW);
+  }
   pinMode(PIN_RELAY, OUTPUT);
   pinMode(PIN_BUZZER, OUTPUT);
   pinMode(PIN_LED_RED, OUTPUT);
@@ -316,9 +443,22 @@ void setup() {
   rejectServo.write(machineConfig.restAngle);
 
   notifySender.begin();
-  machine.init(millis(), machineConfig);
+  WiFi.mode(WIFI_STA);  // Enable RF entropy before generating this boot's token.
+  char session[33];
+  snprintf(session, sizeof(session), "%08lx%08lx%08lx%08lx",
+           static_cast<unsigned long>(esp_random()), static_cast<unsigned long>(esp_random()),
+           static_cast<unsigned long>(esp_random()), static_cast<unsigned long>(esp_random()));
+  machineConfig.admissionEnabled = CN360_BENCH_ADMISSION_ENABLED == 1;
+  machine.init(millis(), machineConfig, session);
+  machineMutex = xSemaphoreCreateMutex();
+  notificationQueue = xQueueCreate(2, sizeof(Notification));
+  esp_task_wdt_init(5, true);
+  if (!machineMutex || !notificationQueue ||
+      xTaskCreatePinnedToCore(controlTask, "item-control", 6144, nullptr, 2, nullptr, 1) != pdPASS) {
+    Serial.println("Control task unavailable; admission disabled.");
+    for (;;) delay(1000);
+  }
 
-  WiFi.mode(WIFI_STA);
   WiFi.config(staticIp, gateway, subnet, dns);
   WiFi.setAutoReconnect(true);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
@@ -332,22 +472,21 @@ void setup() {
   server.on("/mode", HTTP_OPTIONS, handlePreflight);
   server.on("/servo", HTTP_POST, handleServo);
   server.on("/servo", HTTP_OPTIONS, handlePreflight);
+  server.on("/conveyor", HTTP_POST, handleConveyor);
+  server.on("/conveyor", HTTP_OPTIONS, handlePreflight);
+  server.on("/conveyor/lease", HTTP_GET, handleConveyorLease);
+  server.on("/conveyor/lease", HTTP_OPTIONS, handlePreflight);
   server.on("/status", HTTP_GET, handleStatus);
   server.on("/status", HTTP_OPTIONS, handlePreflight);
   server.on("/health", HTTP_GET, handleHealth);
   server.on("/health", HTTP_OPTIONS, handlePreflight);
   server.begin();
 
-  esp_task_wdt_init(5, true);  // best-effort: timed out -> restart
-  esp_task_wdt_add(NULL);
-
   Serial.print("Control unit ready. IP: ");
   Serial.println(WiFi.localIP());
 }
 
 void loop() {
-  esp_task_wdt_reset();
-
   if (WiFi.status() != WL_CONNECTED) {
     unsigned long now = millis();
     if ((uint32_t)(now - lastWifiAttemptMs) >= WIFI_RETRY_INTERVAL_MS) {
@@ -358,10 +497,10 @@ void loop() {
   }
 
   server.handleClient();
+  Notification message;
+  if (!notifySender.busy() && xQueueReceive(notificationQueue, &message, 0) == pdTRUE) {
+    notifySender.fire(message.payload);
+  }
   notifySender.update();
-
-  bool present = (digitalRead(PIN_IR_SENSOR) == LOW);
-  Action out[4];
-  uint8_t n = machine.step(millis(), present, out, 4);
-  applyAll(out, n);
+  delay(1);
 }

@@ -1,0 +1,50 @@
+{
+  "database": "postgres:17-alpine",
+  "scope": "Real SQL; Supabase roles/storage bootstrap only. Hosted smoke proves HTTP APIs separately.",
+  "cases": [
+    {
+      "id": "blank-database-and-repeatable-migrations",
+      "passed": true
+    },
+    {
+      "id": "actual-row-builders-insert-and-read-all-four-tables",
+      "passed": true
+    },
+    {
+      "id": "one-item-one-inspection-with-five-separate-control-receipts",
+      "passed": true
+    },
+    {
+      "id": "invalid-pass-and-frame-geometry-refused",
+      "passed": true
+    },
+    {
+      "id": "foreign-key-and-parent-delete-protection",
+      "passed": true
+    },
+    {
+      "id": "public-roles-denied-and-backend-audit-role-append-only",
+      "passed": true
+    },
+    {
+      "id": "development-seed-loads-with-real-constraints",
+      "passed": true
+    },
+    {
+      "id": "unpaired-observations-retain-null-action-without-actuation",
+      "passed": true
+    },
+    {
+      "id": "public-jpeg-bucket-without-anonymous-object-access-policy",
+      "passed": true
+    },
+    {
+      "id": "legacy-upgrade-preserves-rows-columns-ids-and-historical-invalid-data",
+      "passed": true
+    },
+    {
+      "id": "legacy-upgrade-allows-retry-receipts-and-enforces-new-writes",
+      "passed": true
+    }
+  ]
+}

@@ -1,0 +1,771 @@
+{
+  "runId": "fresh-1793176113",
+  "startedAt": "2026-10-28T08:28:33Z",
+  "settings": {
+    "maxSide": 448,
+    "requestDeadlineSeconds": 120,
+    "modelMode": "hybrid",
+    "source": "fresh direct native-model HTTP predictions; no n8n or controller"
+  },
+  "modelHealth": {
+    "status": "ok",
+    "backend": "CUDA0",
+    "busy": false,
+    "warmup_ms": 2186.6485999998986,
+    "warmup": {
+      "width": 448,
+      "height": 448,
+      "sha256": "9bc1ffdadedc9e6639449cb647c24233118e7d52df303b89cf7e19bca799c68d",
+      "prompt": "Locate all the instances that matches the following description: defect."
+    },
+    "startup_ms": 72150.0474000004
+  },
+  "directPredictions": [
+    {
+      "caseId": "bottle__good__000-1",
+      "kind": "jpeg",
+      "elapsedMs": 2431.2786999998934,
+      "httpStatus": 200,
+      "body": {
+        "status": "success",
+        "prompt_used": "Locate all the instances that matches the following description: broken glass on the bottle rim.",
+        "detections": [
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              58.2399979,
+              219.520004,
+              74.3679962,
+              268.35199
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              66.3040009,
+              164.863998,
+              78.8479996,
+              215.488007
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              74.3679962,
+              280.895996,
+              98.1119995,
+              320.768005
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              94.5279999,
+              120.511993,
+              120.511993,
+              136.639999
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              96.3199997,
+              345.856018,
+              149.184006,
+              362.880005
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              142.016006,
+              67.647995,
+              186.368011,
+              94.5279999
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              149.184006,
+              379.007996,
+              242.368011,
+              388.863983
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              192.639999,
+              66.3040009,
+              239.680008,
+              80.1920013
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              244.160004,
+              74.3679962,
+              320.768005,
+              109.760002
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              268.35199,
+              358.847992,
+              339.584015,
+              374.976013
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              339.584015,
+              135.744003,
+              370.496002,
+              169.792007
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              348.544006,
+              287.167999,
+              379.007996,
+              315.391998
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              362.880005,
+              164.863998,
+              379.007996,
+              206.528
+            ]
+          }
+        ],
+        "frame_width": 448,
+        "frame_height": 448,
+        "backend": "CUDA0",
+        "peak_working_set_bytes": 5359550464,
+        "timings_ms": {
+          "inference": 2420.247500000187,
+          "image_handling": 0.20169999879726674,
+          "request": 2424.3188000000373
+        }
+      }
+    },
+    {
+      "caseId": "bottle__broken_large__000-1",
+      "kind": "jpeg",
+      "elapsedMs": 1726.5736999997898,
+      "httpStatus": 200,
+      "body": {
+        "status": "success",
+        "prompt_used": "Locate all the instances that matches the following description: broken glass on the bottle rim.",
+        "detections": [
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              175.615997,
+              315.391998,
+              251.328003,
+              379.007996
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              319.872009,
+              216.384003,
+              385.727997,
+              251.328003
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              320.768005,
+              143.807999,
+              351.680023,
+              238.783997
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              345.856018,
+              149.184006,
+              370.496002,
+              219.520004
+            ]
+          }
+        ],
+        "frame_width": 448,
+        "frame_height": 448,
+        "backend": "CUDA0",
+        "peak_working_set_bytes": 5371039744,
+        "timings_ms": {
+          "inference": 1704.4528999995237,
+          "image_handling": 0.12790000073437113,
+          "request": 1707.0400000011432
+        }
+      }
+    },
+    {
+      "caseId": "bottle__broken_small__000-1",
+      "kind": "jpeg",
+      "elapsedMs": 3950.9680999999546,
+      "httpStatus": 200,
+      "body": {
+        "status": "success",
+        "prompt_used": "Locate all the instances that matches the following description: broken glass on the bottle rim.",
+        "detections": [
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              70.3359985,
+              287.167999,
+              104.832001,
+              315.391998
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              71.2319946,
+              120.511993,
+              109.760002,
+              206.528
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              106.176003,
+              280.895996,
+              120.511993,
+              301.952026
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              120.511993,
+              267.455994,
+              142.016006,
+              291.64801
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              120.511993,
+              70.3359985,
+              301.952026,
+              120.511993
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              301.952026,
+              366.015991,
+              327.040009,
+              385.727997
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              307.328003,
+              85.5680008,
+              358.847992,
+              120.511993
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              327.040009,
+              339.584015,
+              351.680023,
+              362.880005
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              351.680023,
+              312.70401,
+              388.863983,
+              345.856018
+            ]
+          },
+          {
+            "label": "broken glass on the bottle rim",
+            "box": [
+              366.015991,
+              168.447998,
+              387.52002,
+              208.320007
+            ]
+          }
+        ],
+        "frame_width": 448,
+        "frame_height": 448,
+        "backend": "CUDA0",
+        "peak_working_set_bytes": 5372157952,
+        "timings_ms": {
+          "inference": 3942.392799999652,
+          "image_handling": 0.12520000018412247,
+          "request": 3946.5220000001864
+        }
+      }
+    },
+    {
+      "caseId": "metal_nut__good__000-1",
+      "kind": "jpeg",
+      "elapsedMs": 3395.5813000011403,
+      "httpStatus": 200,
+      "body": {
+        "status": "success",
+        "prompt_used": "Locate all the instances that matches the following description: scratch on the metal nut.",
+        "detections": [
+          {
+            "label": "scratch on the metal nut",
+            "box": [
+              37.1839981,
+              287.167999,
+              94.5279999,
+              370.496002
+            ]
+          },
+          {
+            "label": "scratch on the metal nut",
+            "box": [
+              43.9039993,
+              39.8720016,
+              96.3199997,
+              169.792007
+            ]
+          },
+          {
+            "label": "scratch on the metal nut",
+            "box": [
+              94.5279999,
+              351.680023,
+              183.679993,
+              404.544006
+            ]
+          },
+          {
+            "label": "scratch on the metal nut",
+            "box": [
+              265.216003,
+              45.2480011,
+              408.127991,
+              206.528
+            ]
+          },
+          {
+            "label": "scratch on the metal nut",
+            "box": [
+              342.272003,
+              268.35199,
+              401.40802,
+              411.263977
+            ]
+          }
+        ],
+        "frame_width": 448,
+        "frame_height": 448,
+        "backend": "CUDA0",
+        "peak_working_set_bytes": 5382922240,
+        "timings_ms": {
+          "inference": 3363.5729999987234,
+          "image_handling": 0.1931000006152317,
+          "request": 3369.802000001073
+        }
+      }
+    },
+    {
+      "caseId": "metal_nut__good__000-2",
+      "kind": "jpeg",
+      "elapsedMs": 2899.2047000010643,
+      "httpStatus": 200,
+      "body": {
+        "status": "success",
+        "prompt_used": "Locate all the instances that matches the following description: bent edge of the metal nut.",
+        "detections": [
+          {
+            "label": "bent edge of the metal nut",
+            "box": [
+              37.1839981,
+              282.23999,
+              94.5279999,
+              406.335999
+            ]
+          },
+          {
+            "label": "bent edge of the metal nut",
+            "box": [
+              42.5599976,
+              39.8720016,
+              98.1119995,
+              187.712006
+            ]
+          },
+          {
+            "label": "bent edge of the metal nut",
+            "box": [
+              265.216003,
+              45.2480011,
+              408.127991,
+              215.488007
+            ]
+          },
+          {
+            "label": "bent edge of the metal nut",
+            "box": [
+              347.64801,
+              268.35199,
+              402.751984,
+              411.263977
+            ]
+          }
+        ],
+        "frame_width": 448,
+        "frame_height": 448,
+        "backend": "CUDA0",
+        "peak_working_set_bytes": 5382922240,
+        "timings_ms": {
+          "inference": 2845.406099999309,
+          "image_handling": 0.30139999944367446,
+          "request": 2857.7934999993886
+        }
+      }
+    },
+    {
+      "caseId": "metal_nut__scratch__000-1",
+      "kind": "jpeg",
+      "elapsedMs": 2330.8997999993153,
+      "httpStatus": 200,
+      "body": {
+        "status": "success",
+        "prompt_used": "Locate all the instances that matches the following description: scratch on the metal nut.",
+        "detections": [
+          {
+            "label": "scratch on the metal nut",
+            "box": [
+              48.8320007,
+              258.944,
+              411.263977,
+              413.056
+            ]
+          }
+        ],
+        "frame_width": 448,
+        "frame_height": 448,
+        "backend": "CUDA0",
+        "peak_working_set_bytes": 5382922240,
+        "timings_ms": {
+          "inference": 2318.054800000027,
+          "image_handling": 0.3192999993189005,
+          "request": 2324.419799999305
+        }
+      }
+    },
+    {
+      "caseId": "metal_nut__bent__000-1",
+      "kind": "jpeg",
+      "elapsedMs": 2963.125199999922,
+      "httpStatus": 200,
+      "body": {
+        "status": "success",
+        "prompt_used": "Locate all the instances that matches the following description: bent edge of the metal nut.",
+        "detections": [
+          {
+            "label": "bent edge of the metal nut",
+            "box": [
+              30.9119987,
+              64.064003,
+              228.927994,
+              219.520004
+            ]
+          },
+          {
+            "label": "bent edge of the metal nut",
+            "box": [
+              59.5839996,
+              361.088013,
+              219.520004,
+              419.328003
+            ]
+          },
+          {
+            "label": "bent edge of the metal nut",
+            "box": [
+              228.927994,
+              30.9119987,
+              385.727997,
+              223.104004
+            ]
+          },
+          {
+            "label": "bent edge of the metal nut",
+            "box": [
+              361.088013,
+              114.239998,
+              426.496002,
+              263.872009
+            ]
+          }
+        ],
+        "frame_width": 448,
+        "frame_height": 448,
+        "backend": "CUDA0",
+        "peak_working_set_bytes": 5383917568,
+        "timings_ms": {
+          "inference": 2915.8332999995764,
+          "image_handling": 0.22399999943445437,
+          "request": 2956.3488000003417
+        }
+      }
+    },
+    {
+      "caseId": "hazelnut__good__000-1",
+      "kind": "jpeg",
+      "elapsedMs": 2553.0497999989166,
+      "httpStatus": 200,
+      "body": {
+        "status": "success",
+        "prompt_used": "Locate all the instances that matches the following description: crack in the hazelnut shell.",
+        "detections": [
+          {
+            "label": "crack in the hazelnut shell",
+            "box": [
+              61.8239975,
+              67.647995,
+              216.384003,
+              268.35199
+            ]
+          }
+        ],
+        "frame_width": 448,
+        "frame_height": 448,
+        "backend": "CUDA0",
+        "peak_working_set_bytes": 5383917568,
+        "timings_ms": {
+          "inference": 2493.3197000009386,
+          "image_handling": 0.2870999996957835,
+          "request": 2546.474099999614
+        }
+      }
+    },
+    {
+      "caseId": "hazelnut__good__000-2",
+      "kind": "jpeg",
+      "elapsedMs": 1701.1204000009457,
+      "httpStatus": 200,
+      "body": {
+        "status": "success",
+        "prompt_used": "Locate all the instances that matches the following description: hole in the hazelnut shell.",
+        "detections": [
+          {
+            "label": "hole in the hazelnut shell",
+            "box": [
+              61.8239975,
+              66.3040009,
+              216.384003,
+              270.143982
+            ]
+          }
+        ],
+        "frame_width": 448,
+        "frame_height": 448,
+        "backend": "CUDA0",
+        "peak_working_set_bytes": 5383917568,
+        "timings_ms": {
+          "inference": 1680.7713999987755,
+          "image_handling": 0.18989999989571515,
+          "request": 1696.6726999999082
+        }
+      }
+    },
+    {
+      "caseId": "hazelnut__crack__000-1",
+      "kind": "jpeg",
+      "elapsedMs": 1515.549199999441,
+      "httpStatus": 200,
+      "body": {
+        "status": "success",
+        "prompt_used": "Locate all the instances that matches the following description: crack in the hazelnut shell.",
+        "detections": [
+          {
+            "label": "crack in the hazelnut shell",
+            "box": [
+              111.103996,
+              138.880005,
+              199.360001,
+              185.472
+            ]
+          }
+        ],
+        "frame_width": 448,
+        "frame_height": 448,
+        "backend": "CUDA0",
+        "peak_working_set_bytes": 5383917568,
+        "timings_ms": {
+          "inference": 1483.175700001084,
+          "image_handling": 0.14240000018617138,
+          "request": 1496.584200000143
+        }
+      }
+    },
+    {
+      "caseId": "hazelnut__hole__000-1",
+      "kind": "jpeg",
+      "elapsedMs": 2130.4669999990438,
+      "httpStatus": 200,
+      "body": {
+        "status": "success",
+        "prompt_used": "Locate all the instances that matches the following description: hole in the hazelnut shell.",
+        "detections": [
+          {
+            "label": "hole in the hazelnut shell",
+            "box": [
+              232.511993,
+              172.928009,
+              263.872009,
+              199.360001
+            ]
+          }
+        ],
+        "frame_width": 448,
+        "frame_height": 448,
+        "backend": "CUDA0",
+        "peak_working_set_bytes": 5383917568,
+        "timings_ms": {
+          "inference": 2120.4006999996636,
+          "image_handling": 0.2265999992232537,
+          "request": 2125.254099999438
+        }
+      }
+    },
+    {
+      "caseId": "capsule__good__000-1",
+      "kind": "jpeg",
+      "elapsedMs": 1923.5788999994838,
+      "httpStatus": 200,
+      "body": {
+        "status": "success",
+        "prompt_used": "Locate all the instances that matches the following description: crack in the capsule.",
+        "detections": [
+          {
+            "label": "crack in the capsule",
+            "box": [
+              229.376007,
+              160.384003,
+              420.223999,
+              282.23999
+            ]
+          }
+        ],
+        "frame_width": 448,
+        "frame_height": 448,
+        "backend": "CUDA0",
+        "peak_working_set_bytes": 5383917568,
+        "timings_ms": {
+          "inference": 1915.2785999995103,
+          "image_handling": 0.24090000079013407,
+          "request": 1918.8805000012508
+        }
+      }
+    },
+    {
+      "caseId": "capsule__good__000-2",
+      "kind": "jpeg",
+      "elapsedMs": 1919.3502000016451,
+      "httpStatus": 200,
+      "body": {
+        "status": "success",
+        "prompt_used": "Locate all the instances that matches the following description: dented area on the capsule.",
+        "detections": [
+          {
+            "label": "dented area on the capsule",
+            "box": [
+              228.927994,
+              164.863998,
+              420.223999,
+              282.23999
+            ]
+          }
+        ],
+        "frame_width": 448,
+        "frame_height": 448,
+        "backend": "CUDA0",
+        "peak_working_set_bytes": 5383917568,
+        "timings_ms": {
+          "inference": 1908.4277000001748,
+          "image_handling": 0.25999999888881575,
+          "request": 1913.5093000004417
+        }
+      }
+    },
+    {
+      "caseId": "capsule__crack__000-1",
+      "kind": "jpeg",
+      "elapsedMs": 1822.2105000004376,
+      "httpStatus": 200,
+      "body": {
+        "status": "success",
+        "prompt_used": "Locate all the instances that matches the following description: crack in the capsule.",
+        "detections": [],
+        "frame_width": 448,
+        "frame_height": 448,
+        "backend": "CUDA0",
+        "peak_working_set_bytes": 5383917568,
+        "timings_ms": {
+          "inference": 1812.8587000010157,
+          "image_handling": 0.19040000006498303,
+          "request": 1817.1000000002095
+        }
+      }
+    },
+    {
+      "caseId": "capsule__squeeze__000-1",
+      "kind": "jpeg",
+      "elapsedMs": 1818.3314000016253,
+      "httpStatus": 200,
+      "body": {
+        "status": "success",
+        "prompt_used": "Locate all the instances that matches the following description: dented area on the capsule.",
+        "detections": [
+          {
+            "label": "dented area on the capsule",
+            "box": [
+              226.23999,
+              155.007996,
+              417.53598,
+              294.335999
+            ]
+          }
+        ],
+        "frame_width": 448,
+        "frame_height": 448,
+        "backend": "CUDA0",
+        "peak_working_set_bytes": 5384679424,
+        "timings_ms": {
+          "inference": 1808.8346999993519,
+          "image_handling": 0.20899999981338624,
+          "request": 1812.7767000005406
+        }
+      }
+    }
+  ]
+}

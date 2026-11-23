@@ -1,0 +1,145 @@
+{
+  "state": "published-and-verified",
+  "recordedAt": "2026-10-28T13:14:45.639620+00:00",
+  "scope": "Published writable branch histories; report captures the rewrite before the later audit-documentation commit.",
+  "ownerApprovedPublication": true,
+  "backupStoredOutsideWorkspace": true,
+  "backupSha256": "e55c52817c430f24ca45747a10d761ca53fde2e332fd58a17f4c87a9d43ab07d",
+  "backupVerified": true,
+  "targets": [
+    "360ControlUnit/.pio/",
+    "360ControlUnit/.vscode/",
+    "360ControlUnit/test/host/build/",
+    "360ControlUnit/src/secrets.h"
+  ],
+  "writableRefsVerified": 18,
+  "mainAtRewriteVerification": "b2855e2ba769ae6375daa1befcc2f7b8b3c795a1",
+  "remainingTargetPathsInFreshNormalClone": 0,
+  "freshCloneFsckPassed": true,
+  "retainedNonTargetBranchTipTreesIdenticalAtRewrite": true,
+  "beforePackedBytes": 143879318,
+  "afterPackedBytes": 132763056,
+  "readOnlyPullRefsNotRewritten": 17,
+  "openPR32Preserved": {
+    "headRefName": "fix/issue-24",
+    "headRefOid": "efc9faea492b72316c4f55245e3baba789fa20a2",
+    "mergeStateStatus": "DIRTY",
+    "mergeable": "CONFLICTING",
+    "state": "OPEN"
+  },
+  "refMappingAtRewrite": [
+    {
+      "ref": "refs/heads/add/issue-10",
+      "before": "8fe56ac2e4441d62e8d7a9e773d29fba7557c770",
+      "after": "e243f4fc2695d8145048aad9130397e21384f39b",
+      "retainedTreeIdentical": true
+    },
+    {
+      "ref": "refs/heads/add/issue-26",
+      "before": "ef4d57a3383daf1ef26a9e9c6f0426b55940665c",
+      "after": "fb2c6913f6b5fb3c8a42df1719c98371236db876",
+      "retainedTreeIdentical": true
+    },
+    {
+      "ref": "refs/heads/add/issue-7",
+      "before": "bc6914d927f4e6a80572fc0938c4185823456ba7",
+      "after": "dd7d3f5d31b79a6501ac2a59e5267c555b1040a9",
+      "retainedTreeIdentical": true
+    },
+    {
+      "ref": "refs/heads/codex/close-software-issues",
+      "before": "9d09ecd1e88676161e418166ba07724dd7120fab",
+      "after": "7ece4166f73011b6f45d78775ce2a1b5cfd5ea5a",
+      "retainedTreeIdentical": true
+    },
+    {
+      "ref": "refs/heads/codex/pico-controller-shortcuts",
+      "before": "b3a832265a4283b584424c5b965debed601968a6",
+      "after": "7d9285433eac7e8e331120058ecbd407d1a346ea",
+      "retainedTreeIdentical": true
+    },
+    {
+      "ref": "refs/heads/feat/accuracy-eval",
+      "before": "b83fc876d702e0512171189bcbb0671f2bca0c41",
+      "after": "eb0ca9eab6df2d9db633f66e271db2de8c4bc9a7",
+      "retainedTreeIdentical": true
+    },
+    {
+      "ref": "refs/heads/feat/line-latency",
+      "before": "308e8a6be32ed9d73c26cc6556c96d18248c5908",
+      "after": "b9cde088f0713c130900b9cfd242dd3f1e692c72",
+      "retainedTreeIdentical": true
+    },
+    {
+      "ref": "refs/heads/feat/model-warmup",
+      "before": "8a97d96c7f371496d26fe9f7f9fa27784e3132e7",
+      "after": "ba03c72d82362eae10ba467c04748e28abe43afd",
+      "retainedTreeIdentical": true
+    },
+    {
+      "ref": "refs/heads/fix/issue-24",
+      "before": "8db71379ed5a91a9f530bebeaeae6f538ded4f35",
+      "after": "efc9faea492b72316c4f55245e3baba789fa20a2",
+      "retainedTreeIdentical": true
+    },
+    {
+      "ref": "refs/heads/fix/issue-24-fail-closed-verdict",
+      "before": "b8f98990964005705b9f13599f7f51989411d7eb",
+      "after": "7b68e4ef13a19e3f0a3ecdcecbcc06cffe22dcd2",
+      "retainedTreeIdentical": true
+    },
+    {
+      "ref": "refs/heads/main",
+      "before": "b854549b055320dc9312c0c387cb2b827215f4ed",
+      "after": "b2855e2ba769ae6375daa1befcc2f7b8b3c795a1",
+      "retainedTreeIdentical": true
+    },
+    {
+      "ref": "refs/heads/origin/PICOdeploy",
+      "before": "0036b95b20e42096b5831918ef4a9353661a6e57",
+      "after": "24d914f881c5751bb4e5493d4ffd23500a2fe835",
+      "retainedTreeIdentical": true
+    },
+    {
+      "ref": "refs/heads/origin/controlunitdev",
+      "before": "756681cf714bb62028a2061668a1b03b5b45a755",
+      "after": "193ddc5ccd105796bfc54e785cc4e15c116a2b42",
+      "retainedTreeIdentical": true
+    },
+    {
+      "ref": "refs/heads/origin/theepopDev",
+      "before": "fd74fbf1d70233734997b93f703cc1640edcf471",
+      "after": "a148f2f7923657df8c27c7e6417867d0ae120212",
+      "retainedTreeIdentical": true
+    },
+    {
+      "ref": "refs/heads/pico-webapp",
+      "before": "38add7c2911e37621ec8e9707e9165d3adba752f",
+      "after": "f26072ac7e91d92ff337ccb40f41953baf62e459",
+      "retainedTreeIdentical": true
+    },
+    {
+      "ref": "refs/heads/raspberry-pi-streaming",
+      "before": "05319340e40b0a05d54e4f069d67e9fdfe03bf9c",
+      "after": "b7b917658d44c057060f564032781bdcc0f197a0",
+      "retainedTreeIdentical": true
+    },
+    {
+      "ref": "refs/heads/supabase",
+      "before": "c0acd788722665a070eef20bc930687a22b62279",
+      "after": "eb6e4783c3d9382822c6b90760bd0f7f6ad89db6",
+      "retainedTreeIdentical": true
+    },
+    {
+      "ref": "refs/heads/supabase-pani",
+      "before": "a89028a51de478f5bd3b3555b911e877000a25a8",
+      "after": "7ed4a41ac6dad37a9dafd1e9e28fe0b332c5e1b4",
+      "retainedTreeIdentical": true
+    }
+  ],
+  "limitations": [
+    "GitHub read-only PR refs, cached views, forks and other local clones were not purged by this push.",
+    "Affected credentials must be rotated if they were actually used; history cleanup does not make a disclosed password private.",
+    "Packed sizes describe the verified private mirrors, not a claim about immediate GitHub server garbage collection."
+  ]
+}

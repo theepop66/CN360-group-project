@@ -1,0 +1,355 @@
+{
+  "scope": "Actual CUDA resident worker through local HTTP; original-geometry JPEG test pictures, 1100 ms production request deadline. No hardware/accuracy acceptance.",
+  "warmupImage": "bottle__good__000-1",
+  "requestTimeoutMs": 1100,
+  "workers": [
+    {
+      "restart": 1,
+      "health": {
+        "status": "ok",
+        "backend": "CUDA0",
+        "busy": false,
+        "warmup_ms": 16802.671700000246,
+        "warmup": {
+          "width": 900,
+          "height": 900,
+          "sha256": "c1ea10ec9215056d5d88b7f2a85f24520a99cedbd8eb7a75029266441373f150",
+          "prompt": "Locate all the instances that matches the following description: defect."
+        },
+        "startup_ms": 47671.34799999985
+      },
+      "startupAndWarmupMs": 64671.84190000035
+    },
+    {
+      "restart": 2,
+      "health": {
+        "status": "ok",
+        "backend": "CUDA0",
+        "busy": false,
+        "warmup_ms": 16981.841799999984,
+        "warmup": {
+          "width": 900,
+          "height": 900,
+          "sha256": "c1ea10ec9215056d5d88b7f2a85f24520a99cedbd8eb7a75029266441373f150",
+          "prompt": "Locate all the instances that matches the following description: defect."
+        },
+        "startup_ms": 10086.985299999924
+      },
+      "startupAndWarmupMs": 27350.961499999812
+    },
+    {
+      "restart": 3,
+      "health": {
+        "status": "ok",
+        "backend": "CUDA0",
+        "busy": false,
+        "warmup_ms": 16587.69910000001,
+        "warmup": {
+          "width": 900,
+          "height": 900,
+          "sha256": "c1ea10ec9215056d5d88b7f2a85f24520a99cedbd8eb7a75029266441373f150",
+          "prompt": "Locate all the instances that matches the following description: defect."
+        },
+        "startup_ms": 9768.258799999785
+      },
+      "startupAndWarmupMs": 26753.5412000002,
+      "integrationExitCode": 0
+    }
+  ],
+  "attempts": [
+    {
+      "restart": 1,
+      "caseId": "bottle__good__000-1",
+      "width": 900,
+      "height": 900,
+      "sha256": "c1ea10ec9215056d5d88b7f2a85f24520a99cedbd8eb7a75029266441373f150",
+      "readyBefore": {
+        "status": "ok",
+        "backend": "CUDA0",
+        "busy": false,
+        "warmup_ms": 16802.671700000246,
+        "warmup": {
+          "width": 900,
+          "height": 900,
+          "sha256": "c1ea10ec9215056d5d88b7f2a85f24520a99cedbd8eb7a75029266441373f150",
+          "prompt": "Locate all the instances that matches the following description: defect."
+        },
+        "startup_ms": 47671.34799999985
+      },
+      "httpStatus": 504,
+      "body": {
+        "status": "error",
+        "reason": "model_timeout"
+      },
+      "elapsedMs": 1201.1428000000706,
+      "healthAfter": {
+        "status": "error",
+        "reason": "model_timeout"
+      }
+    },
+    {
+      "restart": 1,
+      "caseId": "bottle__broken_large__000-1",
+      "width": 900,
+      "height": 900,
+      "sha256": "6d91d4f9f4f98f42343ed4da055fdf2df3198ba5830d673bb0a2657507048a9c",
+      "readyBefore": {
+        "status": "ok",
+        "backend": "CUDA0",
+        "busy": false,
+        "warmup_ms": 17254.07630000018,
+        "warmup": {
+          "width": 900,
+          "height": 900,
+          "sha256": "c1ea10ec9215056d5d88b7f2a85f24520a99cedbd8eb7a75029266441373f150",
+          "prompt": "Locate all the instances that matches the following description: defect."
+        },
+        "startup_ms": 14505.371100000048
+      },
+      "httpStatus": 504,
+      "body": {
+        "status": "error",
+        "reason": "model_timeout"
+      },
+      "elapsedMs": 1198.1157999998686,
+      "healthAfter": {
+        "status": "error",
+        "reason": "model_timeout"
+      }
+    },
+    {
+      "restart": 1,
+      "caseId": "capsule__good__000-1",
+      "width": 1000,
+      "height": 1000,
+      "sha256": "55c267401f0ea60800425058d56d9e1a08886c8893877877462192b81e1bc76f",
+      "readyBefore": {
+        "status": "ok",
+        "backend": "CUDA0",
+        "busy": false,
+        "warmup_ms": 17106.717899999694,
+        "warmup": {
+          "width": 900,
+          "height": 900,
+          "sha256": "c1ea10ec9215056d5d88b7f2a85f24520a99cedbd8eb7a75029266441373f150",
+          "prompt": "Locate all the instances that matches the following description: defect."
+        },
+        "startup_ms": 21442.03639999978
+      },
+      "httpStatus": 504,
+      "body": {
+        "status": "error",
+        "reason": "model_timeout"
+      },
+      "elapsedMs": 1296.8077999998968,
+      "healthAfter": {
+        "status": "error",
+        "reason": "model_timeout"
+      }
+    },
+    {
+      "restart": 2,
+      "caseId": "bottle__good__000-1",
+      "width": 900,
+      "height": 900,
+      "sha256": "c1ea10ec9215056d5d88b7f2a85f24520a99cedbd8eb7a75029266441373f150",
+      "readyBefore": {
+        "status": "ok",
+        "backend": "CUDA0",
+        "busy": false,
+        "warmup_ms": 16981.841799999984,
+        "warmup": {
+          "width": 900,
+          "height": 900,
+          "sha256": "c1ea10ec9215056d5d88b7f2a85f24520a99cedbd8eb7a75029266441373f150",
+          "prompt": "Locate all the instances that matches the following description: defect."
+        },
+        "startup_ms": 10086.985299999924
+      },
+      "httpStatus": 504,
+      "body": {
+        "status": "error",
+        "reason": "model_timeout"
+      },
+      "elapsedMs": 1187.3537999999826,
+      "healthAfter": {
+        "status": "error",
+        "reason": "model_timeout"
+      }
+    },
+    {
+      "restart": 2,
+      "caseId": "bottle__broken_large__000-1",
+      "width": 900,
+      "height": 900,
+      "sha256": "6d91d4f9f4f98f42343ed4da055fdf2df3198ba5830d673bb0a2657507048a9c",
+      "readyBefore": {
+        "status": "ok",
+        "backend": "CUDA0",
+        "busy": false,
+        "warmup_ms": 15356.90599999998,
+        "warmup": {
+          "width": 900,
+          "height": 900,
+          "sha256": "c1ea10ec9215056d5d88b7f2a85f24520a99cedbd8eb7a75029266441373f150",
+          "prompt": "Locate all the instances that matches the following description: defect."
+        },
+        "startup_ms": 9940.346399999726
+      },
+      "httpStatus": 504,
+      "body": {
+        "status": "error",
+        "reason": "model_timeout"
+      },
+      "elapsedMs": 1203.6510000002636,
+      "healthAfter": {
+        "status": "error",
+        "reason": "model_timeout"
+      }
+    },
+    {
+      "restart": 2,
+      "caseId": "capsule__good__000-1",
+      "width": 1000,
+      "height": 1000,
+      "sha256": "55c267401f0ea60800425058d56d9e1a08886c8893877877462192b81e1bc76f",
+      "readyBefore": {
+        "status": "ok",
+        "backend": "CUDA0",
+        "busy": false,
+        "warmup_ms": 16375.665399999889,
+        "warmup": {
+          "width": 900,
+          "height": 900,
+          "sha256": "c1ea10ec9215056d5d88b7f2a85f24520a99cedbd8eb7a75029266441373f150",
+          "prompt": "Locate all the instances that matches the following description: defect."
+        },
+        "startup_ms": 9577.562599999965
+      },
+      "httpStatus": 504,
+      "body": {
+        "status": "error",
+        "reason": "model_timeout"
+      },
+      "elapsedMs": 1257.7259999998205,
+      "healthAfter": {
+        "status": "error",
+        "reason": "model_timeout"
+      }
+    },
+    {
+      "restart": 3,
+      "caseId": "bottle__good__000-1",
+      "width": 900,
+      "height": 900,
+      "sha256": "c1ea10ec9215056d5d88b7f2a85f24520a99cedbd8eb7a75029266441373f150",
+      "readyBefore": {
+        "status": "ok",
+        "backend": "CUDA0",
+        "busy": false,
+        "warmup_ms": 16587.69910000001,
+        "warmup": {
+          "width": 900,
+          "height": 900,
+          "sha256": "c1ea10ec9215056d5d88b7f2a85f24520a99cedbd8eb7a75029266441373f150",
+          "prompt": "Locate all the instances that matches the following description: defect."
+        },
+        "startup_ms": 9768.258799999785
+      },
+      "httpStatus": 504,
+      "body": {
+        "status": "error",
+        "reason": "model_timeout"
+      },
+      "elapsedMs": 1199.087899999995,
+      "healthAfter": {
+        "status": "error",
+        "reason": "model_timeout"
+      }
+    },
+    {
+      "restart": 3,
+      "caseId": "bottle__broken_large__000-1",
+      "width": 900,
+      "height": 900,
+      "sha256": "6d91d4f9f4f98f42343ed4da055fdf2df3198ba5830d673bb0a2657507048a9c",
+      "readyBefore": {
+        "status": "ok",
+        "backend": "CUDA0",
+        "busy": false,
+        "warmup_ms": 16728.948899999978,
+        "warmup": {
+          "width": 900,
+          "height": 900,
+          "sha256": "c1ea10ec9215056d5d88b7f2a85f24520a99cedbd8eb7a75029266441373f150",
+          "prompt": "Locate all the instances that matches the following description: defect."
+        },
+        "startup_ms": 10059.184900000218
+      },
+      "httpStatus": 504,
+      "body": {
+        "status": "error",
+        "reason": "model_timeout"
+      },
+      "elapsedMs": 1192.3094000003402,
+      "healthAfter": {
+        "status": "error",
+        "reason": "model_timeout"
+      }
+    },
+    {
+      "restart": 3,
+      "caseId": "capsule__good__000-1",
+      "width": 1000,
+      "height": 1000,
+      "sha256": "55c267401f0ea60800425058d56d9e1a08886c8893877877462192b81e1bc76f",
+      "readyBefore": {
+        "status": "ok",
+        "backend": "CUDA0",
+        "busy": false,
+        "warmup_ms": 15160.615600000256,
+        "warmup": {
+          "width": 900,
+          "height": 900,
+          "sha256": "c1ea10ec9215056d5d88b7f2a85f24520a99cedbd8eb7a75029266441373f150",
+          "prompt": "Locate all the instances that matches the following description: defect."
+        },
+        "startup_ms": 9584.995700000036
+      },
+      "httpStatus": 504,
+      "body": {
+        "status": "error",
+        "reason": "model_timeout"
+      },
+      "elapsedMs": 1265.2227000003222,
+      "healthAfter": {
+        "status": "error",
+        "reason": "model_timeout"
+      }
+    }
+  ],
+  "perCase": {
+    "bottle__good__000-1": {
+      "count": 3,
+      "errors": 3,
+      "p50Ms": 1199.087899999995,
+      "p95Ms": 1201.1428000000706,
+      "maxMs": 1201.1428000000706
+    },
+    "bottle__broken_large__000-1": {
+      "count": 3,
+      "errors": 3,
+      "p50Ms": 1198.1157999998686,
+      "p95Ms": 1203.6510000002636,
+      "maxMs": 1203.6510000002636
+    },
+    "capsule__good__000-1": {
+      "count": 3,
+      "errors": 3,
+      "p50Ms": 1265.2227000003222,
+      "p95Ms": 1296.8077999998968,
+      "maxMs": 1296.8077999998968
+    }
+  },
+  "productionTiming": "failed or incomplete"
+}

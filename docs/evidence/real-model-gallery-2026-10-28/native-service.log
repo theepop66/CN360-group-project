@@ -1,0 +1,127 @@
+INFO:     Started server process [30896]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8002 (Press CTRL+C to quit)
+INFO:     127.0.0.1:49678 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:49686 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:49687 - "GET /health HTTP/1.1" 503 Service Unavailable
+ggml_cuda_init: found 1 CUDA devices (Total VRAM: 6143 MiB):
+  Device 0: NVIDIA GeForce RTX 3060 Laptop GPU, compute capability 8.6, VMM: yes, VRAM: 6143 MiB
+[la] la::Backend using device: CUDA0
+INFO:     127.0.0.1:49689 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:49691 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59493 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59496 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59498 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59500 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59502 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59503 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59504 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59506 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59507 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59508 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59509 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59510 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59511 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59512 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59513 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59515 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59516 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59517 - "GET /health HTTP/1.1" 503 Service Unavailable
+Exception in callback _ProactorBasePipeTransport._call_connection_lost()
+handle: <Handle _ProactorBasePipeTransport._call_connection_lost()>
+Traceback (most recent call last):
+  File "C:\Users\ASUS\AppData\Local\Programs\Python\Python313\Lib\asyncio\events.py", line 89, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ASUS\AppData\Local\Programs\Python\Python313\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+    self._sock.shutdown(socket.SHUT_RDWR)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+INFO:     127.0.0.1:59518 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59519 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59520 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59521 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59522 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59523 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59526 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59527 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59528 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59529 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59530 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59531 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59532 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59533 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59534 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59536 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59538 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59540 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:59541 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:62887 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:62889 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:62890 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:62891 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:62892 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:62893 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:62894 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:62895 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:62896 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:62897 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:62898 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:62899 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:62900 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:62901 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:62902 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:62903 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:62904 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:62905 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:62906 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:62907 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:62908 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:62909 - "GET /health HTTP/1.1" 503 Service Unavailable
+Exception in callback _ProactorBasePipeTransport._call_connection_lost()
+handle: <Handle _ProactorBasePipeTransport._call_connection_lost()>
+Traceback (most recent call last):
+  File "C:\Users\ASUS\AppData\Local\Programs\Python\Python313\Lib\asyncio\events.py", line 89, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ASUS\AppData\Local\Programs\Python\Python313\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+    self._sock.shutdown(socket.SHUT_RDWR)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+INFO:     127.0.0.1:62910 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:62911 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:62912 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:62913 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:62914 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:62915 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:62916 - "GET /health HTTP/1.1" 503 Service Unavailable
+Exception in callback _ProactorBasePipeTransport._call_connection_lost()
+handle: <Handle _ProactorBasePipeTransport._call_connection_lost()>
+Traceback (most recent call last):
+  File "C:\Users\ASUS\AppData\Local\Programs\Python\Python313\Lib\asyncio\events.py", line 89, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ASUS\AppData\Local\Programs\Python\Python313\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+    self._sock.shutdown(socket.SHUT_RDWR)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+[la] offload_weights: 768 weights -> CUDA0 (2 host-read tensors kept on CPU)
+INFO:     127.0.0.1:62917 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:62918 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:62919 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62920 - "POST /predict HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64981 - "POST /predict HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57334 - "POST /predict HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63106 - "POST /predict HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63107 - "POST /predict HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63108 - "POST /predict HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63109 - "POST /predict HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63110 - "POST /predict HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63111 - "POST /predict HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63112 - "POST /predict HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63113 - "POST /predict HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63114 - "POST /predict HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63115 - "POST /predict HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63116 - "POST /predict HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63117 - "POST /predict HTTP/1.1" 200 OK

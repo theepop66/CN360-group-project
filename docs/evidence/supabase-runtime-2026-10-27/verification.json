@@ -1,0 +1,53 @@
+{
+  "baselineCommit": "276f62fdb4b1da9bbe7c8fb2f4925ee6dc6219c4",
+  "node": "24.15.0",
+  "n8n": "2.6.4",
+  "unitTests": {
+    "passed": 208,
+    "failed": 0,
+    "skipped": 0
+  },
+  "liveCases": {
+    "passed": 8,
+    "failed": 0
+  },
+  "controlledRuns": [
+    {
+      "passed": 37,
+      "total": 38,
+      "failedCases": [
+        "model-delay-1250"
+      ]
+    },
+    {
+      "passed": 37,
+      "total": 38,
+      "failedCases": [
+        "concurrent-5"
+      ]
+    }
+  ],
+  "snapshotRegressionPassedInBothRuns": true,
+  "physicalAcceptance": false,
+  "productionModelAcceptance": false,
+  "issue17Closable": false,
+  "artifacts": {
+    "actual-schema.json": "41b3347dbd39e402285ff470a9940fd6eb8998a9a35a12c7628bba8013c84a93",
+    "applied-access-grants.sql": "fdc828d54a51296bb2d892ff10a2298a282759682c1eef63e4866f4a9859fcc1",
+    "applied-schema-alignment.sql": "e5856dbb2049ebd326d20d875f76af687cf6073e40f667c984e5920a0bec5934",
+    "controlled-initial-failure.json": "00a20bccc355f69cd1e9a2b096d8938dad19528f820f772c49d5766bdc6f4716",
+    "controlled-initial.log": "028f591bb5a072f4757f1fadee668d24177c595c3e0a6fa231356f27e5e60a1a",
+    "controlled-repeat-failure.json": "70f859febe55a622ea727ffb217ff53a141135cbd1f86b01e729c68004af7909",
+    "controlled-repeat.log": "62eafe8deafca32b8ce0a37fd49e1819b83b8e4fba96ae1ab80c9cffa794aeff",
+    "installed-verification.json": "56111298aa8a9354cb09724dcad45297cef8049663203f1a4563121cae1fe242",
+    "live-initial-failures.json": "92344b70f9e90594071544b99a5cd883a00fb4f28697de1d3c71f0a0d0ff6a32",
+    "live-n8n.log": "ff91f25fff72d391bf9e7de67fc0ab46a1023fa300d89b7d5187ae634a94e94b",
+    "live-runner-source.txt": "a6175d93a8d689d8722a0cfb48b3e8869f165aa4474cf6801bc18df5424a9af8",
+    "live-supabase-passed.json": "aa9dbd3168eb36af0b2544f15b5313baf0af397219b1a0125ab010a6c7fad347",
+    "README.md": "b672442026a7f07bda7947c4b833d6829ab72af9df35235cd74e16606e2f6503",
+    "review.md": "cc44cd5d7ca189f9e31583635dd76614497672aa47d84a8237643945186631af",
+    "unit-tests.log": "4f92c00db74a9dfa45efd9ca4e8d952e58bfcf14a3efa662ca61e767da399df1",
+    "upload-diagnostic.json": "d75fcda32a07eeb8ef753b4a5d2a27072a88f5735e0e453c767a7896eda4f4b0"
+  },
+  "artifactHashEncoding": "SHA-256 of Git blob bytes; Git normalizes text line endings to LF."
+}

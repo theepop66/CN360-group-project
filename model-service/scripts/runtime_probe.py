@@ -32,6 +32,7 @@ def main() -> None:
     root = Path(__file__).resolve().parents[1]
     env = {**os.environ, "LA_DEVICE": args.device, "CN360_MODEL_LIBRARY": str(args.library.resolve()),
            "CN360_MODEL_PATH": str(args.model.resolve()), "CN360_MODEL_THREADS": "6", "CN360_MODEL_REQUEST_TIMEOUT": "1.1"}
+    env["CN360_MODEL_WARMUP_IMAGE"] = str(args.image.resolve())
     if args.device.lower() == "auto":
         env.pop("LA_DEVICE", None)
     script = """
@@ -61,7 +62,7 @@ const input = JSON.parse(require('node:fs').readFileSync(0, 'utf8'));
         server = subprocess.Popen([sys.executable, "-m", "cn360_model"], cwd=root, env=env, stdout=log, stderr=log, creationflags=0x08000000 if os.name == "nt" else 0)
         try:
             with httpx.Client(timeout=2) as client:
-                for _ in range(120):
+                for _ in range(int(float(env.get("CN360_MODEL_STARTUP_TIMEOUT", "120")) + float(env.get("CN360_MODEL_WARMUP_TIMEOUT", "60")) + 10)):
                     if server.poll() is not None:
                         raise RuntimeError("server stopped during startup")
                     try:

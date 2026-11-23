@@ -1,8 +1,35 @@
 #include "ControlUnitState.h"
+#include <cstdio>
+#include <limits>
 
 namespace controlunit {
 
-void ControlUnit::init(uint32_t now, Config config) {
+static bool validToken(const std::string& value) {
+  if (value.empty() || value.size() > 64) return false;
+  for (const char c : value) {
+    if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+          (c >= '0' && c <= '9') || c == '_' || c == '-')) return false;
+  }
+  return true;
+}
+
+bool validItemIdentity(const ItemIdentity& item) {
+  return validToken(item.controllerSession) && validToken(item.itemId);
+}
+
+const char* receiptReasonName(ReceiptReason reason) {
+  switch (reason) {
+    case ReceiptReason::Accepted: return "accepted";
+    case ReceiptReason::Expired: return "expired";
+    case ReceiptReason::WrongSession: return "wrong_session";
+    case ReceiptReason::WrongItem: return "wrong_item";
+    case ReceiptReason::AlreadyResolved: return "already_resolved";
+    case ReceiptReason::InvalidRequest: return "invalid_request";
+    default: return "no_active_item";
+  }
+}
+
+void ControlUnit::init(uint32_t now, Config config, const char* session) {
   config_ = config;
   now_ = now;
   debounceStart_ = now;
@@ -14,6 +41,17 @@ void ControlUnit::init(uint32_t now, Config config) {
   phase_ = Phase::Idle;
   passCount_ = 0;
   rejectCount_ = 0;
+  item_ = {session ? session : "", ""};
+  if (!validToken(item_.controllerSession)) item_.controllerSession.clear();
+  itemCounter_ = 0;
+  stationCleared_ = false;
+  timedOut_ = false;
+  rejectSequenceAlerted_ = false;
+  conveyorDirection_ = 0;
+  conveyorNeedsNeutral_ = true;
+  conveyorCycleActive_ = false;
+  conveyorTimeoutLock_ = false;
+  conveyorClearingItem_ = false;
 }
 
 uint8_t ControlUnit::emit(Action::Kind kind, int angle, Action* out, uint8_t cap,
@@ -35,11 +73,17 @@ uint8_t ControlUnit::step(uint32_t now, bool sensorPresent, Action* out, uint8_t
   } else if (!sensorPresent) {
     sensorState_ = false;
     awaitClear_ = false;
+    stationCleared_ = true;
   }
 
   uint8_t idx = 0;
-  if (phase_ == Phase::Idle && !awaitClear_ && sensorState_ &&
+  if (admissionReady() && !awaitClear_ && sensorState_ &&
       (now - debounceStart_) >= config_.debounceMs) {
+    ++itemCounter_;
+    char itemId[21];
+    std::snprintf(itemId, sizeof(itemId), "%llu", static_cast<unsigned long long>(itemCounter_));
+    item_.itemId = itemId;
+    timedOut_ = false;
     phase_ = Phase::AwaitVerdict;
     phaseStart_ = now;
     awaitClear_ = true;
@@ -49,7 +93,8 @@ uint8_t ControlUnit::step(uint32_t now, bool sensorPresent, Action* out, uint8_t
   switch (phase_) {
     case Phase::AwaitVerdict:
       if ((now - phaseStart_) >= config_.verdictTimeoutMs) {
-        idx = resolvePass(now, out, cap, idx);
+        timedOut_ = true;
+        idx = resolveReject(now, out, cap, idx);
       }
       break;
     case Phase::RejectRising:
@@ -97,20 +142,41 @@ uint8_t ControlUnit::step(uint32_t now, bool sensorPresent, Action* out, uint8_t
   return idx;
 }
 
-uint8_t ControlUnit::acceptVerdict(uint32_t now, Verdict verdict, Action* out, uint8_t cap) {
-  if (phase_ != Phase::AwaitVerdict) {
-    return 0;
+VerdictReceipt ControlUnit::acceptVerdict(uint32_t now, const ItemIdentity& item,
+                                         Verdict verdict, Action* out, uint8_t cap) {
+  VerdictReceipt receipt;
+  // Local expiry progresses even when the submitted command is invalid/stale.
+  if (phase_ == Phase::AwaitVerdict && (now - phaseStart_) >= config_.verdictTimeoutMs) {
+    timedOut_ = true;
+    receipt.actionCount = resolveReject(now, out, cap, 0);
   }
-  if (verdict == Verdict::Pass) {
-    return resolvePass(now, out, cap, 0);
+  if (!validItemIdentity(item) ||
+      (verdict != Verdict::Pass && verdict != Verdict::Reject)) {
+    receipt.reason = ReceiptReason::InvalidRequest;
+  } else if (item.controllerSession != item_.controllerSession) {
+    receipt.reason = ReceiptReason::WrongSession;
+  } else if (item_.itemId.empty()) {
+    receipt.reason = ReceiptReason::NoActiveItem;
+  } else if (item.itemId != item_.itemId) {
+    receipt.reason = ReceiptReason::WrongItem;
+  } else if (phase_ != Phase::AwaitVerdict) {
+    receipt.reason = timedOut_ ? ReceiptReason::Expired : ReceiptReason::AlreadyResolved;
+  } else {
+    receipt.accepted = true;
+    receipt.reason = ReceiptReason::Accepted;
+    receipt.actionCount = verdict == Verdict::Pass ? resolvePass(now, out, cap, 0)
+                                                  : resolveReject(now, out, cap, 0);
   }
+  return receipt;
+}
 
+uint8_t ControlUnit::resolveReject(uint32_t now, Action* out, uint8_t cap, uint8_t idx) {
   rejectCount_++;
   if (mode_ == Mode::Auto) {
     rejectSequenceAlerted_ = true;
     phase_ = Phase::RejectRising;
     phaseStart_ = now;
-    uint8_t idx = emit(Action::Kind::ServoAngle, config_.rejectAngle, out, cap, 0);
+    idx = emit(Action::Kind::ServoAngle, config_.rejectAngle, out, cap, idx);
     idx = emit(Action::Kind::RedLedOn, 0, out, cap, idx);
     idx = emit(Action::Kind::BuzzerOn, 0, out, cap, idx);
     return idx;
@@ -118,7 +184,7 @@ uint8_t ControlUnit::acceptVerdict(uint32_t now, Verdict verdict, Action* out, u
 
   phase_ = Phase::AlertHold;
   phaseStart_ = now;
-  uint8_t idx = emit(Action::Kind::RedLedOn, 0, out, cap, 0);
+  idx = emit(Action::Kind::RedLedOn, 0, out, cap, idx);
   idx = emit(Action::Kind::BuzzerOn, 0, out, cap, idx);
   return idx;
 }
@@ -126,6 +192,15 @@ uint8_t ControlUnit::acceptVerdict(uint32_t now, Verdict verdict, Action* out, u
 bool ControlUnit::setMode(uint32_t now, Mode mode) {
   if (phase_ != Phase::Idle) {
     return false;
+  }
+  if (mode != mode_) {
+    conveyorDirection_ = 0;
+    conveyorNeedsNeutral_ = true;
+    conveyorCycleActive_ = false;
+    conveyorClearingItem_ = false;
+    if (mode_ == Mode::Manual && mode == Mode::Auto && !itemPresent_) {
+      conveyorTimeoutLock_ = false;
+    }
   }
   now_ = now;
   mode_ = mode;
@@ -174,6 +249,67 @@ bool ControlUnit::itemPresent() const { return itemPresent_; }
 uint32_t ControlUnit::passCount() const { return passCount_; }
 
 uint32_t ControlUnit::rejectCount() const { return rejectCount_; }
+
+const ItemIdentity& ControlUnit::itemIdentity() const { return item_; }
+
+bool ControlUnit::admissionReady() const {
+  return config_.admissionEnabled && stationCleared_ && !item_.controllerSession.empty() &&
+         phase_ == Phase::Idle && !awaitClear_ &&
+         itemCounter_ != std::numeric_limits<uint64_t>::max();
+}
+
+const char* ControlUnit::resolutionReason() const {
+  return timedOut_ ? "verdict_timeout" : "verdict";
+}
+
+int ControlUnit::conveyorDirection(uint32_t now) {
+  if (conveyorDirection_ != 0 && now - conveyorCommandAt_ >= 500) {
+    conveyorDirection_ = 0;
+    conveyorNeedsNeutral_ = true;
+  }
+  if (phase_ != Phase::Idle) {
+    conveyorDirection_ = 0;
+    conveyorNeedsNeutral_ = true;
+    if (mode_ == Mode::Auto) {
+      conveyorCycleActive_ = true;
+      if (timedOut_) conveyorTimeoutLock_ = true;
+    }
+  }
+  if (mode_ == Mode::Auto) {
+    if (phase_ == Phase::Idle && itemPresent_ && !conveyorClearingItem_) {
+      conveyorDirection_ = 0;
+    }
+    if (!itemPresent_) conveyorClearingItem_ = false;
+  }
+  return conveyorDirection_;
+}
+
+void ControlUnit::expireConveyor() {
+  conveyorDirection_ = 0;
+  conveyorNeedsNeutral_ = true;
+}
+
+bool ControlUnit::conveyorCommand(uint32_t now, int direction) {
+  if (direction < -1 || direction > 1) return false;
+  conveyorDirection(now);
+  if (direction == 0) {
+    conveyorDirection_ = 0;
+    if (phase_ == Phase::Idle) conveyorNeedsNeutral_ = false;
+    return true;
+  }
+  if (conveyorNeedsNeutral_ || phase_ != Phase::Idle) return false;
+  if (mode_ == Mode::Auto) {
+    if (!config_.admissionEnabled || conveyorTimeoutLock_) return false;
+    if (itemPresent_) {
+      if (!conveyorCycleActive_ && !conveyorClearingItem_) return false;
+      conveyorClearingItem_ = true;
+    }
+    conveyorCycleActive_ = false;
+  }
+  conveyorDirection_ = direction;
+  conveyorCommandAt_ = now;
+  return true;
+}
 
 uint8_t ControlUnit::resolvePass(uint32_t now, Action* out, uint8_t cap, uint8_t idx) {
   passCount_++;

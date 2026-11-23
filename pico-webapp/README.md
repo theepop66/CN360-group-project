@@ -2,6 +2,13 @@
 
 A build-free 2D quality-control HUD for the Pico 4 browser. It can display this device's local webcam or a remote MJPEG/image feed, draws n8n detection results on a canvas, and sends a new text prompt to n8n.
 
+## Installation and startup
+
+Follow [PICO_SETUP.md](../docs/PICO_SETUP.md) for the complete English walkthrough,
+including commands from a fresh clone, ESP32 setup, HTTPS certificate generation,
+the root/subfolder launcher paths, PICO and phone URLs, camera-only versus
+combined controller servers, controller mappings, shutdown and troubleshooting.
+
 ## View modes
 
 The viewer toolbar has a **2D HUD / AR passthrough / VR cinema** switcher (top-right of the video panel):
@@ -12,16 +19,196 @@ The viewer toolbar has a **2D HUD / AR passthrough / VR cinema** switcher (top-r
 
 Both XR modes require the headset's browser to support the relevant WebXR session mode; unsupported devices get an inline error and stay on 2D HUD instead of failing silently. Verify camera-passthrough- and detection-related logic with the 2D HUD first — it is the only mode this project's `npm test` suite and a desktop browser can exercise directly. Test the XR modes with the [Immersive Web Emulator](https://chromewebstore.google.com/detail/immersive-web-emulator/cgffilbpcibhmcfbgggfhfolhkfbhmik) in desktop Chrome/Edge for quick iteration, then confirm on a physical Pico 4 before a demo — an emulator cannot verify stereo rendering, head tracking, controller input, or real passthrough latency.
 
+### Controller shortcuts (AR / VR only)
+
+PICO 4 uses the registered `xr-standard` layout: Grip = index 1, stick click =
+index 3, A/X = index 4 and B/Y = index 5. Index 2 is an unused touchpad slot;
+it must not be removed when interpreting the button array. See the
+[PICO 4 input profile](https://github.com/immersive-web/webxr-input-profiles/blob/main/packages/registry/profiles/pico/pico-4.json).
+The trigger has no actuator shortcut, and the menu/home buttons belong to the
+headset/browser. In `?xrdebug=1`, the HUD and VR screen show the physical button
+and index on a separate input line; the controller receipt remains visible on
+the status line. A refused Sweep explains whether Manual mode or an idle unit
+is needed. Press **X**, wait for **Mode set to manual**, then press the side
+**Grip** for a Sweep (0 to 90 degrees and back with the current firmware).
+Tests use the registered layout, including its placeholder, instead of assuming
+a compact five-button array. Reload the HUD after updating the scripts.
+
+The flat 2D browser never exposes controller buttons to page script — there the controller is only a pointer. Inside AR passthrough or VR cinema, `js/xr-controller.js` polls the XR gamepads:
+
+| Input | Action |
+| --- | --- |
+| Left thumbstick right / left | Command the paired iPhone camera to zoom in / out within its reported range |
+| Left thumbstick click | Reset the phone camera to its nearest supported 1× |
+| Left thumbstick up | Run the conveyor forward while held |
+| Left thumbstick down | Reverse the conveyor while held in Manual mode |
+| Right thumbstick up / right | Jog the servo +`stepDeg` (repeats while held) |
+| Right thumbstick down / left | Jog the servo −`stepDeg` |
+| Right **A** (primary) | Reject now (`/verdict`) |
+| Right **B** (secondary) | Pass now (`/verdict`) |
+| **Grip** (either hand) | Sweep |
+| Left **X** (primary) | Mode → Manual |
+| Left **Y** (secondary) | Mode → Auto |
+
+The action mapping, step size, repeat cadence, and deadzone live in `controllerShortcuts` in `config.js`. The current PICO button indices are defined in `js/xr-controller.js`; open the HUD with `?xrdebug=1` to print which index each press reports if a firmware/browser update changes it. The firmware still enforces its own rules — angle jogs need Manual mode and an idle unit, reject/pass only apply while an item is in the beam — and the HUD mirrors that feedback to the VR status line or the AR panel.
+
+Zoom controls the **capture camera on the iPhone before upload**. Enter the
+current phone pairing code in **Connection settings → Phone camera control
+code** on the HUD. The code stays in memory for this page only. Use the
+**− / actual zoom / +** toolbar on PC/Pico 2D, or the left thumbstick horizontally in an
+active WebXR AR/VR session over trusted HTTPS; click the level/stick to reset.
+In 2D the controller acts as a pointer. Left-stick vertical movement controls
+the conveyor; the right stick retains its separate servo mapping.
+
+The phone reports its camera track's actual range, step when exposed, and current
+setting. Min/max-only ranges use 0.1× requests with the same readback check.
+The HUD shows a pending state until the phone applies the command, observes
+new camera frames and confirms its setting. Captures are unavailable during
+the change, and frames from an older zoom command are discarded. Future HUD
+and n8n captures receive the changed source image; existing saved inspections
+retain their original pixels. Each new phone session starts with its reported
+camera setting. No extra viewer zoom is applied; detection boxes still use the
+source dimensions and each viewport's normal cover geometry.
+
+Safari/device support is checked on the live camera. If zoom capabilities or
+settings are unavailable, the HUD explicitly disables control. This web API
+does not guarantee optical zoom or lens switching. The API changes the capture
+track as described by [W3C Image Capture](https://www.w3.org/TR/image-capture/);
+actual iPhone support and Pico controls must be checked on those devices.
+An ignored constraint is reported as a failure. A camera operation that times
+out stops the sender, requiring Start again rather than uploading uncertain
+pixels. Physical camera zoom and headset acceptance remain pending.
+Conveyor commands require a centered left stick before starting. In Auto, the belt stops when an item is detected and stays stopped during the Verdict and reject cycle. After the cycle, center the stick and push forward again to clear the item. A Verdict timeout requires switching to Manual, clearing the item and returning to Auto. Loss of controller input or XR frame updates stops command renewals, and the ESP32 expires the motor command locally. Automatic admission remains disabled unless the controller is explicitly configured for bench validation.
+
 ## Run locally
+
+### iPhone camera → PC / Pico HUD
+
+The optional phone receiver serves a dedicated sender page and exposes the
+uploaded JPEGs through the HUD's existing remote camera support. On Windows
+PowerShell 7.2+, run this from the repository root with the PC's **Wi-Fi IPv4**:
+
+```powershell
+./pico-webapp/tools/start-phone-camera.ps1 -IpAddress 192.168.1.20
+```
+
+It starts a camera-only bench on HTTP 8080 / HTTPS 8443. It creates a 30-day
+development CA and IP-specific server certificate under
+`%LOCALAPPDATA%/CN360/phone-camera/<IP>/`; private keys never enter the repository.
+It does not install trust or change firewall rules. The pairing code, URLs and
+public CA SHA256 fingerprint are in `connection.txt` in that private directory.
+The local CA signing key is discarded after issuing the server certificate.
+Keep the generated server private key private and remove the trusted CA from
+devices when testing ends. Restarting at the same IP reuses unexpired files;
+changing IP needs a new setup and trust. Expired files must be preserved/moved
+aside before regenerating and trusting the replacement CA.
+
+1. Connect iPhone, PC and Pico to the same network. Allow Node on the Windows
+   Private network if prompted. Guest/campus Wi-Fi may isolate devices; if so,
+   use a private shared network with device-to-device access.
+2. On iPhone open `http://<PC-IP>:8080/phone-camera-ca.cer`, install the downloaded
+   CA in **Settings → General → VPN & Device Management**, then enable it in
+   **General → About → Certificate Trust Settings**. Compare its fingerprint
+   with the PC file before trusting it. This is development-only local trust.
+3. In Safari open `https://<PC-IP>:8443/phone-camera.html`, enter the PC pairing
+   code, tap Start and allow camera access. The rear camera is preferred. Keep
+   this page visible; hiding it stops capture. Stop the old sender or wait ten
+   seconds before pairing a replacement. The code is never stored in browser
+   storage or in a URL.
+4. On the PC open `http://localhost:8080/?camera=phone`. On Pico open
+   `http://<PC-IP>:8080/?camera=phone` for 2D, or the HTTPS equivalent after
+   trusting the CA in its browser for XR. Physical Pico/XR acceptance is separate.
+5. For remote camera zoom, enter the same pairing code in the HUD's Connection
+   settings. Check the phone's camera zoom status and HUD range. If supported,
+   use the toolbar or left joystick and verify that the phone preview changes
+   along with the PC/Pico image. An unsupported status means this browser/camera
+   cannot provide remote zoom through the current web sender.
+
+The phone shortcut temporarily selects same-origin stream/health URLs and takes
+precedence over saved camera settings. Other saved connections, including n8n
+and relay URLs, are unchanged. A relay connection warning is expected if only
+the camera server is running; live camera display does not require AI or relay.
+
+For n8n pull ingestion, use `piBaseUrl: "http://host.docker.internal:8080"`
+when n8n runs in Docker Desktop on this PC, or `http://<PC-IP>:8080` from another
+host. `/capture` returns the exact accepted JPEG and all five existing frame
+identity headers; `/health` is also available. Use the existing local runtime
+configuration/deployment procedure; starting the camera does **not** modify or
+activate n8n workflows, start the model or establish a physical controller.
+The camera-only launcher sends `/esp/*` to an unused loopback port, so it cannot
+operate the actual servo. For an already configured HUD server, use its normal
+launch command with `--phone-camera` (and optional `--phone-ca <public-ca-file>`).
+
+Transport bounds: one active publisher, at most eight MJPEG viewers, JPEG only,
+512 KiB per upload, at most 1920×1080 pixels; the sender fits within 960×720 and
+uploads one frame at a time with a 125 ms minimum gap. Camera sessions change
+on every start. Uploads require a newly presented video frame; a muted/paused
+camera stops the sender, and two seconds without a new video frame ends it.
+The sender requires `requestVideoFrameCallback` (update Safari if unavailable).
+Duplicate/reordered sequence numbers, replaced sessions,
+future-dated or more-than-two-second-old images are rejected. `/capture` and
+health return 503 when stale; existing streams end rather than replaying a
+stale image. Timestamping uses the PC pairing clock plus the phone's monotonic
+clock, anchored conservatively when the pairing response arrives. It estimates
+capture time; physical sensor-to-camera latency still requires measurement.
+Frames and viewer buffers are memory-only; no snapshots are saved by this
+receiver. Authorized n8n inspection can separately persist its captured image.
+
+Stop the owned camera server with:
+
+```powershell
+./pico-webapp/tools/stop-phone-camera.ps1 -IpAddress 192.168.1.20
+```
+
+This adds an alternative live camera for #23. It does not by itself complete
+Pi deployment, prompt/inference integration, AI accuracy, physical timing or
+system acceptance. Verify a live iPhone image, camera stop/reconnect and the
+matching inspected snapshot on the physical PC/Pico before claiming those.
+
+Start the detection relay first with `npm start --prefix detection-relay` from
+the repository root. `npm run serve` in this folder proxies the default
+same-origin `/detections` WebSocket to the relay on `127.0.0.1:8081`.
+The HTTPS listener also tunnels this channel, so the default becomes `wss://`
+on a secure page. Use `--relay-origin` to point the HUD server at another relay.
+If using a different static server, set an explicit relay URL in Connection
+settings; that server does not automatically provide the tunnel.
 
 The browser must load the files through HTTP (not by opening `index.html` directly):
 
 ```bash
 cd pico-webapp
-python -m http.server 8080
+npm run serve -- --control-unit http://172.20.10.5
 ```
 
 For desktop webcam development, open `http://localhost:8080`. From the PICO browser, open `http://<DEVELOPMENT-PC-IP>:8080` and select the remote source mode. Do not use `localhost` on the headset; it points to the headset itself.
+
+The bundled server serves the HUD and forwards `/esp/*` to the control unit. Its default target is `http://172.20.10.5`, matching the current bench firmware. Use `--control-unit http://<ESP32-IP>` for another network.
+
+### HTTPS for AR / VR controller input
+
+On Windows, with the IP-specific `tools/dev-cert.pem` and matching key already
+prepared, double-click `START-PICO-VR.cmd` in the repository root. Keep its
+window open. It starts only HTTPS 8443, leaving an existing HTTP 8080 server
+alone, verifies an actual HUD response using the certificate, and reads
+`/esp/status` to check the controller's conveyor session/sequence fields.
+It does not change trust/firewall settings or move the belt. If the controller
+uses another IP, run `./START-PICO-VR.cmd http://<ESP32-IP>` from the repository
+root. A reused HTTPS server retains its existing controller target.
+
+Run this launcher from the PC's normal Windows terminal. An isolated agent
+shell can report a listening process while LAN access remains blocked; an
+`EACCES` startup check is a failure, not confirmation that the headset can connect.
+The PICO browser must also trust the server certificate. After entering VR,
+press **X** for Manual, then use the left stick up/down for forward/reverse;
+release it to stop. Physical headset/belt operation must be confirmed on-device.
+
+WebXR on the headset needs HTTPS. Place a certificate trusted by the PICO browser at `tools/dev-cert.pem` and its private key at `tools/dev-key.pem`, with a certificate valid for the hostname or IP address used by the headset. These local files and server logs are gitignored.
+
+```bash
+npm run serve:vr -- --control-unit http://172.20.10.5
+```
+
+Open `https://<DEVELOPMENT-PC-IP>:8443/?xrdebug=1` on the headset, then enter AR passthrough or VR cinema. Servo requests use the same HTTPS origin (`/esp/mode`, `/esp/servo`, `/esp/verdict`); the server forwards them to the ESP32 over HTTP. `npm run serve` keeps the flat HUD available on port 8080, but does not enable headset WebXR by itself.
 
 The default development source is **Local webcam**. Allow camera permission when prompted. `getUserMedia()` always opens the camera attached to the device running the browser; it does not relay a computer webcam to a PICO headset. It also requires a secure browser context, normally HTTPS or localhost.
 
@@ -115,7 +302,7 @@ The configured WebSocket gateway should broadcast messages in this shape:
 - Include a capture `timestamp`, increasing `frame.sequence`, and producer `frame.sessionId`; the HUD ignores older results that arrive after a newer n8n execution and accepts a reset sequence after a new producer session. If `timestamp` is omitted, ordering falls back to `sequence` rather than inventing a receive-time timestamp. The n8n flow should copy these values from the Pi capture response headers.
 - The parser also accepts `boxes`, `imageWidth`, and `imageHeight` as compatibility aliases.
 
-> **WebSocket ownership:** a standard n8n Webhook node is HTTP-only and does not automatically create `ws://n8n...` routes. The n8n side must provide a real WebSocket-capable gateway/community node or change this transport by agreement. The default `n8n-gateway.local` URL is a placeholder, not a built-in n8n endpoint.
+> **WebSocket ownership:** a standard n8n Webhook node is HTTP-only. The [detection relay](../detection-relay/README.md) serves port 8081, and the HUD server tunnels its `/detections` channel on the page's own host and port. The default therefore follows HTTP/HTTPS as `ws://`/`wss://`; set `--relay-origin` on the HUD server when the relay is on another machine. Connection settings can override this for a different deployment.
 
 ### Prompt update to n8n
 
@@ -137,12 +324,18 @@ The **360ControlUnit servo** panel (`js/servo.js`) talks directly to the ESP32 f
 ```http
 POST {modeUrl}          {"mode":"auto"|"manual"}       -> {"accepted":bool,"mode":"auto"|"manual"}
 POST {servoUrl}         {"angle":0-180} or {"sweep":true} -> {"accepted":bool}
-POST {servoUrl}/../verdict  {"action":"reject"|"pass"}  -> {"accepted":bool,"status":"rejected"|"passed"|"ignored"}
+POST {servoUrl}/../verdict  {"action":"reject"|"pass","controller_session":"...","item_id":"..."}  -> {"accepted":bool,"status":"rejected"|"passed"|"ignored"}
 ```
 
 The `/verdict` endpoint is derived from `servoUrl` by replacing its last path segment (e.g. `http://192.168.1.50/servo` → `http://192.168.1.50/verdict`) rather than being a third configured field.
 
-The firmware's own state machine decides whether a request actually does anything — for example, the servo angle/sweep only apply in **Manual** mode while idle, and `/verdict` only applies while the unit is awaiting a verdict (an item is in the beam). A rejected-by-firmware request still returns HTTP 200 with `"accepted": false`; the panel treats that as informational feedback ("ignored — wrong mode or mid-cycle"), not an error. A thrown error (timeout, network failure, non-2xx) means the request never reached the firmware at all.
+The panel reads `/status` on the same controller before a manual Verdict and
+requires `awaiting_verdict` plus its active session/item. The original deadline
+is retained; a later reply for A cannot control B. Manual angle/sweep still
+require Manual mode and an idle controller. An ignored command reports its
+reason. Acceptance requires a boolean `accepted` and a matching echoed item;
+missing or mismatched replies display unknown acceptance. A network timeout
+can occur after the controller acted, so it does not prove non-delivery.
 
 The ESP32 firmware sends permissive CORS headers (`Access-Control-Allow-Origin: *`) so the browser can call it directly without a gateway.
 

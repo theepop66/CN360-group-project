@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import struct
+import time
 
 from fastapi.testclient import TestClient
 from PIL import Image
@@ -32,7 +33,10 @@ def test_real_native_empty_success_and_decode_failure(caplog: pytest.LogCaptureF
         verified.load()
         assert verified.size == (32, 32)
     report: dict = {"scope": "Real native worker through public Model HTTP API; synthetic input images, no physical devices", "empty_requests": []}
-    with TestClient(create_app(request_timeout=120)) as client:
+    with TestClient(create_app(request_timeout=120, warmup_image=image.getvalue())) as client:
+        until = time.monotonic() + 240
+        while client.get("/health").status_code != 200 and time.monotonic() < until:
+            time.sleep(0.05)
         report["health_before"] = client.get("/health").json()
         if positive := os.environ.get("CN360_NATIVE_POSITIVE_IMAGE"):
             response = client.post("/predict", data={"prompt": "Locate all the instances that matches the following description: cat</c>remote."}, files={"file": ("fixture.png", Path(positive).read_bytes(), "image/png")})

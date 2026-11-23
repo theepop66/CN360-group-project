@@ -191,6 +191,99 @@ def test_info_redacts_camera_credentials_and_lists_contract_endpoints() -> None:
     assert "/stream.mjpg" in response.json["endpoints"]
 
 
+class _StubPusher:
+    def __init__(self) -> None:
+        self.push_requests = 0
+
+    def request_push(self) -> None:
+        self.push_requests += 1
+
+    def status(self) -> dict:
+        return {
+            "enabled": True,
+            "running": True,
+            "intervalSeconds": 0,
+            "totalPushed": 3,
+            "totalDropped": 1,
+            "consecutiveFailures": 0,
+            "lastImageId": "session-a-7",
+            "lastPushAt": "2026-09-13T10:00:00.000Z",
+            "lastStatus": 200,
+            "lastLatencyMs": 12.5,
+            "lastError": None,
+        }
+
+
+def make_client_with_pusher(**settings_overrides: object):
+    settings = Settings(
+        camera_source=0,
+        initial_frame_wait_seconds=0.01,
+        capture_wait_seconds=0.01,
+        **settings_overrides,  # type: ignore[arg-type]
+    )
+    snapshot = FrameSnapshot(
+        session_id="session-a",
+        sequence=7,
+        captured_at="2026-08-23T12:00:00.000Z",
+        captured_monotonic=1.0,
+        width=1920,
+        height=1080,
+        raw_frame=FakeFrame(marker="raw"),
+        stream_jpeg=STREAM_JPEG,
+    )
+    camera = StubCamera(snapshot, CAPTURE_JPEG)
+    pusher = _StubPusher()
+    app = create_app(settings, camera, pusher=pusher)  # type: ignore[arg-type]
+    app.config.update(TESTING=True)
+    return app.test_client(), camera, pusher
+
+
+def test_push_endpoint_requests_a_manual_push() -> None:
+    client, _camera, pusher = make_client_with_pusher()
+
+    response = client.post("/push")
+
+    assert response.status_code == 202
+    assert response.json == {"status": "accepted", "trigger": "manual"}
+    assert pusher.push_requests == 1
+    assert response.headers["Access-Control-Allow-Methods"] == "GET, POST, OPTIONS"
+
+
+def test_push_endpoint_returns_409_when_push_is_not_configured() -> None:
+    client, _camera = make_client()
+
+    response = client.post("/push")
+
+    assert response.status_code == 409
+    assert response.json == {
+        "status": "error",
+        "error": "frame push is not configured",
+    }
+
+
+def test_info_reports_push_status_and_redacted_webhook() -> None:
+    client, _camera, _pusher = make_client_with_pusher(
+        n8n_webhook_url="http://user:secret@n8n.local:5678/webhook/image?token=hidden"
+    )
+
+    response = client.get("/info")
+
+    assert response.status_code == 200
+    assert response.json["push"]["webhook"] == "http://n8n.local:5678/webhook/image"
+    assert response.json["push"]["enabled"] is True
+    assert response.json["push"]["totalPushed"] == 3
+    assert response.json["push"]["lastImageId"] == "session-a-7"
+    assert "/push" in response.json["endpoints"]
+
+
+def test_info_reports_push_disabled_when_unconfigured() -> None:
+    client, _camera = make_client()
+
+    response = client.get("/info")
+
+    assert response.json["push"] == {"enabled": False}
+
+
 def test_cors_origin_can_be_restricted_to_the_hud() -> None:
     settings = Settings(cors_allowed_origin="https://hud.example.test")
     snapshot = FrameSnapshot(

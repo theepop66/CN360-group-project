@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-26",
+  "python": "3.13.12",
+  "pillow": "12.3.0",
+  "node": "v24.15.0",
+  "n8nVersion": "2.6.4",
+  "dockerImage": "sha256:768f790a4e418377a7943cc385899009df4fdbeabd46a8adc32b098ba05ad566",
+  "gpu": "NVIDIA GeForce RTX 3060 Laptop GPU, 566.07, 6144 MiB",
+  "model": {
+    "filename": "locate-anything-q8_0.gguf",
+    "bytes": 6259931712,
+    "sha256": "0909d8a1aba584b482d501baae032611d1559878be1b7f6606ba516687c5380d",
+    "decodeMode": "hybrid",
+    "threads": 6,
+    "actualBackend": "CUDA0"
+  },
+  "library": {
+    "filename": "cn360_model.dll",
+    "sha256": "c7170d830fb0c1f8c6c224643b4050678b3740c9b46cec4032d19f1d8cb5663c"
+  },
+  "sourceSha256": {
+    "n8n/lib/static-inspection.mjs": "d5220a7d075dcd279fee76536a64f4f2623cb7e97e1e78a2aa47c6d462f8d56a",
+    "n8n/lib/inspection-test-runtime.mjs": "7d867f2199da2690bf478761ff97a591368b17fede8fcbe302688c51db0f738f",
+    "n8n/scripts/static-inspection.mjs": "229b84a7eebb0d95d5f2738973939a5e3cb8812864f501dc05a52015e5c8d312",
+    "n8n/scripts/model-inspection-run.py": "b83fabfcf20276d33ae3aec18116a1a1e9d8ee4f76f330fd81f2471a2abd580e",
+    "n8n/scripts/prepare-inspection-images.py": "e73e4d3d94446f689271a9b1740be6c7b188640a19bbdd69f434d10eb4cb56b9",
+    "n8n/scripts/summarize-inspection.py": "37ae3aae9227db09dc16d8bde8a87530afe9919f0001f83050746f503d52d5f0",
+    "n8n/lib/workflow-definitions.mjs": "72de953657f1aa440c76f55243b9bf5b93f15dd98fb057e8e58a87cad54ccbaa",
+    "n8n/lib/inspection-logic.mjs": "08d71fbc9788ae6504f48dfdacdf33eca7a644efff1a1c94af0e29ec086dc5e0",
+    "n8n/lib/inspection-records.mjs": "84edb14f8ef0de4db612bb24dda7a284200f83e04158f4571063ffc46a1c4ece",
+    "360ControlUnit/lib/ControlUnitState/ControlUnitState.cpp": "1516626c5e56716d185b88c86708d8e5d8cb51247cae0f2dddd5bea6379dc89c",
+    "360ControlUnit/test/host/late_verdict_probe.cpp": "c1ae5b60d379528598ad64c76913a8322c5a512873ada6557b0e529f6a159226"
+  },
+  "provenance": "Working-tree sources based on fd74fbf1d70233734997b93f703cc1640edcf471; exact source/weight/export hashes supplied. See containing implementation commit. Diagnostic request deadline120s, n8n1200ms, first-worker deadline1100ms, startup limit300s."
+}

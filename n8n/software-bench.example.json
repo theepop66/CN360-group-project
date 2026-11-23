@@ -1,0 +1,7 @@
+{
+  "python": "C:/path/to/python.exe",
+  "keyFile": "C:/private/supabase-backend-key.local.txt",
+  "modelProfile": "controlled",
+  "ambient": false,
+  "healthIntervalSeconds": 15
+}

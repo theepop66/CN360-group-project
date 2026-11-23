@@ -5,6 +5,7 @@ import logging
 import math
 import os
 import sys
+from pathlib import Path
 from typing import Any, Protocol
 
 
@@ -47,6 +48,7 @@ class ResidentWorker:
                 stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE,
                 # Native diagnostics go to the server log, never the JSON pipe.
                 stderr=None, limit=1024 * 1024,
+                cwd=Path(__file__).resolve().parents[1],
                 creationflags=0x08000000 if os.name == "nt" else 0,
             )
             async with asyncio.timeout(startup_timeout):

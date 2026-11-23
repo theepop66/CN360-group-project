@@ -1,7 +1,7 @@
 # แผนทดสอบระบบแบบครบวงจร (Full-System Test Plan)
 
 **โปรเจกต์:** CN360 — Agile AI Quality Control HUD
-**ร่างเมื่อ:** 2026-11-21 (Asia/Bangkok)
+**ร่างเมื่อ:** 2026-11-21 (Asia/Bangkok) ปรับปรุงล่าสุด 2026-11-23: ขอบเขตโหมดบนแว่น (D9), ENV-06, HUD-13, Safety lead ใน VR cinema และตัวเลขเทสต์อัตโนมัติ
 **สถานะ:** ร่าง — **ยังไม่ได้รันการทดสอบใดๆ ตามแผนนี้** (ยกเว้นเทสต์อัตโนมัติ 3 ชุดที่รันเพื่อตรวจคำสั่ง ดูหัวข้อ 2.2)
 **เกณฑ์ตัวเลขที่ระบุ "(ข้อเสนอ)"** ต้องได้รับอนุมัติจากเจ้าของโปรเจกต์ก่อนใช้ตัดสินจริง (หัวข้อ 1.3)
 
@@ -27,7 +27,8 @@ IR sensor ─▶ ESP32 ──POST item-detected───┘  ├──POST /verd
 4. **เวลารอ boot/setup ส่วนใหญ่อยู่ที่ PC** (โมเดลเริ่ม+warm-up ราว 26–65 วินาทีต่อรอบ ตามหลักฐาน) ไม่ใช่ที่ Pi — การเปลี่ยนเป็น UNO Q จึงไม่ลดเวลารอรวม (หัวข้อ 5)
 5. ลำดับการทดสอบ: Phase 0–2 (เตรียม/regression/ทีละระบบย่อย) → Phase 3 (ยืนยันว่าสายพานหยุดชิ้นงานและ reject ทัน) → Phase 4 (ครบวงจร) → Phase 5–6 (จำลองความล้มเหลว/วัดเวลา) → Phase 7 (คุณภาพบนชิ้นงานจริง) → Phase 8–9 (soak/ความปลอดภัย)
 6. ประมาณการแรงงาน (ของผู้เขียนแผน ไม่ใช่ข้อมูลจากหลักฐาน): ราว 8–9 วันทำงานสำหรับ 2–3 คน โดย Phase 7 (เก็บภาพ ติดป้าย ประเมิน) ใช้นานที่สุด
-7. **ฮาร์ดแวร์ที่ไม่ใช้แล้ว (ผู้ใช้แจ้ง 2026-11-21):** buzzer, เซนเซอร์ IR และ relay (ผู้ใช้ระบุว่าไม่ต้องแก้ firmware) ข้อทดสอบที่ต้องมี IR ถูกพักไว้ (BLOCKED) และต้องตัดสิน D8 ก่อนว่าจะนิยามคำว่า "สมบูรณ์" อย่างไร (หัวข้อ 2.4) มีร่างระดับ M (คุมด้วยมือ + AI แสดงผล) ใน Phase M รอเจ้าของโปรเจกต์อนุมัติ ตัวเลขประมาณการแรงงานในข้อ 6 ยังไม่ได้ปรับตามนี้ HUD มีปุ่มถ่ายรูปแล้ว (Y ซ้ายใน AR/VR และปุ่ม Capture & inspect บนจอ 2D) และแสดง `AI unavailable` เมื่อ AI ล้มเหลวตั้งแต่ 2026-11-22 (ข้อ HUD-08…12)
+7. **ฮาร์ดแวร์ที่ไม่ใช้แล้ว (ผู้ใช้แจ้ง 2026-11-21):** buzzer, เซนเซอร์ IR และ relay (ผู้ใช้ระบุว่าไม่ต้องแก้ firmware) ข้อทดสอบที่ต้องมี IR ถูกพักไว้ (BLOCKED) และต้องตัดสิน D8 ก่อนว่าจะนิยามคำว่า "สมบูรณ์" อย่างไร (หัวข้อ 2.4) มีร่างระดับ M (คุมด้วยมือ + AI แสดงผล) ใน Phase M รอเจ้าของโปรเจกต์อนุมัติ ตัวเลขประมาณการแรงงานในข้อ 6 ยังไม่ได้ปรับตามนี้ HUD มีปุ่มถ่ายรูปแล้ว (Y ซ้ายใน VR cinema และปุ่ม Capture & inspect บนจอ 2D) และแสดง `AI unavailable` เมื่อ AI ล้มเหลวตั้งแต่ 2026-11-22 (ข้อ HUD-08…12)
+8. **โหมดของ HUD บนแว่น (2026-11-23):** แผนนี้ทดสอบ **2D HUD** และ **VR cinema** เท่านั้น **AR passthrough ไม่อยู่ในขอบเขต** (D9): โค้ดบังคับ WebXR `dom-overlay` ซึ่งเบราว์เซอร์แว่นส่วนใหญ่ไม่มี (ทำซ้ำใน emulator ได้ ยังไม่ได้ลองบน Pico และไม่มีหลักฐานใน repo ว่าเคยรันบนแว่น) และกลุ่มกำลังหารือจะตัดโหมดนี้ ผลตามมา: VR cinema เป็นทางเดียวที่ใช้คอนโทรลเลอร์ ต้องมีอินเทอร์เน็ตให้แว่นโหลด A-Frame (ENV-06, HUD-13) และคนใส่แว่นมองไม่เห็นของจริง จึงต้องมี Safety lead (หัวข้อ 4.6)
 
 ---
 
@@ -37,7 +38,7 @@ IR sensor ─▶ ESP32 ──POST item-detected───┘  ├──POST /verd
 
 **อยู่ในแผนนี้:** กล้อง/camera node, ESP32 + servo + สายพาน (เซนเซอร์ IR, buzzer, relay ไม่ใช้แล้ว ดู 2.4), model service, n8n, relay, HUD บน Pico 4, Supabase, ThingsBoard, เครือข่าย, ความปลอดภัยพื้นฐานของ bench
 
-**ไม่อยู่ในแผนนี้:** เทรน/เปลี่ยนโมเดล, ย้ายตรรกะ firmware ไปที่ MCU ของ UNO Q, hardening ด้าน security ระดับ production (แต่มีข้อสังเกตใน SAF), การออกแบบกลไกหยุด/คัดแยกใหม่
+**ไม่อยู่ในแผนนี้:** เทรน/เปลี่ยนโมเดล, ย้ายตรรกะ firmware ไปที่ MCU ของ UNO Q, hardening ด้าน security ระดับ production (แต่มีข้อสังเกตใน SAF), การออกแบบกลไก, โหมด AR passthrough ของ HUD (ดู D9; แผนนี้ใช้ VR cinema เป็นโหมดเดียวบนแว่น)หยุด/คัดแยกใหม่
 
 ### 1.2 ป้ายสถานะ
 
@@ -87,7 +88,7 @@ IR sensor ─▶ ESP32 ──POST item-detected───┘  ├──POST /verd
 
 | ชุด | ผล | หมายเหตุ |
 | --- | --- | --- |
-| `npm test --prefix pico-webapp` | 100/100 ผ่าน | |
+| `npm test --prefix pico-webapp` | 100/100 ผ่าน (2026-11-21); **144/144 ผ่าน** (รันซ้ำ 2026-11-23 บนสาขา `feat/hud-capture-button` หลัง merge `main`) | ตัวเลขเพิ่มจากเทสต์ใหม่ของ PR #40 (ปุ่มถ่ายรูป, ผลล้มเหลวบน HUD, พร็อกซี `/n8n/inspect-now`, ปุ่มคอนโทรลเลอร์) และของเพื่อนที่ merge จาก `main` จะเปลี่ยนอีกถ้าตัดโหมด AR (แก้ `tests/xr-modes.test.js`) |
 | `npm test --prefix n8n` | 253/254 ผ่าน | ข้อที่ล้ม: "the committed workflow files match a fresh build" สาเหตุคือไฟล์ `n8n/workflows/*.json` ใน repo เป็น CRLF (`core.autocrlf=true`) แต่ `build` สร้าง LF — **ตรวจแล้วว่าเนื้อหาเหมือนกันทุกไฟล์หลังแปลง CRLF→LF** จึงไม่ใช่ logic regression แนะนำเพิ่ม `.gitattributes` (`n8n/workflows/*.json text eol=lf`) แล้ว build/commit ใหม่ |
 | `npm test --prefix detection-relay` | 23 ผ่าน, 1 ล้ม | ไฟล์ที่ล้ม: `test/hud-proxy.test.mjs` รันแล้วไม่จบ — รอบแรกค้างราว 109 วินาที รอบที่สองค้างจนถูกตัดที่ 280 วินาที (subtest ที่เสร็จแล้วผ่าน 1 ข้อ) ยังไม่ได้สืบสาเหตุ |
 | ยังไม่ได้รัน | thingsboard, pytest (camera/model), firmware host tests, controller probe, static-inspection, supabase, accept.mjs | ต้องใช้ Docker/Python env/คอมไพเลอร์/credential |
@@ -117,7 +118,7 @@ IR sensor ─▶ ESP32 ──POST item-detected───┘  ├──POST /verd
 
 **ยังทำได้ตามเดิม:** Phase 0–1, CAM, CTL-01…03 (ตรวจเฉพาะ pin ที่ยังใช้), CTL-05…10 (โหมด Manual, servo, สายพานด้วย lease, สัญญา `/verdict` ที่ต้องปฏิเสธเมื่อไม่มี item), ส่วนที่เหลือของ CTL-11 และ CTL-12 (ไม่มี buzzer), MOD, N8N, HUD, DAT, FLT-07…10 และ FLT-13…14 เท่าที่ไม่ต้องพึ่งการ admit (ให้บันทึกว่าส่วนไหนไม่ได้ตรวจ), PERF-02…04 (วัดจาก n8n execution), Phase 7 (วางชิ้นงานเองแล้วเก็บภาพผ่าน `/capture`), SOAK-01, SOAK-03, SAF
 
-ผลที่ตามมา: โซ่อัตโนมัติ "ชิ้นงานตัด IR → n8n → โมเดล → servo" ทดสอบไม่ได้ ถ้าจะใช้งานจริงตอนนี้ ทางที่เหลือคือระบบคุมด้วยมือ (HUD สั่งสายพานและ servo โมเดลแสดงกล่องให้คนตัดสิน) ซึ่งตรงกับ D2-ก (ร่างเป็นระดับ M ใน Phase M) — ต้องให้เจ้าของโปรเจกต์ยืนยันที่ D8 ข้อควรระวัง: ปุ่ม A/B (pass/reject) บน HUD ส่ง `/verdict` และ HUD ไม่ส่งถ้าไม่มี item ในสถานะ `awaiting_verdict` (`pico-webapp/js/servo.js`) จึงใช้ไม่ได้เมื่อไม่มี IR — การคัดแยกด้วยมือต้องใช้ก้านควบคุม servo และสายพานแทน (CTL-05/06) ทริกเกอร์ที่ไม่ต้องใช้ IR มีสองแบบ: webhook `inspect-now` และ schedule trigger ผลของทั้งสองแบบเป็น "unpaired" คือ n8n ประเมินภาพโดยไม่สั่งการทางกายภาพ (`n8n/README.md` หัวข้อ Item identity and repeat frames) ตั้งแต่ 2026-11-22 HUD เรียก `inspect-now` ได้เองแล้ว: ปุ่ม **Y ซ้าย** ใน AR/VR (แทนปุ่ม Auto เดิม) และปุ่ม **Capture & inspect** บนจอ 2D ผ่าน `POST /n8n/inspect-now` ของ HUD server (`--n8n-origin`) ส่วน Auto ใช้ได้จากจอ 2D เท่านั้น (ข้อ HUD-08…12)
+ผลที่ตามมา: โซ่อัตโนมัติ "ชิ้นงานตัด IR → n8n → โมเดล → servo" ทดสอบไม่ได้ ถ้าจะใช้งานจริงตอนนี้ ทางที่เหลือคือระบบคุมด้วยมือ (HUD สั่งสายพานและ servo โมเดลแสดงกล่องให้คนตัดสิน) ซึ่งตรงกับ D2-ก (ร่างเป็นระดับ M ใน Phase M) — ต้องให้เจ้าของโปรเจกต์ยืนยันที่ D8 ข้อควรระวัง: ปุ่ม A/B (pass/reject) บน HUD ส่ง `/verdict` และ HUD ไม่ส่งถ้าไม่มี item ในสถานะ `awaiting_verdict` (`pico-webapp/js/servo.js`) จึงใช้ไม่ได้เมื่อไม่มี IR — การคัดแยกด้วยมือต้องใช้ก้านควบคุม servo และสายพานแทน (CTL-05/06) ทริกเกอร์ที่ไม่ต้องใช้ IR มีสองแบบ: webhook `inspect-now` และ schedule trigger ผลของทั้งสองแบบเป็น "unpaired" คือ n8n ประเมินภาพโดยไม่สั่งการทางกายภาพ (`n8n/README.md` หัวข้อ Item identity and repeat frames) ตั้งแต่ 2026-11-22 HUD เรียก `inspect-now` ได้เองแล้ว: ปุ่ม **Y ซ้าย** ใน VR cinema (แทนปุ่ม Auto เดิม) และปุ่ม **Capture & inspect** บนจอ 2D ผ่าน `POST /n8n/inspect-now` ของ HUD server (`--n8n-origin`) ส่วน Auto ใช้ได้จากจอ 2D เท่านั้น (ข้อ HUD-08…12)
 
 ---
 
@@ -146,7 +147,7 @@ IR sensor ─▶ ESP32 ──POST item-detected───┘  ├──POST /verd
 | ESP32 DevKit V1 | pin map ที่ยังใช้: servo=18, LED แดง=22, LED เขียว=23, สายพาน IN1–IN4=32/33/25/26 (ไม่ใช้แล้ว: IR=GPIO4, relay=19, buzzer=21 — ดู 2.4) | Serial 115200 ขึ้น `Control unit ready. IP: …` |
 | สายพาน | 28BYJ-48 + ULN2003, ไฟ 5 V กระแสพอ (BOM ระบุ ≥ 2 A), GND ร่วมกับ ESP32 | ทดสอบ Manual ก่อน (CTL-06) |
 | Reject arm | servo ติดแขนคัดแยก มุม rest 0° / reject 90° (ค่าใน `Config`) | ไม่ชนโครงสร้างตลอดช่วง 0–90° |
-| Pico 4 + controller | เบราว์เซอร์รองรับ WebXR; ติดตั้ง/trust ใบรับรองสำหรับ HTTPS (`npm run serve:vr`) | เปิด HUD ได้ทั้ง 2D และ AR/VR |
+| Pico 4 + controller | เบราว์เซอร์รองรับ WebXR; ติดตั้ง/trust ใบรับรองสำหรับ HTTPS (`npm run serve:vr`); แว่นเข้าอินเทอร์เน็ตได้ เพราะ VR cinema โหลด A-Frame 1.5.0 จาก `cdn.jsdelivr.net` ตอนเข้าครั้งแรก (ENV-06); ไม่ใช้โหมด AR passthrough (D9) | เปิด HUD ได้ทั้ง 2D และเข้า VR cinema ได้ |
 | iPhone (ถ้าใช้เป็นกล้อง) | Safari ต้องมี `requestVideoFrameCallback` | ผ่านขั้นตอนใน `pico-webapp/README.md` |
 | เครือข่าย | AP/router ที่ **ไม่เปิด client isolation** | ping ได้ทุกคู่ที่ระบุใน ENV-02 |
 | กล่องแสง/ฉาก | แสงสม่ำเสมอ ไม่กะพริบ (ไฟบ้านไทย 50 Hz) | CAM-10, CAM-12 |
@@ -187,6 +188,7 @@ IR sensor ─▶ ESP32 ──POST item-detected───┘  ├──POST /verd
 - ตัดไฟ actuator ได้ในมือเดียว (สวิตช์หรือถอดปลั๊ก) ก่อนทุกครั้งที่เริ่ม Phase 3
 - เริ่มทุกขั้นตอนใหม่ *ไม่มีภาระทางกล* ก่อน (หลักเดียวกับ [spec item-verdict-deadline](../specs/item-verdict-deadline-safety.md))
 - มือและสายห่างจากแขน servo, ลูกกลิ้ง/สายพาน ระหว่างที่ระบบกำลังทำงาน
+- ใน VR cinema คนใส่แว่นมองไม่เห็นสายพานและ servo (ไม่มีโหมดที่เห็นห้องจริง เพราะ AR passthrough ไม่อยู่ในขอบเขต ดู D9) ข้อที่คุม actuator จากแว่น (HUD-04, HUD-05) และข้ออื่นที่สวมแว่นขณะ actuator มีไฟ ต้องมี **Safety lead** มองของจริงและมือบนสวิตช์ตัดไฟ เหมือน Phase 3 ขึ้นไป ห้ามเดินสายพานหรือสั่ง servo จากแว่นโดยไม่มีคนมองของจริง
 
 ---
 
@@ -225,6 +227,7 @@ IR sensor ─▶ ESP32 ──POST item-detected───┘  ├──POST /verd
 | ENV-03 | `git check-ignore -v` กับ `src/secrets.h`, `n8n/runtime.local.json`, `thingsboard/*.local.json`, `dev-key.pem`, `pico-webapp/dev-key.pem`; ตรวจ `git status` | ไฟล์ลับทั้งหมดถูก ignore; ไม่มี private key ปรากฏในรายการที่จะถูก `git add` | ผล `git status` |
 | ENV-04 | ตรวจเครื่องมือวัด: ถ่าย slow-mo 240 fps กับนาฬิกาจับเวลา ตรวจว่านับ 4.2 ms/เฟรมได้ | อ่านเวลาในวิดีโอได้ละเอียด ≤ 10 ms | คลิปทดสอบ |
 | ENV-05 | จับเวลา bring-up ตามหัวข้อ 5 จากเย็นสนิท 3 ครั้ง | ทุกบริการเขียวภายในเป้า (ข้อเสนอ ≤ 5 นาที) หรือบันทึกค่าจริงเป็น baseline | ตารางเวลา |
+| ENV-06 | บนเครือข่ายที่จะใช้ทดสอบและ demo (ดู D6) เปิด `https://cdn.jsdelivr.net/npm/aframe@1.5.0/dist/aframe-master.min.js` ใน PICO Browser แล้วเข้า VR cinema ครั้งแรกจากหน้า HUD HTTPS `:8443` | ไฟล์โหลดได้และเข้า VR cinema ได้ (ถ้าโหลดไม่ได้ HUD ต้องขึ้น `Could not start VR cinema: Could not load A-Frame from the CDN`) ถ้าเครือข่ายไม่มีอินเทอร์เน็ต ให้ฝัง A-Frame ไว้ใน `pico-webapp/` แล้วเปลี่ยน `AFRAME_SRC` ใน `js/vr-cinema.js` ก่อนเริ่ม HUD-04 | ภาพหน้าจอ + บันทึกเครือข่าย |
 
 ### Phase 1 — เทสต์อัตโนมัติ (REG)
 
@@ -234,7 +237,7 @@ IR sensor ─▶ ESP32 ──POST item-detected───┘  ├──POST /verd
 | --- | --- | --- |
 | REG-01 | `npm test --prefix n8n` | ผ่านทั้งหมด (วันนี้ล้ม 1 ข้อเรื่อง CRLF ดู 2.2 — แก้ก่อน) |
 | REG-02 | `npm test --prefix detection-relay` | ผ่านทั้งหมด (วันนี้ล้ม 1 ข้อ `hud-proxy.test.mjs` — สืบสาเหตุก่อน) |
-| REG-03 | `npm test --prefix pico-webapp` | ผ่านทั้งหมด (วันนี้ 100/100) |
+| REG-03 | `npm test --prefix pico-webapp` | ผ่านทั้งหมด (ล่าสุด 144/144 ณ 2026-11-23; 100/100 เมื่อ 2026-11-21 ก่อนมีเทสต์ใหม่; ตัวเลขเปลี่ยนถ้าแก้ `tests/xr-modes.test.js`) |
 | REG-04 | `npm test --prefix thingsboard` | ผ่านทั้งหมด |
 | REG-05 | `python -m pytest` ใน `raspberry-pi-streaming` (ติดตั้ง `requirements-dev.txt`) และ `model-service` (`python -m pip install -e ".[test]"`) | ผ่านทั้งหมด |
 | REG-06 | `./360ControlUnit/test/host/run-host-tests.ps1`, `./360ControlUnit/test/host/build-adapter.ps1`, `./n8n/scripts/run-controller-probe.ps1` (exit 1 = เงื่อนไข timeout/stale-verdict ที่ต้องการไม่ผ่าน) | ผ่านทั้งหมด |
@@ -316,15 +319,16 @@ IR sensor ─▶ ESP32 ──POST item-detected───┘  ├──POST /verd
 | HUD-01 | เปิด `http://<PC-IP>:8080` บน Pico; เลือก Remote stream | เห็นภาพสดจาก camera node; ถอดกล้อง → ซ่อนภาพค้าง; เสียบ → กลับมาเอง | คลิป |
 | HUD-02 | ส่ง `POST :8081/detections` ตัวอย่างกล่องที่รู้พิกัด (ตัวอย่างใน README ของ relay) แล้วเทียบกล่องกับภาพต้นฉบับที่ขนาดจอต่างกัน (หมุน/ย่อ-ขยาย) | กล่องตรงตำแหน่งพิกเซลจริง; กล่องทั้งหมดแสดง **แม้ต่ำกว่า threshold**; กล่องล้างเมื่อส่ง `detections: []` | ภาพหน้าจอ |
 | HUD-03 | HUD ต่อ relay ช้ากว่า payload; เปิด HUD ทีหลัง; ส่งเฟรมสลับลำดับ (sequence เก่ามาทีหลัง) | ผู้เชื่อมต่อใหม่ไม่เห็นเฟรมเก่า; เฟรมเก่าไม่ทับเฟรมใหม่; session ใหม่ที่ sequence รีเซ็ตยังแสดงได้ | คลิป |
-| HUD-04 | ควบคุมจาก Pico (AR/VR ผ่าน `npm run serve:vr`, `https://<PC-IP>:8443/?xrdebug=1`): stick ซ้ายขึ้น/ลง = สายพาน, stick ขวา = servo, A = reject, B = pass, X = Manual, Y = Capture & inspect (ถ่ายรูปแล้วให้ AI ตรวจ), grip = sweep (ปุ่ม Auto ย้ายไปอยู่บนจอ 2D) | ทุกปุ่มทำงานตามตารางใน `pico-webapp/README.md`; ปุ่มที่ firmware ปฏิเสธ (เช่น servo ใน Auto) แสดงเหตุผลบน HUD; บันทึกดัชนีปุ่มจริงด้วย `?xrdebug=1` | คลิป |
-| HUD-05 | ถอดการเชื่อมต่อของ Pico (ปิด Wi-Fi แว่น) ขณะดัน stick ค้างให้สายพานเดิน | สายพานหยุดภายใน ~0.5 วินาทีหลังคำสั่งสุดท้าย | คลิป 240 fps |
+| HUD-04 | ควบคุมจาก Pico (VR cinema ผ่าน `npm run serve:vr`, `https://<PC-IP>:8443/?xrdebug=1`): stick ซ้ายขึ้น/ลง = สายพาน, stick ขวา = servo, A = reject, B = pass, X = Manual, Y = Capture & inspect (ถ่ายรูปแล้วให้ AI ตรวจ), grip = sweep (ปุ่ม Auto ย้ายไปอยู่บนจอ 2D); ต้องมี Safety lead มองของจริง (4.6) | ทุกปุ่มทำงานตามตารางใน `pico-webapp/README.md`; ปุ่มที่ firmware ปฏิเสธ (เช่น servo ใน Auto) แสดงเหตุผลบน HUD; บันทึกดัชนีปุ่มจริงด้วย `?xrdebug=1` | คลิป |
+| HUD-05 | ถอดการเชื่อมต่อของ Pico (ปิด Wi-Fi แว่น) ขณะดัน stick ค้างให้สายพานเดิน (ต้องมี Safety lead มองของจริงและมือบนสวิตช์ตัดไฟ) | สายพานหยุดภายใน ~0.5 วินาทีหลังคำสั่งสุดท้าย | คลิป 240 fps |
 | HUD-06 | ส่ง prompt จาก HUD ผ่าน n8n จริง (CORS ของ n8n) | ส่งผ่าน; หมดเวลา 8 วินาทีถ้า n8n ล่ม และ UI ไม่ค้าง | คลิป |
 | HUD-07 | ตรวจ Verdict ด้วยมือจาก HUD ขณะไม่มี item active | HUD ไม่ส่งคำสั่ง (อ่าน `/status` ต้องเป็น `awaiting_verdict`) หรือ firmware ตอบ ignored และ HUD แสดงเหตุผล | คลิป |
 | HUD-08 | ปุ่ม **Capture & inspect** บนจอ 2D: กด 1 ครั้งขณะ n8n workflow active และ HUD server ตั้ง `--n8n-origin` ถูก | บรรทัดผลของปุ่มขึ้น `Captured · AI says …` (หรือ review/error ตามจริง) และระบุว่าไม่มีคำสั่งไปที่เครื่อง; กล่องและข้อความสรุปขึ้นบน HUD; n8n มี execution ใหม่ 1 ครั้งที่ไม่ผูก item; `/status` ของ ESP32 ไม่เปลี่ยน | คลิป + execution + `/status` |
-| HUD-09 | ปุ่ม **Y ซ้าย** ใน AR/VR (HTTPS `:8443`): กด 1 ครั้ง, กดค้าง, กดรัว | ได้ผลเหมือน HUD-08 บนหน้า HTTPS (ไม่ติด mixed content); กดค้างหรือรัวได้คำขอเดียว (ข้อความ `Capture already running`); legend ใน VR แสดง `Capture · Y`; Y ไม่สลับเป็น Auto อีก ส่วน X ยังสลับเป็น Manual | คลิป + execution |
+| HUD-09 | ปุ่ม **Y ซ้าย** ใน VR cinema (HTTPS `:8443`): กด 1 ครั้ง, กดค้าง, กดรัว | ได้ผลเหมือน HUD-08 บนหน้า HTTPS (ไม่ติด mixed content); กดค้างหรือรัวได้คำขอเดียว (ข้อความ `Capture already running`); legend ใน VR แสดง `Capture · Y`; Y ไม่สลับเป็น Auto อีก ส่วน X ยังสลับเป็น Manual | คลิป + execution |
 | HUD-10 | การถ่ายล้มเหลว: (a) n8n workflow ไม่ active (b) หยุด n8n (c) model ล่มหรือหน่วง (d) ถอดกล้อง | บรรทัดผลของปุ่มเป็น `Capture failed · …` สีแดงทุกกรณี (404 บอกให้ตรวจว่า workflow active, 504 `n8n unreachable`, `model_*` / `frame_capture_failed`) ไม่มีกรณีใดแสดงเหมือนผลตรวจ | ภาพหน้าจอ |
 | HUD-11 | ผลล้มเหลวที่มาทาง relay: ส่ง `POST :8081/detections` ที่ `reason` เป็น `model_timeout`, `frame_capture_failed` และอีกชุดที่ `status` เป็น `error` | ข้อความสรุปเป็น `AI unavailable · <reason>` ไม่ใช่ "AI reports no detections"; ไฟสถานะ AI สีแดง; ข้อความค้างเกิน `detectionTtlMs` จนมีผลใหม่; ผล `no_defect_detected`, `defect_detected`, `manual_review_required` ยังแสดงและหมดอายุตามเดิม | ภาพหน้าจอ + คลิป |
 | HUD-12 | `/n8n/inspect-now` ของ HUD server: ส่ง GET, ส่ง POST แบบ form หรือ `text/plain`, ส่ง body ที่มี `controller_session`/`item_id`, ยิงสองคำขอพร้อมกัน | 405 / 415 / n8n ได้รับเฉพาะ `{}` ไม่มี identity / คำขอที่สองได้ 429 | `curl` + log ของ n8n |
+| HUD-13 | เข้า/ออก VR cinema 5 รอบจากหน้า HUD HTTPS `:8443` บนเครือข่ายที่มีอินเทอร์เน็ต (ENV-06): กดปุ่ม **VR cinema**, รอ A-Frame โหลด, ดูการ์ดและ legend, ออกจาก session, ตรวจว่า HUD กลับเป็น 2D แล้วเข้าซ้ำ; รอบสุดท้าย (ไม่บังคับ): ล้างแคช PICO Browser, รีโหลดหน้า HUD, ตัดอินเทอร์เน็ตของแว่น แล้วกด VR cinema | เข้าได้ทุกรอบ ไม่ค้าง; การ์ดแสดงภาพกล้องพร้อมกล่อง ข้อความสรุป และ legend `Capture · Y`, `Manual · X`, `Sweep · Grip`, `Reject · A   Pass · B`; หลังออก HUD กลับเป็น 2D ปุ่ม **Capture & inspect** และช่อง prompt ยังใช้ได้ ไม่มี session ค้างหรือปุ่มโหมดค้างสถานะ; เมื่อไม่มีอินเทอร์เน็ตและ A-Frame ยังไม่ถูกโหลด ขึ้น `Could not start VR cinema: Could not load A-Frame from the CDN…` แทนการค้างเงียบ | คลิป + ภาพหน้าจอ |
 
 #### 2F. ข้อมูลและการเฝ้าดู (DAT)
 
@@ -486,7 +490,7 @@ build_flags = -D CN360_BENCH_ADMISSION_ENABLED=1
 1. เจ้าของโปรเจกต์อนุมัติ D8-ค และนิยามระดับ M พร้อมบันทึกวันที่
 2. ESP32 ใช้ build ปกติ (`/status.automatic_admission_enabled` เป็น `false`) และผู้ปฏิบัติสลับเป็น Manual ก่อนสั่ง servo/สายพาน
 3. ส่วนที่ "ยังทำได้" ในหัวข้อ 2.4 ผ่านแล้ว
-4. n8n workflow ที่ต้องใช้ถูก import และ active หลังตรวจเชื่อมต่อแล้ว (N8N-xx) ทริกเกอร์ที่ใช้คือ `POST /webhook/inspect-now` โดยไม่แนบ `controller_session`/`item_id` (คำขอที่แนบ identity ของ item คือแบบ paired ตาม n8n README) หรือ schedule trigger — HUD เรียก `inspect-now` ได้เองด้วยปุ่ม **Capture & inspect** (จอ 2D) หรือปุ่ม **Y ซ้าย** (AR/VR) ผ่าน HUD server ที่ตั้ง `--n8n-origin` ถูกต้อง (HUD-08…12)
+4. n8n workflow ที่ต้องใช้ถูก import และ active หลังตรวจเชื่อมต่อแล้ว (N8N-xx) ทริกเกอร์ที่ใช้คือ `POST /webhook/inspect-now` โดยไม่แนบ `controller_session`/`item_id` (คำขอที่แนบ identity ของ item คือแบบ paired ตาม n8n README) หรือ schedule trigger — HUD เรียก `inspect-now` ได้เองด้วยปุ่ม **Capture & inspect** (จอ 2D) หรือปุ่ม **Y ซ้าย** (VR cinema) ผ่าน HUD server ที่ตั้ง `--n8n-origin` ถูกต้อง (HUD-08…12)
 
 | ID | ทำอะไร | เกณฑ์ผ่าน (ข้อเสนอ) | หลักฐาน |
 | --- | --- | --- | --- |
@@ -506,7 +510,7 @@ build_flags = -D CN360_BENCH_ADMISSION_ENABLED=1
 - ทางที่ต้องทดสอบ: ตั้ง `inspectionPolicy` เป็น `{"version":1,"enabled":true,"rules":[]}` ใน `n8n/runtime.local.json` แล้วรัน `node configure.mjs` (`configure.mjs` ตรวจว่าเป็น version 1, enabled และ rules เป็น array) ผลที่ตรวจ: ทุกผลเป็น `reviewRequired` และ HUD แสดง "Human review required · controller reject · model suggestion: …" โดยผลล้มเหลวแสดง `unavailable` ส่วนผลที่โมเดลประเมินสำเร็จแสดง `pass` หรือ `reject` จึงแยกความล้มเหลวออกจากผลประเมินได้ แต่ถ้อยคำ "controller reject" ยังอยู่ (MAN-05) การเปลี่ยนนี้ต้องให้เจ้าของโปรเจกต์ตัดสินและรัน REG ซ้ำ
 - หลัง `detectionTtlMs` (3000 ms) HUD ล้างกล่องและตั้งข้อความเป็น "No recent detections" ซึ่งเป็นข้อความเดียวกันไม่ว่าผลจะหมดอายุ ไม่พบอะไร หรือไม่มีผลเข้ามา (เช่น n8n หยุด) แยกกันไม่ได้หลัง 3 วินาที นี่คือเหตุที่ MAN-04 เป็นข้อปลอดภัย ไม่ใช่แค่ความสะดวก
 
-**แก้แล้ว (2026-11-22):** HUD (`pico-webapp/js/overlay.js` และ `app.js`) ถือว่า `reason` ที่ไม่ใช่ `defect_detected`, `no_defect_detected` หรือ `manual_review_required` (หรือ `status: error`) คือการตรวจล้มเหลว: ข้อความสรุปเป็น `AI unavailable · <reason> · <เวลา>` ไฟสถานะ AI เป็นสีแดง และข้อความค้างจนกว่าจะมีผลใหม่ (ไม่ถูกล้างเป็น "No recent detections" ตาม TTL) ผลปกติยังหมดอายุตาม `detectionTtlMs` เหมือนเดิม ตรวจแล้วบน 2D HUD จริงในเบราว์เซอร์ ผ่าน relay จริงและ n8n จำลอง ได้ผลตามนี้ทั้งกรณีไม่มี policy และกรณี `reviewRequired` แต่ **ยังไม่ได้ตรวจใน AR/VR บนแว่น และยังไม่ได้ตรวจกับ n8n จริง** จึงให้ MAN-03 และ HUD-11 ยืนยันซ้ำ การตั้ง `inspectionPolicy` ในข้อก่อนหน้าไม่จำเป็นอีกสำหรับเรื่องนี้ (ใช้เฉพาะเมื่อต้องการให้ทุกผลเป็น "ต้องให้คนตรวจ") และถ้อยคำ "controller reject" ในข้อความ review ยังเหมือนเดิม (MAN-05)
+**แก้แล้ว (2026-11-22):** HUD (`pico-webapp/js/overlay.js` และ `app.js`) ถือว่า `reason` ที่ไม่ใช่ `defect_detected`, `no_defect_detected` หรือ `manual_review_required` (หรือ `status: error`) คือการตรวจล้มเหลว: ข้อความสรุปเป็น `AI unavailable · <reason> · <เวลา>` ไฟสถานะ AI เป็นสีแดง และข้อความค้างจนกว่าจะมีผลใหม่ (ไม่ถูกล้างเป็น "No recent detections" ตาม TTL) ผลปกติยังหมดอายุตาม `detectionTtlMs` เหมือนเดิม ตรวจแล้วบน 2D HUD จริงในเบราว์เซอร์ ผ่าน relay จริงและ n8n จำลอง ได้ผลตามนี้ทั้งกรณีไม่มี policy และกรณี `reviewRequired` แต่ **ยังไม่ได้ตรวจใน VR cinema บนแว่น และยังไม่ได้ตรวจกับ n8n จริง** จึงให้ MAN-03 และ HUD-11 ยืนยันซ้ำ การตั้ง `inspectionPolicy` ในข้อก่อนหน้าไม่จำเป็นอีกสำหรับเรื่องนี้ (ใช้เฉพาะเมื่อต้องการให้ทุกผลเป็น "ต้องให้คนตรวจ") และถ้อยคำ "controller reject" ในข้อความ review ยังเหมือนเดิม (MAN-05)
 
 **เกณฑ์ผ่านของระดับ M (ข้อเสนอ):** Phase 0–1 ผ่าน; ส่วนของ Phase 2 ที่ทำได้ (2.4) ผ่านทั้งหมด; MAN-01…09 ผ่าน โดย **MAN-03 ต้องผ่านก่อนให้ผู้ปฏิบัติใช้ AI ประกอบการตัดสิน**; SOAK-01, SOAK-03 และ SAF ผ่าน (SAF-03 ผ่านโดยปริยายเพราะ admission ปิด); QLT-01…05 ทำและ **รายงานผลตามจริง** (ไม่ต้องผ่านเกณฑ์อนุมัติอัตโนมัติ เพราะไม่มี automatic pass) พร้อมระบุข้อจำกัดในคู่มือผู้ปฏิบัติ; ไม่มีข้อใดเป็น UNVERIFIED
 
@@ -535,9 +539,10 @@ build_flags = -D CN360_BENCH_ADMISSION_ENABLED=1
 | D3 | Camera node | Pi หรือ UNO Q | CAM-xx ของทั้งสองตัว + UNOQ-xx | ทีม | **ตัดสินแล้ว: ใช้ Pi** (ผู้ใช้แจ้งในแชต 2026-11-21 ควรยืนยันกับทีมอีกครั้ง); ไม่ต้องทำ UNOQ-xx |
 | D4 | ที่รัน AI | PC GPU (ปัจจุบัน) หรืออื่น | MOD-xx; ภาคผนวก A.2 | เจ้าของโปรเจกต์ | แนะนำคง PC GPU |
 | D5 | เปิด admission ใน build ที่ใช้จริง | เปิด/ปิด | HOLD-xx ครบ + FLT ผ่าน | เจ้าของโปรเจกต์ | เปิด |
-| D6 | เครือข่ายของการ demo | hotspot หรือ router เฉพาะ | ENV-02 | ทีม | เปิด |
+| D6 | เครือข่ายของการ demo | hotspot หรือ router เฉพาะ (router ที่ไม่มีอินเทอร์เน็ตทำให้ VR cinema โหลด A-Frame ไม่ได้ เว้นแต่ฝัง A-Frame ไว้ใน repo ก่อน) | ENV-02, ENV-06 | ทีม | เปิด |
 | D7 | กล้องหลายตัว/หลายชนิด (USB + CSI) | (ก) สลับชนิดต่อเครื่อง (ข) สองสตรีมคนละพอร์ตบน Pi เดียว (ค) ใช้สองมุมในรอบตรวจเดียว | ผล CAM-03/QLT ต่อกล้อง, งบเวลา (D1), การออกแบบ workflow และ Frame Context | เจ้าของโปรเจกต์ | เปิด (อนาคต — ผู้ใช้แจ้ง 2026-11-21 ว่าอาจใช้ทั้งคู่; ดู [pi-camera-node-setup.md](pi-camera-node-setup.md) หัวข้อ 12) |
 | D8 | ตัวตรวจจับชิ้นงานและนิยามคำว่า "สมบูรณ์" เมื่อไม่มี IR/buzzer/relay | (ก) ต่อเซนเซอร์ IR กลับและใช้แผนเดิม (ข) ใช้ตัวตรวจจับอื่น (ต้องแก้ firmware ซึ่งผู้ใช้ไม่ต้องการแตะตอนนี้) (ค) ใช้เป็นระบบคุมด้วยมือ + AI แสดงกล่องบน HUD โดยคนตัดสินและสั่ง servo เอง (ตรงกับ D2-ก; ร่างเป็นระดับ M ใน Phase M) | ผลของ D2 (ผู้ใช้ยืนยันแล้ว 2026-11-21 ว่าไม่ใช้เซนเซอร์ IR ทั้งตัว) | เจ้าของโปรเจกต์ | เปิด (ผู้ใช้แจ้ง 2026-11-21 ว่าไม่ใช้ buzzer/IR/relay และไม่ต้องแก้ firmware) |
+| D9 | โหมด AR passthrough ของ HUD | (ก) ตัดโหมดนี้ออกจาก HUD (โค้ด ปุ่ม CSS เทสต์ เอกสาร) (ข) เก็บไว้แต่ซ่อนปุ่มและไม่รับรอง (ค) แก้ให้วาด HUD ลง WebGL ใน `immersive-ar` แทน DOM Overlay | ผลสืบสวน 2026-11-22: โค้ดบังคับ `dom-overlay` ซึ่งเบราว์เซอร์แว่นส่วนใหญ่ไม่มี (ทำซ้ำใน emulator ได้) ยังไม่ได้ลองบน Pico ถ้าต้องการหลักฐาน ให้ดูข้อความแดงที่ HUD ขึ้นเมื่อกดปุ่ม AR บนแว่น | ทีม | เปิด (กลุ่มกำลังหารือจะตัด ผู้ใช้แจ้ง 2026-11-23; ณ วันนั้นโค้ดยังมี AR ใน `main` และ PR #40) แผนนี้ใช้ VR cinema เป็นโหมดเดียวบนแว่นไม่ว่าผลเป็นอย่างไร |
 
 ---
 

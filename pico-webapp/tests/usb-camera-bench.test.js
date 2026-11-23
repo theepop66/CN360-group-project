@@ -34,7 +34,7 @@ test("USB selection rejects disconnected and unassigned adapters and requires an
 
 async function bench(t) {
   let time = 1800000000000;
-  const camera = createPhoneCamera({ pairingCode: "bench-code", now: () => time });
+  const camera = createPhoneCamera({ pairingCode: "bench-code", now: () => time, maxFrameBytes: 2 * 1024 * 1024 });
   const fallback = (req, res) => {
     if (camera.handle(req, res, new URL(req.url, "http://localhost").pathname)) return;
     res.writeHead(404); res.end();
@@ -47,8 +47,8 @@ async function bench(t) {
   const response = await call("/phone-camera/session", { method: "POST", headers: { Authorization: "Bearer bench-code" } });
   const owner = await response.json();
   const jpeg = readFileSync(new URL("../../docs/evidence/real-model-gallery-2026-10-28/images/bottle__broken_large__000.jpg", import.meta.url));
-  const upload = (sequence, token = owner.token, zoomRevision = 0) => call("/phone-camera/frame", { method: "POST", body: jpeg,
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "image/jpeg", "X-Frame-Sequence": String(sequence), "X-Captured-At-Ms": String(time), "X-Camera-Zoom-Command": String(zoomRevision) } });
+  const upload = (sequence, token = owner.token, zoomRevision = 0, body = jpeg, age = 0) => call("/phone-camera/frame", { method: "POST", body,
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "image/jpeg", "X-Frame-Sequence": String(sequence), "X-Captured-At-Ms": String(time - age), "X-Camera-Zoom-Command": String(zoomRevision) } });
   return { call, upload, owner, jpeg, advance(ms) { time += ms; } };
 }
 
@@ -76,6 +76,28 @@ test("USB diagnostics describe only accepted JPEG frames, capture bytes are pres
   b.advance(2001);
   assert.equal((await (await b.call("/usb-bench/status")).json()).lastFrame.fresh, false);
   assert.equal((await b.call("/capture")).status, 503);
+});
+
+test("bench diagnostics and capture retain accepted JPEGs above the old size limit and measure received FPS", async t => {
+  const b = await bench(t);
+  // Insert valid JPEG comment segments without modifying any image pixels.
+  const comment = Buffer.alloc(60004);
+  comment.set([0xff, 0xfe]);
+  comment.writeUInt16BE(comment.length - 2, 2);
+  const jpeg = Buffer.concat([b.jpeg.subarray(0, 2), ...Array(9).fill(comment), b.jpeg.subarray(2)]);
+  assert.ok(jpeg.length > 512 * 1024);
+  assert.equal(b.owner.maxFrameBytes, 2 * 1024 * 1024);
+  for (let index = 1; index <= 6; index++) {
+    b.advance(100);
+    assert.equal((await b.upload(index, b.owner.token, 0, jpeg, 35)).status, 200);
+  }
+  const { lastFrame } = await (await b.call("/usb-bench/status")).json();
+  assert.equal(lastFrame.bytes, jpeg.length);
+  assert.ok(lastFrame.width > 0 && lastFrame.height > 0);
+  assert.equal(lastFrame.fps, 10);
+  assert.equal(lastFrame.arrivalAgeMs, 35);
+  assert.deepEqual(Buffer.from(await (await b.call("/capture")).arrayBuffer()), jpeg);
+  assert.equal((await b.upload(7, b.owner.token, 0, Buffer.alloc(b.owner.maxFrameBytes + 1))).status, 413);
 });
 
 test("ending a camera session clears transport evidence and a non-USB destination is never labelled USB", async t => {

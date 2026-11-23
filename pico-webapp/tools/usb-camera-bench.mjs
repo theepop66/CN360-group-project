@@ -11,7 +11,7 @@ import { parseArgs } from "node:util";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHandler } from "./hud-server.mjs";
-import { createPhoneCamera, jpegDimensions } from "./phone-camera.mjs";
+import { createPhoneCamera } from "./phone-camera.mjs";
 
 const tools = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(tools, "..");
@@ -35,7 +35,7 @@ body{margin:0;padding:16px;background:#07110f;color:#eafff5;font:16px system-ui}
 #status{padding:12px;background:#12271e;border-radius:8px;white-space:pre-line}iframe{width:100%;height:75vh;border:1px solid #315846;margin-top:16px}
 </style><h1>iPhone → USB → Windows HUD</h1>
 <p id="status" role="status">Waiting for a fresh iPhone frame…</p>
-<p><a href="/?camera=phone" target="_blank" rel="noopener">Open HUD</a> · <a href="/capture" target="_blank" rel="noopener">Latest capture</a></p>
+<p><a href="/?camera=phone" target="_blank" rel="noopener">Open HUD</a> · <a href="/?camera=phone&amp;fit=contain" target="_blank" rel="noopener">Show full frame</a> · <a href="/capture" target="_blank" rel="noopener">Latest capture</a></p>
 <p>Unplug Lightning: the feed must stop. Reconnect and start the phone sender again. This verifies the cable dependency.</p>
 <iframe title="Live camera HUD" src="/?camera=phone"></iframe><script type="module">
 const status=document.querySelector('#status');
@@ -44,13 +44,16 @@ try{
  const [diagnostics,health]=await Promise.all([fetch('/usb-bench/status',{cache:'no-store'}).then(r=>r.json()),fetch('/phone-camera/health',{cache:'no-store'})]);
  const camera=await health.json(); const frame=diagnostics.lastFrame;
  if(!health.ok||!frame?.fresh||camera.camera.sessionId!==frame.sessionId||camera.camera.sequence<frame.sequence){status.textContent='Waiting for a fresh iPhone frame. Open the phone sender and tap Start.';return;}
- status.textContent=(frame.atUsbAddress?'Receiving at the Apple USB address':'Frame arrived through another address')+'\n'+frame.width+' × '+frame.height+' · Frame '+frame.sequence+' · '+frame.bytes+' bytes\nPhone '+frame.remoteAddress+' → PC '+frame.localAddress+'\nUnplug the cable to confirm this path stops.';
+ const fps = frame.fps == null ? 'measuring FPS' : frame.fps.toFixed(1)+' FPS received';
+ const age = 'Approx. '+frame.arrivalAgeMs+' ms from capture to PC';
+ status.textContent=(frame.atUsbAddress?'Receiving at the Apple USB address':'Frame arrived through another address')+'\n'+frame.width+' × '+frame.height+' · Frame '+frame.sequence+' · '+frame.bytes+' bytes\n'+fps+' · '+age+'\nPhone '+frame.remoteAddress+' → PC '+frame.localAddress;
 }catch{status.textContent='Camera test server is unreachable.';}finally{setTimeout(refresh,1000);}}
 refresh();</script></html>`;
 
 export function createUsbBenchHandler({ handler, usbAddress, now = Date.now }) {
   let lastFrame = null;
   let sessionId = null;
+  let arrivals = [];
   return (req, res) => {
     const pathname = new URL(req.url, "http://localhost").pathname;
     if (req.method === "GET" && pathname === "/usb-bench/status") {
@@ -72,26 +75,25 @@ export function createUsbBenchHandler({ handler, usbAddress, now = Date.now }) {
       return;
     }
     if (publisherRequest) {
-      // Observe only this bounded JPEG endpoint. Count a frame only when the
-      // existing camera service says accepted:true (200 alone is insufficient).
-      const chunks = [];
-      let bytes = 0;
-      if (pathname.endsWith("/frame")) req.on?.("data", chunk => {
-        bytes += chunk.length;
-        if (bytes <= 512 * 1024) chunks.push(chunk);
-      });
+      // Use the dimensions and size already validated by the camera service.
       const originalEnd = res.end;
       res.end = function(body, ...args) {
         try {
           const result = JSON.parse(String(body));
-          if (res.statusCode === 200 && result.accepted === true && pathname.endsWith("/frame")) {
-            const dimensions = jpegDimensions(Buffer.concat(chunks));
-            lastFrame = { sessionId, sequence: result.sequence, capturedAtMs: Number(req.headers["x-captured-at-ms"]), receivedAtMs: now(), bytes, ...dimensions,
+          if (res.statusCode === 200 && result.accepted === true && result.frame && pathname.endsWith("/frame")) {
+            const receivedAtMs = now();
+            arrivals = arrivals.filter(time => time <= receivedAtMs && receivedAtMs - time <= 2000).slice(-59);
+            arrivals.push(receivedAtMs);
+            const elapsed = receivedAtMs - arrivals[0];
+            lastFrame = { sessionId, sequence: result.sequence, ...result.frame, receivedAtMs,
+              fps: elapsed >= 500 ? (arrivals.length - 1) * 1000 / elapsed : null,
+              arrivalAgeMs: Math.max(0, receivedAtMs - result.frame.capturedAtMs),
               localAddress: ipv4(req.socket.localAddress), remoteAddress: ipv4(req.socket.remoteAddress),
               atUsbAddress: ipv4(req.socket.localAddress) === usbAddress };
           } else if (pathname.endsWith("/session") && [200, 201].includes(res.statusCode)) {
             lastFrame = null;
             sessionId = result.sessionId ?? null;
+            arrivals = [];
           }
         } catch { /* Diagnostic observation must never break camera replies. */ }
         return originalEnd.call(this, body, ...args);
@@ -156,7 +158,7 @@ async function main() {
     throw new Error("Certificate set is invalid/expired for this USB address. Preserve it and choose another --state-dir.");
   }
   createSecureContext({ cert: certBytes, key: keyBytes });
-  const camera = createPhoneCamera();
+  const camera = createPhoneCamera({ maxFrameBytes: 2 * 1024 * 1024 });
   const handler = createUsbBenchHandler({ usbAddress: adapter.address, handler: createHandler({ root,
     phoneCamera: camera, phoneCaBytes: caBytes, controlUnit: "http://127.0.0.1:1", relayOrigin: "http://127.0.0.1:1" }) });
   const servers = [httpServer(handler), httpsServer({ cert: certBytes, key: keyBytes }, handler)];

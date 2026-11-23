@@ -33,6 +33,20 @@ test("applies zoom to the capture track and verifies it after new source frames"
   assert.equal(actual.value, 2);
 });
 
+test("successive zoom commands preserve capture dimensions and other advanced constraints", async () => {
+  const capture = { width: { ideal: 1920 }, height: { ideal: 1080 } };
+  let constraints = { ...capture, zoom: 1, advanced: [{ zoom: 1, focusDistance: 1 }] };
+  const track = {
+    getCapabilities: () => ({ zoom: report }),
+    getSettings: () => ({ zoom: constraints.advanced.at(-1).zoom }),
+    getConstraints: () => structuredClone(constraints),
+    applyConstraints: async value => { constraints = value; }
+  };
+  await applyCameraZoom(track, 2);
+  await applyCameraZoom(track, 3);
+  assert.deepEqual(constraints, { ...capture, advanced: [{ focusDistance: 1 }, { zoom: 3 }] });
+});
+
 test("a successful but ignored applyConstraints promise is never a zoom confirmation", async () => {
   const track = { getCapabilities: () => ({ zoom: report }), getSettings: () => ({ zoom: 1 }), applyConstraints: async () => {} };
   await assert.rejects(applyCameraZoom(track, 2), /camera_zoom_not_confirmed/);

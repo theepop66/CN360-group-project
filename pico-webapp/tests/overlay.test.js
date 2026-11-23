@@ -92,6 +92,17 @@ test("maps boxes through the cropped area when the video uses object-fit cover",
   assert.deepEqual(mapped, { x: 0, y: 0, width: 100, height: 100 });
 });
 
+test("fits the displayed portrait pixels while normalizing boxes against the detection dimensions", () => {
+  const mapped = mapBoxToDisplay(
+    { x1: 0, y1: 0, x2: 540, y2: 960, normalized: false },
+    { width: 1080, height: 1920 },
+    { width: 1280, height: 720 },
+    "contain",
+    { width: 542, height: 960 }
+  );
+  assert.deepEqual(mapped, { x: 436.75, y: 0, width: 203.25, height: 360 });
+});
+
 test("rejects pixel boxes when source dimensions are missing", () => {
   assert.throws(
     () => parseDetectionPayload({ boxes: [{ x1: 5, y1: 8, x2: 20, y2: 30 }] }),

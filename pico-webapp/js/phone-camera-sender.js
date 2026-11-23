@@ -7,7 +7,12 @@ const codeInput = document.querySelector("#pairing-code");
 const status = document.querySelector("#status");
 const video = document.querySelector("#preview");
 const zoomStatus = document.querySelector("#camera-zoom-status");
+const qualityInput = document.querySelector("#camera-quality");
+const rateInput = document.querySelector("#camera-rate");
 const canvas = document.createElement("canvas");
+const original = { width: 960, height: 720, jpegQuality: 0.75 };
+const highDetail = { width: 1920, height: 1080, jpegQuality: 0.90 };
+const legacyFrameBytes = 512 * 1024;
 let generation = 0;
 let media = null;
 let session = null;
@@ -55,29 +60,73 @@ function stop(message = "Streaming stopped") {
   media?.getTracks().forEach(track => track.stop());
   media = null; video.srcObject = null;
   startButton.disabled = false; stopButton.disabled = true; codeInput.disabled = false;
+  for (const input of [qualityInput, rateInput]) if (input) input.disabled = false;
   status.textContent = message;
 }
 
-async function publish(current, serverTime, clockStart) {
+function encodeJpeg(quality) {
+  return new Promise((resolve, reject) => canvas.toBlob(blob => {
+    if (blob?.type === "image/jpeg") resolve(blob);
+    else reject(new Error("Could not encode the camera frame as JPEG"));
+  }, "image/jpeg", quality));
+}
+
+async function publish(current, serverTime, clockStart, profile, fps, maxFrameBytes) {
   let sequence = 0;
   let confirmedZoomCommand = 0;
+  let nextCapture = null;
+  let sizeReduction = 1;
   const track = media.getVideoTracks()[0];
   while (current === generation) {
     await nextVideoFrame();
     if (current !== generation) return;
-    if (!video.videoWidth || video.readyState < 2 || media.getVideoTracks()[0].muted) throw new Error("Camera paused. Please restart the camera.");
-    const scale = Math.min(1, 960 / video.videoWidth, 720 / video.videoHeight);
-    canvas.width = Math.round(video.videoWidth * scale);
-    canvas.height = Math.round(video.videoHeight * scale);
-    const capturedMs = Math.floor(serverTime + performance.now() - clockStart);
+    const frameTime = performance.now();
+    if (fps) {
+      const period = 1000 / fps;
+      nextCapture ??= frameTime;
+      if (frameTime < nextCapture - 1) continue;
+      const missedPeriods = Math.floor(Math.max(0, frameTime - nextCapture) / period);
+      nextCapture += (missedPeriods + 1) * period;
+    }
+    const { videoWidth, videoHeight } = video;
+    if (!videoWidth || !videoHeight || video.readyState < 2 || track.muted) throw new Error("Camera paused. Please restart the camera.");
+    const portrait = profile === highDetail && videoHeight > videoWidth;
+    const maxWidth = portrait ? profile.height : profile.width;
+    const maxHeight = portrait ? profile.width : profile.height;
+    const scale = Math.min(1, maxWidth / videoWidth, maxHeight / videoHeight) * sizeReduction;
+    const width = Math.max(1, Math.round(videoWidth * scale));
+    const height = Math.max(1, Math.round(videoHeight * scale));
+    if (canvas.width !== width) canvas.width = width;
+    if (canvas.height !== height) canvas.height = height;
+    const capturedMs = Math.floor(serverTime + frameTime - clockStart);
     canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
-    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.75));
+    let jpegQuality = profile.jpegQuality;
+    let blob = await encodeJpeg(jpegQuality);
     if (current !== generation) return;
-    if (!blob) throw new Error("Could not encode the camera frame");
-    const result = await api("/phone-camera/frame", {
-      method: "POST", body: blob,
-      headers: { Authorization: `Bearer ${session.token}`, "Content-Type": "image/jpeg", "X-Frame-Sequence": String(++sequence), "X-Captured-At-Ms": String(capturedMs), "X-Camera-Zoom-Command": String(confirmedZoomCommand) }
-    });
+    if (blob.size > maxFrameBytes && profile === highDetail) {
+      jpegQuality = original.jpegQuality;
+      blob = await encodeJpeg(jpegQuality);
+      if (current !== generation) return;
+    }
+    if (blob.size > maxFrameBytes) {
+      // Try a smaller, fresh frame next time. Do not upload or re-timestamp this image.
+      if (sizeReduction <= 0.25) throw new Error("Could not fit the camera frame within the server JPEG limit");
+      sizeReduction = Math.max(0.25, sizeReduction * 0.75);
+      status.textContent = "Reducing image size to fit the server limit…";
+      continue;
+    }
+    let result;
+    try {
+      result = await api("/phone-camera/frame", {
+        method: "POST", body: blob,
+        headers: { Authorization: `Bearer ${session.token}`, "Content-Type": "image/jpeg", "X-Frame-Sequence": String(++sequence), "X-Captured-At-Ms": String(capturedMs), "X-Camera-Zoom-Command": String(confirmedZoomCommand) }
+      });
+    } catch (error) {
+      if (current !== generation) return;
+      if (error.message !== "stale_frame") throw error;
+      status.textContent = "A frame arrived too late. Waiting for a fresh frame…";
+      continue;
+    }
     if (current !== generation) return;
     if (result.zoomCommand) {
       zoomApplyingGeneration = current;
@@ -101,8 +150,10 @@ async function publish(current, serverTime, clockStart) {
       confirmedZoomCommand = result.zoomCommand.id;
       if (current !== generation) return;
     }
-    status.textContent = `Streaming · ${canvas.width} × ${canvas.height} · Frame ${result.sequence}`;
-    await new Promise(resolve => setTimeout(resolve, 125));
+    if (result.accepted) {
+      status.textContent = `Camera ${videoWidth} × ${videoHeight} · Sent ${width} × ${height} · JPEG ${jpegQuality.toFixed(2)} · Frame ${result.sequence}`;
+    }
+    if (!fps) await new Promise(resolve => setTimeout(resolve, 125));
   }
 }
 
@@ -121,10 +172,14 @@ form.addEventListener("submit", async event => {
   if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) { status.textContent = "Open this page over trusted HTTPS to use the camera"; return; }
   if (!video.requestVideoFrameCallback) { status.textContent = "This browser cannot confirm new frames. Please update Safari."; return; }
   const current = ++generation;
+  const profile = qualityInput?.value === "detail" ? highDetail : original;
+  const requestedFps = Number(rateInput?.value);
+  const fps = [10, 15].includes(requestedFps) ? requestedFps : 0;
   startButton.disabled = true; stopButton.disabled = false; codeInput.disabled = true;
+  for (const input of [qualityInput, rateInput]) if (input) input.disabled = true;
   status.textContent = "Requesting camera access...";
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" }, width: { ideal: 960 }, height: { ideal: 720 }, zoom: true }, audio: false });
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" }, width: { ideal: profile.width }, height: { ideal: profile.height }, zoom: true }, audio: false });
     if (current !== generation) { stream.getTracks().forEach(track => track.stop()); return; }
     media = stream;
     stream.getVideoTracks()[0].addEventListener("ended", () => { if (current === generation) stop("Camera ended. Please restart the camera."); });
@@ -141,7 +196,8 @@ form.addEventListener("submit", async event => {
     const clockStart = performance.now();
     await reportZoom(stream.getVideoTracks()[0]);
     if (current !== generation) return;
-    await publish(current, paired.serverTime, clockStart);
+    const limit = Number.isSafeInteger(paired.maxFrameBytes) && paired.maxFrameBytes > 0 ? paired.maxFrameBytes : legacyFrameBytes;
+    await publish(current, paired.serverTime, clockStart, profile, fps, limit);
   } catch (error) { if (current === generation) stop(`Streaming failed: ${error.message}`); }
 });
 stopButton.addEventListener("click", () => stop());

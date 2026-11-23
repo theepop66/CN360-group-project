@@ -52,7 +52,7 @@ async function readImage(req, limit = MAX_BYTES) {
   return Buffer.concat(chunks);
 }
 
-export function createPhoneCamera({ pairingCode = randomBytes(12).toString("hex"), now = Date.now } = {}) {
+export function createPhoneCamera({ pairingCode = randomBytes(12).toString("hex"), now = Date.now, maxFrameBytes = MAX_BYTES } = {}) {
   let publisher = null;
   let frame = null;
   let uploads = 0;
@@ -89,7 +89,7 @@ export function createPhoneCamera({ pairingCode = randomBytes(12).toString("hex"
       if (publisher && now() - publisher.lastSeen < LEASE_MS) return reply(res, 409, { error: "camera_in_use_stop_other_sender_or_wait_10s" });
       clear();
       publisher = { sessionId: randomUUID(), token: randomBytes(24).toString("hex"), lastSeen: now(), sequence: 0, zoom: createCameraZoomState() };
-      return reply(res, 201, { sessionId: publisher.sessionId, token: publisher.token, serverTime: now() });
+      return reply(res, 201, { sessionId: publisher.sessionId, token: publisher.token, serverTime: now(), maxFrameBytes });
     }
     if (pathname === "/phone-camera/zoom" && req.method === "GET") {
       return reply(res, 200, { sessionId: publisher?.sessionId ?? null, available: Boolean(fresh()), ...(publisher?.zoom.state() ?? { supported: false, status: "offline" }) });
@@ -129,12 +129,12 @@ export function createPhoneCamera({ pairingCode = randomBytes(12).toString("hex"
       }
       if (req.method !== "POST" || !pathname.endsWith("frame")) { req.resume(); return reply(res, 405, { error: "method_not_allowed" }); }
       if (req.headers["content-type"] !== "image/jpeg") { req.resume(); return reply(res, 415, { error: "jpeg_required" }); }
-      if (Number(req.headers["content-length"]) > MAX_BYTES) { req.resume(); return reply(res, 413, { error: "image_too_large" }); }
+      if (Number(req.headers["content-length"]) > maxFrameBytes) { req.resume(); return reply(res, 413, { error: "image_too_large" }); }
       if (uploads >= 2) { req.resume(); return reply(res, 429, { error: "too_many_uploads" }); }
       let bytes;
       uploads++;
       const timeout = setTimeout(() => req.destroy(), 4000);
-      try { bytes = await readImage(req); }
+      try { bytes = await readImage(req, maxFrameBytes); }
       catch (error) { if (!res.destroyed) reply(res, error.message === "image_too_large" ? 413 : 400, { error: "image_upload_failed" }); return; }
       finally { uploads--; clearTimeout(timeout); }
       // Ownership and ordering must be rechecked after the asynchronous body read.
@@ -152,7 +152,7 @@ export function createPhoneCamera({ pairingCode = randomBytes(12).toString("hex"
       }
       frame = { bytes, ...dimensions, sessionId: owner.sessionId, sequence, capturedMs };
       for (const viewer of viewers) writeFrame(viewer, frame);
-      return reply(res, 200, { accepted: true, sequence, zoomCommand: null });
+      return reply(res, 200, { accepted: true, sequence, zoomCommand: null, frame: { ...dimensions, bytes: bytes.length, capturedAtMs: capturedMs } });
     }
     if (req.method !== "GET") { req.resume(); return reply(res, 405, { error: "method_not_allowed" }); }
     if (pathname === "/phone-camera/health" || pathname === "/health") return reply(res, fresh() ? 200 : 503, {

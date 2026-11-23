@@ -15,6 +15,17 @@
     <form id="sender-form">
       <label for="pairing-code">Pairing code from the PC test window</label>
       <input id="pairing-code" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" required>
+      <label for="camera-quality">Image quality</label>
+      <select id="camera-quality">
+        <option value="original">Original</option>
+        <option value="detail">High detail (up to 1080p)</option>
+      </select>
+      <label for="camera-rate">Frame rate</label>
+      <select id="camera-rate">
+        <option value="original">Original</option>
+        <option value="10">Up to 10 FPS</option>
+        <option value="15">Up to 15 FPS</option>
+      </select>
       <div class="actions">
         <button id="start" type="submit">Start streaming</button>
         <button id="stop" type="button" disabled>Stop</button>

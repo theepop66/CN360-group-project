@@ -154,6 +154,10 @@ h2 {
   background: #030807;
 }
 
+.video-stage[data-camera-fit="contain"] .camera-feed {
+  object-fit: contain;
+}
+
 #detection-overlay {
   z-index: 1;
   pointer-events: none;

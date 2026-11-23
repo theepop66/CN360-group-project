@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   VIEW_MODES,
   isViewMode,
+  xrContextError,
   isSessionModeSupported,
   isImmersiveArSupported,
   isImmersiveVrSupported
@@ -14,6 +15,13 @@ test("recognizes only the three declared view modes", () => {
   assert.equal(isViewMode(VIEW_MODES.VR), true);
   assert.equal(isViewMode("immersive-ar"), false);
   assert.equal(isViewMode(undefined), false);
+});
+
+test("insecure immersive modes identify HTTPS as the missing requirement", () => {
+  assert.match(xrContextError(VIEW_MODES.VR, false), /VR cinema requires HTTPS/);
+  assert.match(xrContextError(VIEW_MODES.AR, false), /AR passthrough requires HTTPS/);
+  assert.equal(xrContextError(VIEW_MODES.FLAT, false), null);
+  assert.equal(xrContextError(VIEW_MODES.VR, true), null);
 });
 
 test("reports unsupported when navigator.xr is missing", async () => {

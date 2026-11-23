@@ -1,0 +1,150 @@
+import { readCameraZoom, applyCameraZoom } from "./camera-zoom.js";
+
+const form = document.querySelector("#sender-form");
+const startButton = document.querySelector("#start");
+const stopButton = document.querySelector("#stop");
+const codeInput = document.querySelector("#pairing-code");
+const status = document.querySelector("#status");
+const video = document.querySelector("#preview");
+const zoomStatus = document.querySelector("#camera-zoom-status");
+const canvas = document.createElement("canvas");
+let generation = 0;
+let media = null;
+let session = null;
+let pending = null;
+let cancelFrameWait = null;
+let zoomApplyingGeneration = null;
+
+function nextVideoFrame() {
+  return new Promise((resolve, reject) => {
+    let callbackId;
+    const finish = error => {
+      clearTimeout(timer);
+      if (callbackId !== undefined) video.cancelVideoFrameCallback(callbackId);
+      if (cancelFrameWait === cancel) cancelFrameWait = null;
+      if (error) reject(error); else resolve();
+    };
+    const cancel = () => finish(new Error("Stopped waiting for a camera frame"));
+    const timer = setTimeout(() => finish(new Error("No new camera frame. Please restart the camera.")), 2000);
+    cancelFrameWait = cancel;
+    callbackId = video.requestVideoFrameCallback(() => finish());
+  });
+}
+
+async function api(path, options) {
+  const controller = new AbortController();
+  pending = controller;
+  const timer = setTimeout(() => controller.abort(), 4000);
+  try {
+    const response = await fetch(path, { ...options, signal: controller.signal, cache: "no-store" });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error ?? `HTTP ${response.status}`);
+    return result;
+  } finally { clearTimeout(timer); if (pending === controller) pending = null; }
+}
+
+function stop(message = "Streaming stopped") {
+  generation++;
+  zoomApplyingGeneration = null;
+  pending?.abort();
+  cancelFrameWait?.();
+  if (session) {
+    void fetch("/phone-camera/session", { method: "DELETE", headers: { Authorization: `Bearer ${session.token}` }, keepalive: true }).catch(() => {});
+    session = null;
+  }
+  media?.getTracks().forEach(track => track.stop());
+  media = null; video.srcObject = null;
+  startButton.disabled = false; stopButton.disabled = true; codeInput.disabled = false;
+  status.textContent = message;
+}
+
+async function publish(current, serverTime, clockStart) {
+  let sequence = 0;
+  let confirmedZoomCommand = 0;
+  const track = media.getVideoTracks()[0];
+  while (current === generation) {
+    await nextVideoFrame();
+    if (current !== generation) return;
+    if (!video.videoWidth || video.readyState < 2 || media.getVideoTracks()[0].muted) throw new Error("Camera paused. Please restart the camera.");
+    const scale = Math.min(1, 960 / video.videoWidth, 720 / video.videoHeight);
+    canvas.width = Math.round(video.videoWidth * scale);
+    canvas.height = Math.round(video.videoHeight * scale);
+    const capturedMs = Math.floor(serverTime + performance.now() - clockStart);
+    canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.75));
+    if (current !== generation) return;
+    if (!blob) throw new Error("Could not encode the camera frame");
+    const result = await api("/phone-camera/frame", {
+      method: "POST", body: blob,
+      headers: { Authorization: `Bearer ${session.token}`, "Content-Type": "image/jpeg", "X-Frame-Sequence": String(++sequence), "X-Captured-At-Ms": String(capturedMs), "X-Camera-Zoom-Command": String(confirmedZoomCommand) }
+    });
+    if (current !== generation) return;
+    if (result.zoomCommand) {
+      zoomApplyingGeneration = current;
+      let error = null;
+      try {
+        await applyCameraZoom(track, result.zoomCommand.value, async () => {
+          if (current !== generation) throw new Error("sender_stopped");
+          await nextVideoFrame();
+          if (current !== generation) throw new Error("sender_stopped");
+          await nextVideoFrame();
+        });
+      } catch (failure) {
+        // A timed-out camera operation may still finish later. Stop this track
+        // instead of uploading pixels with an uncertain zoom revision.
+        if (failure.message === "camera_zoom_timeout") throw failure;
+        error = "camera_zoom_apply_failed";
+      }
+      finally { if (zoomApplyingGeneration === current) zoomApplyingGeneration = null; }
+      if (current !== generation) return;
+      await reportZoom(track, result.zoomCommand.id, error);
+      confirmedZoomCommand = result.zoomCommand.id;
+      if (current !== generation) return;
+    }
+    status.textContent = `Streaming · ${canvas.width} × ${canvas.height} · Frame ${result.sequence}`;
+    await new Promise(resolve => setTimeout(resolve, 125));
+  }
+}
+
+async function reportZoom(track, commandId = 0, error = null) {
+  const camera = readCameraZoom(track);
+  await api("/phone-camera/camera-state", {
+    method: "POST", headers: { Authorization: `Bearer ${session.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ ...camera, commandId, error })
+  });
+  zoomStatus.textContent = !camera.supported ? "This browser/camera does not support remote camera zoom" :
+    `Actual camera zoom ${camera.value.toFixed(2)}× (${camera.min}–${camera.max}×)${error ? " · Zoom command failed" : ""}`;
+}
+
+form.addEventListener("submit", async event => {
+  event.preventDefault();
+  if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) { status.textContent = "Open this page over trusted HTTPS to use the camera"; return; }
+  if (!video.requestVideoFrameCallback) { status.textContent = "This browser cannot confirm new frames. Please update Safari."; return; }
+  const current = ++generation;
+  startButton.disabled = true; stopButton.disabled = false; codeInput.disabled = true;
+  status.textContent = "Requesting camera access...";
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" }, width: { ideal: 960 }, height: { ideal: 720 }, zoom: true }, audio: false });
+    if (current !== generation) { stream.getTracks().forEach(track => track.stop()); return; }
+    media = stream;
+    stream.getVideoTracks()[0].addEventListener("ended", () => { if (current === generation) stop("Camera ended. Please restart the camera."); });
+    stream.getVideoTracks()[0].addEventListener("mute", () => { if (current === generation && zoomApplyingGeneration !== current) stop("Camera paused. Please restart the camera."); });
+    video.srcObject = stream;
+    await video.play();
+    if (current !== generation) return;
+    const paired = await api("/phone-camera/session", { method: "POST", headers: { Authorization: `Bearer ${codeInput.value.trim()}` } });
+    if (current !== generation) {
+      void fetch("/phone-camera/session", { method: "DELETE", headers: { Authorization: `Bearer ${paired.token}` }, keepalive: true }).catch(() => {});
+      return;
+    }
+    session = paired;
+    const clockStart = performance.now();
+    await reportZoom(stream.getVideoTracks()[0]);
+    if (current !== generation) return;
+    await publish(current, paired.serverTime, clockStart);
+  } catch (error) { if (current === generation) stop(`Streaming failed: ${error.message}`); }
+});
+stopButton.addEventListener("click", () => stop());
+document.addEventListener("visibilitychange", () => { if (document.hidden) stop("Streaming stopped because this page was hidden. Tap Start to reconnect."); });
+window.addEventListener("pagehide", () => stop());
+video.addEventListener("pause", () => { if (media && video.paused) stop("Video paused. Please restart the camera."); });

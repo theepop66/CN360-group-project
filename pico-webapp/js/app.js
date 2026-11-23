@@ -1,12 +1,22 @@
 import { getCoveredImageRect, mapBoxToDisplay, parseDetectionPayload } from "./overlay.js";
+import { cameraConfig } from "./camera-config.js";
+import { createPhoneCameraControls } from "./phone-camera-controls.js";
 import { createDetectionOrderTracker } from "./detection-order.js";
 import { sendPrompt } from "./prompt.js";
 import { parseCameraMessage } from "./camera-message.js";
-import { VIEW_MODES, isImmersiveArSupported, isImmersiveVrSupported } from "./xr-modes.js";
+import { VIEW_MODES, xrContextError, isImmersiveArSupported, isImmersiveVrSupported } from "./xr-modes.js";
 import { startArPassthrough } from "./ar-passthrough.js";
-import { startVrCinema } from "./vr-cinema.js";
+import { startVrCinema } from "./vr-cinema.js?v=4";
 import { installXrEmulatorIfRequested } from "./dev-xr-emulator.js";
 import { setMode, setServoAngle, runSweep, sendVerdict } from "./servo.js";
+import { createConveyorSender } from "./conveyor.js";
+import { controlFeedback } from "./control-feedback.js";
+import {
+  attachXrControllerShortcuts,
+  clampAngle,
+  DEFAULT_CONTROLLER_SHORTCUTS
+} from "./xr-controller.js?v=4";
+import { createWebRtcReceiver } from "./webrtc-camera.js";
 
 const STORAGE_KEY = "cn360-hud-connections";
 const defaults = window.HUD_CONFIG ?? {};
@@ -39,6 +49,11 @@ const elements = {
   modeUrl: document.querySelector("#mode-url"),
   resetSettings: document.querySelector("#reset-settings"),
   fullscreenButton: document.querySelector("#fullscreen-button"),
+  zoomOut: document.querySelector("#camera-zoom-out"),
+  zoomIn: document.querySelector("#camera-zoom-in"),
+  zoomReset: document.querySelector("#camera-zoom-reset"),
+  phoneControlCode: document.querySelector("#phone-control-code"),
+  zoomFeedback: document.querySelector("#camera-zoom-feedback"),
   viewerToolbar: document.querySelector(".viewer-toolbar"),
   servoModeAuto: document.querySelector("#servo-mode-auto"),
   servoModeManual: document.querySelector("#servo-mode-manual"),
@@ -47,7 +62,8 @@ const elements = {
   servoSweep: document.querySelector("#servo-sweep"),
   servoPass: document.querySelector("#servo-pass"),
   servoReject: document.querySelector("#servo-reject"),
-  servoFeedback: document.querySelector("#servo-feedback")
+  servoFeedback: document.querySelector("#servo-feedback"),
+  controllerInput: document.querySelector("#controller-input")
 };
 
 // Where the prompt form lives outside fullscreen, so it can be moved back
@@ -77,12 +93,23 @@ let streamResetObserved = false;
 let detachStreamListeners = () => {};
 let localWebcamStream = null;
 let localWebcamGeneration = 0;
+let webrtcReceiver = null;
 let n8nFrameGeneration = 0;
 let n8nFrameTimer = null;
 let pendingN8nFrame = null;
 let currentViewMode = VIEW_MODES.FLAT;
 let activeXrController = null;
 let vrRenderLoopHandle = null;
+let activeControllerShortcuts = null;
+let phoneZoomChanging = false;
+// The firmware never reports the servo position, so the HUD mirrors the last
+// angle it successfully asked for; this is also the thumbstick's starting point.
+let controllerAngle = 0;
+let pendingControllerAngle = null;
+let controllerAngleSending = false;
+const controllerTrigger = { disabled: false };
+let controllerActionBusy = false;
+const xrDebugEnabled = new URLSearchParams(window.location.search).has("xrdebug");
 
 function loadConfig() {
   let saved = {};
@@ -92,11 +119,11 @@ function loadConfig() {
     localStorage.removeItem(STORAGE_KEY);
   }
 
-  const cameraSource = saved.cameraSource ?? defaults.cameraSource;
+  const controllerShortcuts = loadControllerShortcuts(
+    saved.controllerShortcuts ?? defaults.controllerShortcuts ?? {}
+  );
   return {
-    cameraSource: cameraSource === "remote" ? "remote" : "local",
-    streamUrl: saved.streamUrl ?? defaults.raspberryPiStreamUrl ?? "",
-    healthUrl: saved.healthUrl ?? defaults.raspberryPiHealthUrl ?? "",
+    ...cameraConfig(saved, defaults, window.location),
     websocketUrl: saved.websocketUrl ?? defaults.n8nDetectionWebSocketUrl ?? "",
     promptUrl: saved.promptUrl ?? defaults.n8nPromptWebhookUrl ?? "",
     servoUrl: saved.servoUrl ?? defaults.controlUnitServoUrl ?? "",
@@ -106,13 +133,46 @@ function loadConfig() {
     healthRequestTimeoutMs: Number(defaults.healthRequestTimeoutMs) || 1500,
     detectionTtlMs: Number(defaults.detectionTtlMs) || 3000,
     promptTimeoutMs: Number(defaults.promptTimeoutMs) || 8000,
-    servoRequestTimeoutMs: Number(defaults.servoRequestTimeoutMs) || 5000
+    servoRequestTimeoutMs: Number(defaults.servoRequestTimeoutMs) || 5000,
+    controllerShortcuts
   };
 }
+
+// config.js owns the tunables; the button map is merged so a deployment can
+// override one mapping without restating the whole block.
+function loadControllerShortcuts(source = {}) {
+  return {
+    ...DEFAULT_CONTROLLER_SHORTCUTS,
+    ...source,
+    buttons: { ...DEFAULT_CONTROLLER_SHORTCUTS.buttons, ...(source.buttons ?? {}) }
+  };
+}
+
+// Last status pills, replayed into the VR scene when it starts (VR has no DOM).
+const lastStatus = { camera: null, socket: null };
 
 function setStatus(element, text, state = "idle") {
   element.textContent = text;
   element.className = `status status--${state}`;
+
+  const kind = element === elements.streamStatus
+    ? "camera"
+    : element === elements.socketStatus ? "socket" : null;
+  if (kind) {
+    lastStatus[kind] = { text, state };
+    activeXrController?.setStatusText?.(kind, text, state);
+  }
+}
+
+// Push the current HUD state into a freshly started VR scene.
+function syncXrHud() {
+  if (!activeXrController) return;
+  activeXrController.setSummaryText?.(elements.summary.textContent);
+  activeXrController.setServoStatusText?.(elements.servoFeedback.textContent);
+  activeXrController.setControllerInputText?.(elements.controllerInput?.textContent ?? "");
+  for (const [kind, status] of Object.entries(lastStatus)) {
+    if (status) activeXrController.setStatusText?.(kind, status.text, status.state);
+  }
 }
 
 function populateSettings() {
@@ -140,6 +200,7 @@ function hideStaleVideo(message = "Waiting for a camera source…") {
 }
 
 function revealFreshVideo(mediaElement = elements.stream) {
+  if (phoneZoomChanging && isPhoneCameraSource()) return;
   elements.stream.classList.toggle("video-feed--hidden", mediaElement !== elements.stream);
   elements.snapshot.classList.toggle("video-feed--hidden", mediaElement !== elements.snapshot);
   elements.webcam.classList.toggle("video-feed--hidden", mediaElement !== elements.webcam);
@@ -148,7 +209,7 @@ function revealFreshVideo(mediaElement = elements.stream) {
 }
 
 function activeMediaElement() {
-  if (config.cameraSource === "local") return elements.webcam;
+  if (config.cameraSource === "local" || config.cameraSource === "webrtc") return elements.webcam;
   return isN8nFrameVisible() ? elements.snapshot : elements.stream;
 }
 
@@ -213,7 +274,7 @@ function showRemoteSource(source, {
   connectingText = "Camera: connecting",
   liveText = "Camera: remote live"
 } = {}) {
-  if (config.cameraSource !== "remote") return;
+  if (config.cameraSource !== "remote" || (phoneZoomChanging && isPhoneCameraSource())) return;
 
   window.clearTimeout(streamRetryTimer);
   detachStreamListeners();
@@ -355,14 +416,57 @@ async function startLocalWebcam() {
   }
 }
 
+function stopWebRtc() {
+  if (webrtcReceiver) { webrtcReceiver.stop(); webrtcReceiver = null; }
+}
+
+function startWebRtcReceiver() {
+  stopWebRtc();
+  setPlaceholder("Connecting to phone camera via WebRTC…");
+  setStatus(elements.streamStatus, "Camera: waiting for WebRTC", "idle");
+
+  webrtcReceiver = createWebRtcReceiver();
+  webrtcReceiver.start(
+    (remoteStream) => {
+      elements.webcam.srcObject = remoteStream;
+      elements.webcam.play().catch(() => {});
+      revealFreshVideo(elements.webcam);
+      setStatus(elements.streamStatus, "Camera: WebRTC live", "ok");
+      drawDetections();
+    },
+    (state) => {
+      const messages = {
+        "waiting-for-sender": "Waiting for phone to connect…",
+        "requesting-offer": "Phone found, negotiating…",
+        "signal-disconnected": "Signaling lost, reconnecting…",
+        "sender-left": "Phone disconnected.",
+        "failed": "WebRTC connection failed.",
+        "disconnected": "WebRTC disconnected."
+      };
+      if (messages[state]) {
+        if (state === "sender-left" || state === "failed" || state === "disconnected") {
+          hideStaleVideo(messages[state]);
+          setStatus(elements.streamStatus, `Camera: ${state}`, "error");
+        } else {
+          setPlaceholder(messages[state]);
+          setStatus(elements.streamStatus, `Camera: ${state}`, "idle");
+        }
+      }
+    }
+  );
+}
+
 function connectCamera() {
   stopN8nFrame();
   stopLocalWebcam();
   stopRemoteStream();
   stopHealthPolling();
+  stopWebRtc();
   cameraHealthState = null;
 
-  if (config.cameraSource === "local") {
+  if (config.cameraSource === "webrtc") {
+    startWebRtcReceiver();
+  } else if (config.cameraSource === "local") {
     void startLocalWebcam();
   } else {
     connectStream();
@@ -415,7 +519,7 @@ function showN8nFrame(imageUrl, {
   deferOverlay = false,
   returnToLive = false
 } = {}) {
-  if (config.cameraSource !== "remote") return;
+  if (config.cameraSource !== "remote" || (phoneZoomChanging && isPhoneCameraSource())) return;
 
   n8nFrameGeneration += 1;
   const generation = n8nFrameGeneration;
@@ -649,7 +753,7 @@ function connectWebSocket() {
       latestResult = parsed;
       const count = parsed.detections.length;
       const eventTime = parsed.timestamp ? new Date(parsed.timestamp) : new Date();
-      setSummary(count === 0
+      setSummary(parsed.reviewRequired ? "Human review required · controller reject · model suggestion: " + (parsed.modelSuggestion ?? "unavailable") : count === 0
         ? "AI reports no detections"
         : `${count} detection${count === 1 ? "" : "s"} · ${eventTime.toLocaleTimeString()}`);
       setStatus(elements.socketStatus, "AI data: receiving", "ok");
@@ -712,24 +816,23 @@ function drawDetections() {
   const context = elements.canvas.getContext("2d");
   context.setTransform(dpr, 0, 0, dpr, 0, 0);
   context.clearRect(0, 0, rect.width, rect.height);
+  drawDetectionBoxes(context, { width: rect.width, height: rect.height }, activeMediaDimensions());
+}
 
+// The DOM overlay and VR texture each map boxes using their own viewport.
+function drawDetectionBoxes(context, viewport, mediaDimensions) {
   if (!latestResult) return;
-
-  const mediaDimensions = activeMediaDimensions();
   const overlaySource = latestResult.source ?? {
-    width: mediaDimensions.width || rect.width,
-    height: mediaDimensions.height || rect.height
+    width: mediaDimensions.width || viewport.width,
+    height: mediaDimensions.height || viewport.height
   };
 
   for (const detection of latestResult.detections) {
-    const displayBox = mapBoxToDisplay(detection, overlaySource, {
-      width: rect.width,
-      height: rect.height
-    }, "cover");
+    const displayBox = mapBoxToDisplay(detection, overlaySource, viewport, "cover");
 
     context.strokeStyle = detection.color;
     context.fillStyle = detection.color;
-    context.lineWidth = Math.max(3, Math.min(rect.width, rect.height) / 180);
+    context.lineWidth = Math.max(3, Math.min(viewport.width, viewport.height) / 180);
     context.strokeRect(displayBox.x, displayBox.y, displayBox.width, displayBox.height);
 
     const confidence = detection.confidence === null
@@ -761,25 +864,115 @@ function compositeVrFrame() {
   const context = elements.vrCompositeCanvas.getContext("2d");
   const media = activeMediaElement();
   const mediaDimensions = activeMediaDimensions();
+  const viewport = { width: VR_CANVAS_WIDTH, height: VR_CANVAS_HEIGHT };
 
   if (mediaDimensions.width > 0 && mediaDimensions.height > 0 && !media.classList.contains("video-feed--hidden")) {
+    context.fillStyle = "#e3edfb";
+    context.fillRect(0, 0, VR_CANVAS_WIDTH, VR_CANVAS_HEIGHT);
     const destRect = getCoveredImageRect(
-      { width: VR_CANVAS_WIDTH, height: VR_CANVAS_HEIGHT },
+      viewport,
       mediaDimensions
     );
     context.drawImage(media, destRect.x, destRect.y, destRect.width, destRect.height);
+    drawDetectionBoxes(context, viewport, mediaDimensions);
   } else {
-    context.fillStyle = "#030807";
-    context.fillRect(0, 0, VR_CANVAS_WIDTH, VR_CANVAS_HEIGHT);
+    drawVrPlaceholder(context);
   }
-
-  // Layer the existing bounding-box overlay on top instead of recomputing
-  // detection boxes a second time for the VR screen texture. The overlay
-  // canvas's own size can differ from the fixed VR canvas; drawImage
-  // rescales it to fit, which stretches boxes slightly if the aspect
-  // ratios differ but keeps them aligned with the video underneath.
-  context.drawImage(elements.canvas, 0, 0, VR_CANVAS_WIDTH, VR_CANVAS_HEIGHT);
 }
+
+// Light-blue "waiting for camera" card shown on the VR screen until a frame
+// is available (mirrors the dashed camera placeholder of the 2D/AR HUD).
+function vrRoundRect(context, x, y, w, h, r) {
+  context.moveTo(x + r, y);
+  context.arcTo(x + w, y, x + w, y + h, r);
+  context.arcTo(x + w, y + h, x, y + h, r);
+  context.arcTo(x, y + h, x, y, r);
+  context.arcTo(x, y, x + w, y, r);
+  context.closePath();
+}
+
+function drawVrPlaceholder(context) {
+  context.fillStyle = "#e3edfb";
+  context.fillRect(0, 0, VR_CANVAS_WIDTH, VR_CANVAS_HEIGHT);
+
+  context.save();
+  context.setLineDash([14, 10]);
+  context.lineWidth = 3;
+  context.strokeStyle = "rgba(60, 100, 165, 0.5)";
+  context.beginPath();
+  vrRoundRect(context, 28, 28, VR_CANVAS_WIDTH - 56, VR_CANVAS_HEIGHT - 56, 28);
+  context.stroke();
+  context.restore();
+
+  // camera glyph
+  const cx = VR_CANVAS_WIDTH / 2;
+  const cy = VR_CANVAS_HEIGHT / 2 - 70;
+  context.save();
+  context.strokeStyle = "#1c3a6b";
+  context.lineWidth = 9;
+  context.lineJoin = "round";
+  context.beginPath();
+  vrRoundRect(context, cx - 80, cy - 46, 160, 110, 16);
+  context.stroke();
+  context.beginPath();
+  context.arc(cx, cy + 9, 30, 0, Math.PI * 2);
+  context.stroke();
+  context.restore();
+
+  context.textAlign = "center";
+  context.fillStyle = "#14284b";
+  context.font = "700 44px system-ui, sans-serif";
+  context.fillText("Waiting for camera", cx, cy + 150);
+  context.fillStyle = "#3d5a85";
+  context.font = "500 27px system-ui, sans-serif";
+  const message = elements.placeholderMessage.textContent || "Link a camera to start live inspection";
+  context.fillText(message.length > 70 ? `${message.slice(0, 69)}…` : message, cx, cy + 200);
+  context.textAlign = "start";
+}
+
+function isPhoneCameraSource() {
+  if (config.cameraSource !== "remote") return false;
+  try {
+    const stream = new URL(config.streamUrl, window.location.href);
+    return stream.origin === window.location.origin && stream.pathname === "/phone-camera/stream.mjpg";
+  } catch { return false; }
+}
+
+const phoneCameraControls = createPhoneCameraControls({
+  isActive: isPhoneCameraSource,
+  getCode: () => elements.phoneControlCode.value,
+  onState(state) {
+    const wasChanging = phoneZoomChanging;
+    phoneZoomChanging = state.active && (state.status === "pending" || (wasChanging && !state.available));
+    if (phoneZoomChanging && !wasChanging) {
+      stopN8nFrame();
+      stopRemoteStream();
+      hideStaleVideo("Waiting for a fresh frame after phone camera zoom…");
+    } else if (wasChanging && !phoneZoomChanging && state.active) {
+      connectStream();
+    }
+    const enabled = state.active && state.available && state.supported && state.authorized && !state.busy && state.status !== "pending";
+    const value = Number.isFinite(state.value) ? `${state.value.toFixed(2)}×` : "Camera";
+    const message = !state.active ? "Select the iPhone feed to control its camera." :
+      state.status === "pending" ? "Waiting for the iPhone to confirm camera zoom…" :
+      !state.available ? "Waiting for the iPhone camera." :
+      !state.supported ? "This phone/browser does not expose camera zoom control." :
+      !state.authorized ? "Enter the phone pairing code below to enable camera controls." :
+      state.error ? `Camera zoom error: ${state.error}` : `Phone camera ${value} (${state.min}–${state.max}×)`;
+    elements.zoomReset.textContent = value;
+    elements.zoomReset.setAttribute("aria-label", `Reset phone camera zoom (${value})`);
+    elements.zoomOut.disabled = !enabled || state.value <= state.min;
+    elements.zoomIn.disabled = !enabled || state.value >= state.max;
+    elements.zoomReset.disabled = !enabled;
+    elements.zoomFeedback.textContent = message;
+    activeXrController?.setZoomText?.(message);
+  }
+});
+elements.zoomOut.addEventListener("click", () => void phoneCameraControls.send("out"));
+elements.zoomIn.addEventListener("click", () => void phoneCameraControls.send("in"));
+elements.zoomReset.addEventListener("click", () => void phoneCameraControls.send("reset"));
+elements.phoneControlCode.addEventListener("input", () => phoneCameraControls.render());
+const cameraControlTimer = window.setInterval(() => void phoneCameraControls.refresh(), 250);
 
 function stopVrRenderLoop() {
   if (vrRenderLoopHandle !== null) {
@@ -802,11 +995,16 @@ function setModeButtonsState(mode) {
     button.setAttribute("aria-pressed", String(button.dataset.mode === mode));
   }
   elements.fullscreenButton.disabled = mode !== VIEW_MODES.FLAT;
+  phoneCameraControls.render();
 }
 
 async function exitCurrentXrMode() {
   stopVrRenderLoop();
   document.documentElement.classList.remove("xr-ar-active");
+  if (activeControllerShortcuts) {
+    activeControllerShortcuts.stop();
+    activeControllerShortcuts = null;
+  }
   const controller = activeXrController;
   activeXrController = null;
   if (controller) controller.stop();
@@ -821,6 +1019,12 @@ async function enterViewMode(targetMode) {
 
   if (targetMode === VIEW_MODES.FLAT) return;
 
+  const contextError = xrContextError(targetMode);
+  if (contextError) {
+    setStatus(elements.streamStatus, contextError, "error");
+    return;
+  }
+
   if (targetMode === VIEW_MODES.AR) {
     if (!(await isImmersiveArSupported())) {
       setStatus(elements.streamStatus, "AR passthrough is not supported on this browser/device.", "error");
@@ -832,11 +1036,12 @@ async function enterViewMode(targetMode) {
         onEnd: () => { void enterViewMode(VIEW_MODES.FLAT); }
       });
       document.documentElement.classList.add("xr-ar-active");
+      activeControllerShortcuts = startControllerShortcuts(activeXrController.session);
       currentViewMode = VIEW_MODES.AR;
       setModeButtonsState(VIEW_MODES.AR);
     } catch (error) {
       console.warn("Could not start AR passthrough:", error);
-      setStatus(elements.streamStatus, "Could not start AR passthrough.", "error");
+      setStatus(elements.streamStatus, `Could not start AR passthrough: ${error?.message || "unknown error"}`, "error");
     }
     return;
   }
@@ -849,14 +1054,17 @@ async function enterViewMode(targetMode) {
     try {
       activeXrController = await startVrCinema({
         compositeCanvasId: elements.vrCompositeCanvas.id,
+        onFrame: compositeVrFrame,
         onEnd: () => { void enterViewMode(VIEW_MODES.FLAT); }
       });
       startVrRenderLoop();
+      syncXrHud();
+      activeControllerShortcuts = startControllerShortcuts(activeXrController.session);
       currentViewMode = VIEW_MODES.VR;
       setModeButtonsState(VIEW_MODES.VR);
     } catch (error) {
       console.warn("Could not start VR cinema mode:", error);
-      setStatus(elements.streamStatus, "Could not start VR cinema mode.", "error");
+      setStatus(elements.streamStatus, `Could not start VR cinema: ${error?.message || "unknown error"}`, "error");
     }
   }
 }
@@ -899,20 +1107,16 @@ elements.promptForm.addEventListener("submit", async (event) => {
 // (wrong mode, or the unit is mid-cycle) — surfaced as feedback rather
 // than treated as a thrown error like a network failure or timeout.
 async function runServoAction(trigger, action, describeSuccess) {
+  if (trigger.disabled) return null;
   const wasDisabled = trigger.disabled;
   trigger.disabled = true;
   elements.servoFeedback.className = "feedback";
   elements.servoFeedback.textContent = "Sending…";
+  mirrorServoFeedbackToVr();
 
   try {
     const result = await action();
-    if (result?.accepted === false) {
-      elements.servoFeedback.className = "feedback";
-      elements.servoFeedback.textContent = "Control unit ignored this request (wrong mode, or mid-cycle).";
-    } else {
-      elements.servoFeedback.className = "feedback feedback--ok";
-      elements.servoFeedback.textContent = describeSuccess(result);
-    }
+    renderControlFeedback(result, describeSuccess);
     return result;
   } catch (error) {
     elements.servoFeedback.className = "feedback feedback--error";
@@ -922,7 +1126,14 @@ async function runServoAction(trigger, action, describeSuccess) {
     return null;
   } finally {
     trigger.disabled = wasDisabled;
+    mirrorServoFeedbackToVr();
   }
+}
+
+function renderControlFeedback(result, describeSuccess) {
+  const { state, text } = controlFeedback(result, describeSuccess);
+  elements.servoFeedback.className = `feedback${state === "idle" ? "" : ` feedback--${state}`}`;
+  elements.servoFeedback.textContent = text;
 }
 
 async function setServoMode(mode) {
@@ -938,6 +1149,130 @@ async function setServoMode(mode) {
   }
 }
 
+// VR cinema has no DOM buttons to read feedback from, so every controller
+// action is mirrored onto the floating status line in the scene.
+function mirrorServoFeedbackToVr() {
+  activeXrController?.setServoStatusText?.(elements.servoFeedback.textContent);
+}
+
+function syncAngleUi(angle) {
+  elements.servoAngle.value = String(angle);
+  elements.servoAngleValue.textContent = String(angle);
+}
+
+// Thumbstick jogs can arrive faster than the ESP32 answers, so keep only the
+// newest requested angle and send the next one when the previous settles.
+async function pushControllerAngle(angle) {
+  pendingControllerAngle = angle;
+  if (controllerAngleSending) return;
+
+  controllerAngleSending = true;
+  try {
+    while (pendingControllerAngle !== null) {
+      const next = pendingControllerAngle;
+      pendingControllerAngle = null;
+      try {
+        const result = await setServoAngle({
+          url: config.servoUrl,
+          angle: next,
+          timeoutMs: config.servoRequestTimeoutMs
+        });
+        renderControlFeedback(result, () => `Servo angle command accepted: ${next}°.`);
+      } catch (error) {
+        elements.servoFeedback.className = "feedback feedback--error";
+        elements.servoFeedback.textContent = error.name === "AbortError"
+          ? "Control unit request timed out."
+          : `Control unit error: ${error.message}`;
+        pendingControllerAngle = null;
+        break;
+      }
+      mirrorServoFeedbackToVr();
+    }
+  } finally {
+    controllerAngleSending = false;
+    mirrorServoFeedbackToVr();
+  }
+}
+
+async function handleControllerAction(action) {
+  // Do not race a mode change with a sweep or another controller command.
+  if (controllerActionBusy || controllerAngleSending) {
+    elements.servoFeedback.textContent = "Wait for the current control request to finish, then press again.";
+    mirrorServoFeedbackToVr();
+    return;
+  }
+  controllerActionBusy = true;
+  try {
+    if (action === "reject" || action === "pass") {
+      await runServoAction(
+        controllerTrigger,
+        () => sendVerdict({
+          servoUrl: config.servoUrl,
+          action,
+          timeoutMs: config.servoRequestTimeoutMs
+        }),
+        (res) => (action === "reject" ? `Marked as ${res.status ?? "reject"}.` : "Marked as pass.")
+      );
+    } else if (action === "sweep") {
+      await runServoAction(
+        controllerTrigger,
+        () => runSweep({ url: config.servoUrl, timeoutMs: config.servoRequestTimeoutMs }),
+        () => "Sweep command accepted."
+      );
+    } else if (action === "manual" || action === "auto") {
+      await setServoMode(action);
+    }
+  } finally {
+    controllerActionBusy = false;
+    mirrorServoFeedbackToVr();
+  }
+}
+
+function startControllerShortcuts(session) {
+  if (!session) {
+    console.warn("No WebXR session available, controller shortcuts are disabled.");
+    return null;
+  }
+
+  const conveyor = createConveyorSender({
+    servoUrl: config.servoUrl,
+    onError: () => {
+      elements.servoFeedback.textContent = "Conveyor connection lost. Release the stick before retrying.";
+      mirrorServoFeedbackToVr();
+    }
+  });
+  return attachXrControllerShortcuts({
+    session,
+    shortcuts: config.controllerShortcuts,
+    initialAngle: controllerAngle,
+    onCameraZoom: action => { void phoneCameraControls.send(action); },
+    onConveyor: (direction) => conveyor.setDirection(direction),
+    onStop: () => conveyor.stop(),
+    onAngle: (angle) => {
+      if (controllerActionBusy) {
+        activeControllerShortcuts?.setAngle?.(controllerAngle);
+        return;
+      }
+      controllerAngle = angle;
+      syncAngleUi(angle);
+      void pushControllerAngle(angle);
+    },
+    onAction: (action) => {
+      void handleControllerAction(action);
+    },
+    onDebug: xrDebugEnabled
+      ? (text) => {
+          console.info(`[xr-controller] ${text}`);
+          if (elements.controllerInput) {
+            elements.controllerInput.hidden = false;
+            elements.controllerInput.textContent = `Input: ${text}`;
+          }
+          activeXrController?.setControllerInputText?.(`Input: ${text}`);
+        }
+      : null
+  });
+}
+
 elements.servoModeAuto.addEventListener("click", () => void setServoMode("auto"));
 elements.servoModeManual.addEventListener("click", () => void setServoMode("manual"));
 
@@ -947,6 +1282,8 @@ elements.servoAngle.addEventListener("input", () => {
 
 elements.servoAngle.addEventListener("change", () => {
   const angle = Number(elements.servoAngle.value);
+  controllerAngle = clampAngle(angle);
+  activeControllerShortcuts?.setAngle?.(controllerAngle);
   void runServoAction(
     elements.servoAngle,
     () => setServoAngle({ url: config.servoUrl, angle, timeoutMs: config.servoRequestTimeoutMs }),
@@ -984,7 +1321,7 @@ elements.settingsForm.addEventListener("submit", (event) => {
   const previousWebsocketUrl = config.websocketUrl;
   config = {
     ...config,
-    cameraSource: elements.cameraSource.value === "remote" ? "remote" : "local",
+    cameraSource: ["remote", "webrtc"].includes(elements.cameraSource.value) ? elements.cameraSource.value : "local",
     streamUrl: elements.streamUrl.value.trim(),
     healthUrl: elements.healthUrl.value.trim(),
     websocketUrl: elements.websocketUrl.value.trim(),
@@ -1052,14 +1389,20 @@ if ("ResizeObserver" in window) {
 }
 
 window.addEventListener("pagehide", () => {
+  window.clearInterval(cameraControlTimer);
+  phoneCameraControls.stop();
+  elements.phoneControlCode.value = "";
   connectionGeneration += 1;
   socket?.close();
   stopLocalWebcam();
   stopRemoteStream();
   stopHealthPolling();
+  stopWebRtc();
 });
 
 populateSettings();
+phoneCameraControls.render();
+void phoneCameraControls.refresh();
 connectCamera();
 connectWebSocket();
 void installXrEmulatorIfRequested();

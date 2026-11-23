@@ -5,15 +5,40 @@ window.HUD_CONFIG = Object.freeze({
   cameraSource: "local",
   raspberryPiStreamUrl: "http://raspberrypi.local:8000/stream.mjpg",
   raspberryPiHealthUrl: "http://raspberrypi.local:8000/health",
-  // Stock n8n does not expose an arbitrary WebSocket broadcast route. Point
-  // this at the gateway/proxy owned by the n8n integration.
-  n8nDetectionWebSocketUrl: "ws://n8n-gateway.local:8081/detections",
+  // hud-server proxies this same-origin channel to the relay. HTTPS pages use
+  // wss:// so WebXR does not block the overlay as mixed content.
+  n8nDetectionWebSocketUrl: (window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.host + "/detections",
   n8nPromptWebhookUrl: "http://n8n.local:5678/webhook/detection-prompt",
-  // 360ControlUnit (ESP32) defaults — matches the static IP in
-  // 360ControlUnit/src/main.cpp. /verdict is derived from servoUrl at
-  // runtime (see js/servo.js), not configured separately.
-  controlUnitServoUrl: "http://192.168.1.50/servo",
-  controlUnitModeUrl: "http://192.168.1.50/mode",
+  // 360ControlUnit (ESP32) endpoints are same-origin paths served by
+  // tools/hud-server.mjs, which proxies /esp/* to the ESP32 (172.20.10.5).
+  // Same-origin keeps WebXR working over HTTPS without mixed-content blocking.
+  // /verdict is derived from servoUrl at runtime (see js/servo.js), not
+  // configured separately.
+  controlUnitServoUrl: "/esp/servo",
+  controlUnitModeUrl: "/esp/mode",
+  // PICO 4 controller shortcuts, active only inside the AR/VR XR modes: the
+  // flat 2D browser never exposes controller buttons to the page. The right
+  // stick controls the servo. Left up/down controls the conveyor, left/right
+  // zooms the paired phone camera, and left stick click resets to 1x.
+  // Camera control needs the phone pairing code entered in Connection settings.
+  // Buttons use the
+  // PICO xr-standard indices (1 grip, 3 stick click, 4 A/X, 5 B/Y); open the HUD with
+  // ?xrdebug=1 to log the real indices if PICO reports a different layout.
+  controllerShortcuts: {
+    stepDeg: 5,
+    repeatMs: 220,
+    firstRepeatMs: 350,
+    deadzone: 0.35,
+    buttonCooldownMs: 350,
+    buttons: {
+      squeeze: "sweep",
+      rightPrimary: "reject",
+      rightSecondary: "pass",
+      leftPrimary: "manual",
+      leftSecondary: "auto",
+      leftStick: "reset-zoom"
+    }
+  },
   reconnectDelayMs: 2000,
   healthPollIntervalMs: 2000,
   healthRequestTimeoutMs: 1500,

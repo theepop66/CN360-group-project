@@ -7,7 +7,7 @@
     <title>VisionQC</title>
     <link rel="stylesheet" href="./styles.css" />
     <script src="./config.js"></script>
-    <script type="module" src="./js/app.js"></script>
+    <script type="module" src="./js/app.js?v=4"></script>
   </head>
   <body>
     <main class="app-shell">
@@ -55,6 +55,11 @@
           <div class="viewer-toolbar">
             <span id="detection-summary">No recent detections</span>
             <div class="toolbar-actions">
+              <div class="zoom-controls" role="group" aria-label="Phone camera zoom" title="Controls the paired phone camera; left joystick left/right, click to reset">
+                <button id="camera-zoom-out" class="icon-button" type="button" aria-label="Zoom out" disabled>−</button>
+                <button id="camera-zoom-reset" class="icon-button" type="button" aria-label="Reset phone camera zoom" disabled>Camera</button>
+                <button id="camera-zoom-in" class="icon-button" type="button" aria-label="Zoom in" disabled>+</button>
+              </div>
               <div class="mode-switcher" role="group" aria-label="View mode">
                 <button type="button" class="mode-button" data-mode="flat" aria-pressed="true">2D HUD</button>
                 <button type="button" class="mode-button" data-mode="ar" aria-pressed="false">AR passthrough</button>
@@ -103,10 +108,13 @@
             <select id="camera-source" name="cameraSource">
               <option value="local">Local webcam (this device)</option>
               <option value="remote">Remote stream / n8n source (PICO)</option>
+              <option value="webrtc">WebRTC (phone → VR real-time)</option>
             </select>
             <p class="settings-hint">
               Local uses this browser's camera. Remote accepts an MJPEG/image URL or a
               <code>camera.source</code> message from the n8n gateway.
+              WebRTC receives a live peer-to-peer stream from a phone running
+              <code>/phone-webrtc.html</code> (or use <code>?camera=webrtc</code>).
             </p>
 
             <label for="stream-url">Remote image or MJPEG URL</label>
@@ -115,6 +123,10 @@
             <label for="health-url">Remote camera health URL (optional)</label>
             <input id="health-url" name="healthUrl" type="url" inputmode="url" />
 
+            <label for="phone-control-code">Phone camera control code</label>
+            <input id="phone-control-code" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" />
+            <p id="camera-zoom-feedback" class="settings-hint" role="status">Start the iPhone camera, then enter its pairing code here. This code is not saved.</p>
+
             <label for="websocket-url">Detection WebSocket gateway URL</label>
             <input id="websocket-url" name="websocketUrl" type="url" inputmode="url" required />
 
@@ -122,10 +134,10 @@
             <input id="prompt-url" name="promptUrl" type="url" inputmode="url" required />
 
             <label for="servo-url">Control unit servo URL</label>
-            <input id="servo-url" name="servoUrl" type="url" inputmode="url" required />
+            <input id="servo-url" name="servoUrl" type="text" inputmode="url" required />
 
             <label for="mode-url">Control unit mode URL</label>
-            <input id="mode-url" name="modeUrl" type="url" inputmode="url" required />
+            <input id="mode-url" name="modeUrl" type="text" inputmode="url" required />
 
             <div class="settings-actions">
               <button class="secondary-button" type="button" id="reset-settings">Use defaults</button>
@@ -160,8 +172,10 @@
           <button type="button" class="primary-button" id="servo-reject">Reject now</button>
         </div>
 
+        <p id="controller-input" class="feedback" hidden></p>
         <p id="servo-feedback" class="feedback" role="status" aria-live="polite">
           Switch to Manual to move the servo directly. Reject/Pass apply while the unit is awaiting a verdict.
+          In AR/VR, the right thumbstick jogs the servo. The left thumbstick controls the conveyor up/down and camera zoom left/right (click to reset). Controller buttons send Reject, Pass, Sweep and mode changes.
         </p>
       </section>
 

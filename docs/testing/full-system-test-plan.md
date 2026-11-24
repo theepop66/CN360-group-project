@@ -88,7 +88,7 @@ IR sensor ─▶ ESP32 ──POST item-detected───┘  ├──POST /verd
 
 | ชุด | ผล | หมายเหตุ |
 | --- | --- | --- |
-| `npm test --prefix pico-webapp` | 100/100 ผ่าน (2026-11-21); **144/144 ผ่าน** (รันซ้ำ 2026-11-23 บนสาขา `feat/hud-capture-button` หลัง merge `main`) | ตัวเลขเพิ่มจากเทสต์ใหม่ของ PR #40 (ปุ่มถ่ายรูป, ผลล้มเหลวบน HUD, พร็อกซี `/n8n/inspect-now`, ปุ่มคอนโทรลเลอร์) และของเพื่อนที่ merge จาก `main` จะเปลี่ยนอีกถ้าตัดโหมด AR (แก้ `tests/xr-modes.test.js`) |
+| `npm test --prefix pico-webapp` | 100/100 ผ่าน (2026-11-21); 144/144 ผ่าน (2026-11-23 หลัง merge `main` ครั้งแรก); **155/155 ผ่าน** (รันซ้ำ 2026-11-24 บนสาขา `feat/hud-capture-button` หลัง merge `main` ครั้งที่สอง) | ตัวเลขเพิ่มจากเทสต์ใหม่ของ PR #40 (ปุ่มถ่ายรูป, ผลล้มเหลวบน HUD, พร็อกซี `/n8n/inspect-now`, ปุ่มคอนโทรลเลอร์) และของเพื่อนที่ merge จาก `main` (รอบล่าสุดเพิ่ม 11 อัน จาก PR กล้อง iPhone USB) จะเปลี่ยนอีกถ้าตัดโหมด AR (แก้ `tests/xr-modes.test.js`) |
 | `npm test --prefix n8n` | 253/254 ผ่าน | ข้อที่ล้ม: "the committed workflow files match a fresh build" สาเหตุคือไฟล์ `n8n/workflows/*.json` ใน repo เป็น CRLF (`core.autocrlf=true`) แต่ `build` สร้าง LF — **ตรวจแล้วว่าเนื้อหาเหมือนกันทุกไฟล์หลังแปลง CRLF→LF** จึงไม่ใช่ logic regression แนะนำเพิ่ม `.gitattributes` (`n8n/workflows/*.json text eol=lf`) แล้ว build/commit ใหม่ |
 | `npm test --prefix detection-relay` | 23 ผ่าน, 1 ล้ม | ไฟล์ที่ล้ม: `test/hud-proxy.test.mjs` รันแล้วไม่จบ — รอบแรกค้างราว 109 วินาที รอบที่สองค้างจนถูกตัดที่ 280 วินาที (subtest ที่เสร็จแล้วผ่าน 1 ข้อ) ยังไม่ได้สืบสาเหตุ |
 | ยังไม่ได้รัน | thingsboard, pytest (camera/model), firmware host tests, controller probe, static-inspection, supabase, accept.mjs | ต้องใช้ Docker/Python env/คอมไพเลอร์/credential |
@@ -237,7 +237,7 @@ IR sensor ─▶ ESP32 ──POST item-detected───┘  ├──POST /verd
 | --- | --- | --- |
 | REG-01 | `npm test --prefix n8n` | ผ่านทั้งหมด (วันนี้ล้ม 1 ข้อเรื่อง CRLF ดู 2.2 — แก้ก่อน) |
 | REG-02 | `npm test --prefix detection-relay` | ผ่านทั้งหมด (วันนี้ล้ม 1 ข้อ `hud-proxy.test.mjs` — สืบสาเหตุก่อน) |
-| REG-03 | `npm test --prefix pico-webapp` | ผ่านทั้งหมด (ล่าสุด 144/144 ณ 2026-11-23; 100/100 เมื่อ 2026-11-21 ก่อนมีเทสต์ใหม่; ตัวเลขเปลี่ยนถ้าแก้ `tests/xr-modes.test.js`) |
+| REG-03 | `npm test --prefix pico-webapp` | ผ่านทั้งหมด (ล่าสุด 155/155 ณ 2026-11-24; 144/144 เมื่อ 2026-11-23; 100/100 เมื่อ 2026-11-21 ก่อนมีเทสต์ใหม่; ตัวเลขเปลี่ยนถ้าแก้ `tests/xr-modes.test.js`) |
 | REG-04 | `npm test --prefix thingsboard` | ผ่านทั้งหมด |
 | REG-05 | `python -m pytest` ใน `raspberry-pi-streaming` (ติดตั้ง `requirements-dev.txt`) และ `model-service` (`python -m pip install -e ".[test]"`) | ผ่านทั้งหมด |
 | REG-06 | `./360ControlUnit/test/host/run-host-tests.ps1`, `./360ControlUnit/test/host/build-adapter.ps1`, `./n8n/scripts/run-controller-probe.ps1` (exit 1 = เงื่อนไข timeout/stale-verdict ที่ต้องการไม่ผ่าน) | ผ่านทั้งหมด |

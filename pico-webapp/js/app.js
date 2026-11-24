@@ -1,4 +1,4 @@
-import { describeResult, getCoveredImageRect, mapBoxToDisplay, parseDetectionPayload } from "./overlay.js";
+import { describeResult, getContainedImageRect, getCoveredImageRect, mapBoxToDisplay, parseDetectionPayload } from "./overlay.js";
 import { cameraConfig } from "./camera-config.js";
 import { createPhoneCameraControls } from "./phone-camera-controls.js";
 import { createDetectionOrderTracker } from "./detection-order.js";
@@ -112,7 +112,10 @@ let pendingControllerAngle = null;
 let controllerAngleSending = false;
 const controllerTrigger = { disabled: false };
 let controllerActionBusy = false;
-const xrDebugEnabled = new URLSearchParams(window.location.search).has("xrdebug");
+const viewParams = new URLSearchParams(window.location.search);
+const xrDebugEnabled = viewParams.has("xrdebug");
+const cameraFit = viewParams.get("fit") === "contain" ? "contain" : "cover";
+elements.stage.dataset.cameraFit = cameraFit;
 
 function loadConfig() {
   let saved = {};
@@ -664,6 +667,7 @@ async function pollCameraHealth(generation) {
     } else if (elements.stream.naturalWidth > 0 && !awaitingFreshFrame) {
       revealFreshVideo(elements.stream);
       setStatus(elements.streamStatus, "Camera: remote live", "ok");
+      if (latestResult && isPhoneCameraSource()) drawDetections();
     } else {
       setStatus(elements.streamStatus, "Camera: ready", "busy");
     }
@@ -837,9 +841,17 @@ function drawDetectionBoxes(context, viewport, mediaDimensions) {
     width: mediaDimensions.width || viewport.width,
     height: mediaDimensions.height || viewport.height
   };
+  let displaySource = overlaySource;
+  if (isPhoneCameraSource() && mediaDimensions.width > 0 && mediaDimensions.height > 0) {
+    const displayedAspect = mediaDimensions.width / mediaDimensions.height;
+    const detectedAspect = overlaySource.width / overlaySource.height;
+    // A result for a different orientation or crop cannot be placed on this feed.
+    if (Math.abs(detectedAspect / displayedAspect - 1) > 0.01) return;
+    displaySource = mediaDimensions;
+  }
 
   for (const detection of latestResult.detections) {
-    const displayBox = mapBoxToDisplay(detection, overlaySource, viewport, "cover");
+    const displayBox = mapBoxToDisplay(detection, overlaySource, viewport, cameraFit, displaySource);
 
     context.strokeStyle = detection.color;
     context.fillStyle = detection.color;
@@ -865,13 +877,11 @@ function drawDetectionBoxes(context, viewport, mediaDimensions) {
 // from mid-session spams `glCopySubTextureCHROMIUM: Offset overflows
 // texture dimensions` GL errors every frame (confirmed while testing
 // this mode against a WebXR emulator).
-const VR_CANVAS_WIDTH = 1280;
-const VR_CANVAS_HEIGHT = 720;
+const highDetailVr = viewParams.get("vr") === "1080";
+const VR_CANVAS_WIDTH = highDetailVr ? 1920 : 1280;
+const VR_CANVAS_HEIGHT = highDetailVr ? 1080 : 720;
 
 function compositeVrFrame() {
-  if (elements.vrCompositeCanvas.width !== VR_CANVAS_WIDTH) elements.vrCompositeCanvas.width = VR_CANVAS_WIDTH;
-  if (elements.vrCompositeCanvas.height !== VR_CANVAS_HEIGHT) elements.vrCompositeCanvas.height = VR_CANVAS_HEIGHT;
-
   const context = elements.vrCompositeCanvas.getContext("2d");
   const media = activeMediaElement();
   const mediaDimensions = activeMediaDimensions();
@@ -880,10 +890,8 @@ function compositeVrFrame() {
   if (mediaDimensions.width > 0 && mediaDimensions.height > 0 && !media.classList.contains("video-feed--hidden")) {
     context.fillStyle = "#e3edfb";
     context.fillRect(0, 0, VR_CANVAS_WIDTH, VR_CANVAS_HEIGHT);
-    const destRect = getCoveredImageRect(
-      viewport,
-      mediaDimensions
-    );
+    const fitImage = cameraFit === "contain" ? getContainedImageRect : getCoveredImageRect;
+    const destRect = fitImage(viewport, mediaDimensions);
     context.drawImage(media, destRect.x, destRect.y, destRect.width, destRect.height);
     drawDetectionBoxes(context, viewport, mediaDimensions);
   } else {
@@ -1063,6 +1071,9 @@ async function enterViewMode(targetMode) {
       return;
     }
     try {
+      elements.vrCompositeCanvas.width = VR_CANVAS_WIDTH;
+      elements.vrCompositeCanvas.height = VR_CANVAS_HEIGHT;
+      compositeVrFrame();
       activeXrController = await startVrCinema({
         compositeCanvasId: elements.vrCompositeCanvas.id,
         onFrame: compositeVrFrame,

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <title>iPhone USB Camera Test</title>
+  <link rel="stylesheet" href="phone-camera.css">
+</head>
+<body>
+  <main>
+    <p class="eyebrow">CN360 · USB CAMERA TEST</p>
+    <h1>iPhone camera → Windows</h1>
+    <p>Keep Lightning connected and Personal Hotspot enabled. Open the exact PC USB address printed in the test window. Keep this page visible while streaming.</p>
+    <form id="sender-form">
+      <label for="pairing-code">Pairing code from the PC test window</label>
+      <input id="pairing-code" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" required>
+      <label for="camera-quality">Image quality</label>
+      <select id="camera-quality">
+        <option value="original">Original</option>
+        <option value="detail">High detail (up to 1080p)</option>
+      </select>
+      <label for="camera-rate">Frame rate</label>
+      <select id="camera-rate">
+        <option value="original">Original</option>
+        <option value="10">Up to 10 FPS</option>
+        <option value="15">Up to 15 FPS</option>
+      </select>
+      <div class="actions">
+        <button id="start" type="submit">Start streaming</button>
+        <button id="stop" type="button" disabled>Stop</button>
+      </div>
+    </form>
+    <p id="status" role="status" aria-live="polite">Ready to connect</p>
+    <p id="camera-zoom-status" role="status">Start to check camera zoom support. Zoom is optional for this connection test.</p>
+    <video id="preview" autoplay muted playsinline></video>
+    <p>Watch the HUD on Windows. Move your hand in front of the lens, then unplug Lightning: the image must stop updating. Reconnect, reload this page and tap Start again.</p>
+  </main>
+  <script type="module" src="js/phone-camera-sender.js"></script>
+</body>
+</html>

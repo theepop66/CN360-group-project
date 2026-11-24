@@ -58,8 +58,8 @@ export function getCoveredImageRect(container, source) {
   return getFittedImageRect(container, source, "cover");
 }
 
-export function mapBoxToDisplay(box, source, container, fit = "contain") {
-  const imageRect = getFittedImageRect(container, source, fit);
+export function mapBoxToDisplay(box, source, container, fit = "contain", displayedSource = source) {
+  const imageRect = getFittedImageRect(container, displayedSource, fit);
   const sourceWidth = box.normalized ? 1 : source.width;
   const sourceHeight = box.normalized ? 1 : source.height;
 

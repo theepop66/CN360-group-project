@@ -34,11 +34,16 @@ export async function applyCameraZoom(track, value, afterApply = async () => {},
   const before = readCameraZoom(track);
   if (!before.supported) throw new Error("camera_zoom_not_supported");
   if (!Number.isFinite(value) || value < before.min || value > before.max) throw new Error("invalid_zoom_value");
+  const constraints = { ...track.getConstraints?.() };
+  const advanced = (constraints.advanced ?? []).flatMap(({ zoom, ...other }) => Object.keys(other).length ? [other] : []);
+  // applyConstraints replaces the current set, so keep the capture profile.
+  delete constraints.zoom;
+  constraints.advanced = [...advanced, { zoom: value }];
   let timer;
   try {
     await Promise.race([
       (async () => {
-        await track.applyConstraints({ advanced: [{ zoom: value }] });
+        await track.applyConstraints(constraints);
         await afterApply();
       })(),
       new Promise((_, reject) => { timer = setTimeout(() => reject(new Error("camera_zoom_timeout")), timeoutMs); })

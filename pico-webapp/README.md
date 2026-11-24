@@ -374,3 +374,9 @@ npm test
 The tests cover camera-message parsing, payload parsing, result ordering, normalized coordinates, validation, contain/cover-aware box scaling, prompt payloads, HTTP errors, and request timeouts. They also cover the capture request and its result wording, the failed-inspection summary, and the HUD server's `/n8n/inspect-now` proxy.
 
 Before a demo, also smoke-test on the physical Pico 4: rotate/resize the view, disconnect and restore Wi-Fi, verify that stale boxes clear, submit a prompt through the real n8n CORS policy, and compare one known box against the inference snapshot.
+
+## iPhone camera over USB (Windows)
+
+Connect an iPhone with a data-capable Lightning or USB-C cable and enable Personal Hotspot. From a normal Windows terminal at the repository root, run `START-IPHONE-USB.cmd`. The launcher prints the current USB address, certificate setup and pairing code. Open `http://localhost:8082/usb-bench` on the PC.
+
+See the [Windows USB camera guide](../docs/testing/iphone11-windows-usb.md) and [iPhone 11 hardware test results](../docs/evidence/iphone11-windows-usb-2026-11-23.md). The camera-only bench keeps actuator and AI services disconnected.

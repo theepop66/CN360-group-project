@@ -290,10 +290,10 @@ export async function startVrCinema({ compositeCanvasId, onEnd, onFrame } = {}) 
 
   // --- Controller legend (mirrors the HUD buttons) -------------------------
   const chips = [
-    { text: "Reject · A", primary: true },
-    { text: "Pass · B" },
+    { text: "Capture · Y", primary: true },
+    { text: "Manual · X" },
     { text: "Sweep · Grip" },
-    { text: "Manual · X   Auto · Y" }
+    { text: "Reject · A   Pass · B" }
   ];
   const chipW = 0.58;
   const chipGap = 0.05;

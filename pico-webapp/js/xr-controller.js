@@ -22,7 +22,7 @@ export const DEFAULT_CONTROLLER_SHORTCUTS = Object.freeze({
     rightPrimary: "reject",
     rightSecondary: "pass",
     leftPrimary: "manual",
-    leftSecondary: "auto",
+    leftSecondary: "capture",
     leftStick: "reset-zoom"
   })
 });

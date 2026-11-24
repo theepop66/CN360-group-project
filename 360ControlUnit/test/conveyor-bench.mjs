@@ -21,7 +21,7 @@ export async function testConveyor({
   async function request(path, body) {
     const controller = new AbortController();
     // Status is read-only and can include connection establishment. Motor
-    // requests remain bounded below the firmware's 400 ms lease deadline.
+    // requests remain bounded so renewals stay inside the firmware's 500 ms command limit.
     const timeoutMs = path === "/status" ? 5000 : path === "/mode" ? 1500 : 250;
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
@@ -92,7 +92,7 @@ export async function testConveyor({
       const mode = await request("/mode", { mode: "manual" });
       if (mode.accepted !== true || mode.mode !== "manual") throw new Error("Manual mode was refused.");
       selectedManual = true;
-      // Mode requests can consume the 400 ms lease; obtain a fresh one.
+      // A slow mode request can outlast the lease window; obtain a fresh lease.
       await acquire();
       await command(0);
       const end = now() + seconds * 1000;
@@ -113,7 +113,7 @@ export async function testConveyor({
       log("STOP acknowledged by ESP32.");
     } catch (error) {
       log(`STOP acknowledgement unavailable: ${error.message}`);
-      log("Command renewals ended. This firmware expires its lease after 400 ms; check the belt physically.");
+      log("Command renewals ended. The firmware stops the belt 500 ms after the last accepted command; check the belt physically.");
       failure ??= error;
     }
   }

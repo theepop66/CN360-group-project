@@ -8,6 +8,7 @@ import {
   clampAngle,
   createEdgeTracker,
   createStickRepeater,
+  DEFAULT_CONTROLLER_SHORTCUTS,
   resolveButtonAction,
   stickDirection
 } from "../js/xr-controller.js";
@@ -47,7 +48,7 @@ function createFakeSession() {
 // touchpad slot. Omitting it was what shifted X/Y/A/B in the old tests.
 const pico = JSON.parse(readFileSync(new URL("./fixtures/pico-4-inputs.json", import.meta.url), "utf8"));
 const expected = {
-  left: [null, "sweep", null, "reset-zoom", "manual", "auto"],
+  left: [null, "sweep", null, "reset-zoom", "manual", "capture"],
   right: [null, "sweep", null, null, "reject", "pass"]
 };
 for (const hand of ["left", "right"]) {
@@ -152,7 +153,7 @@ test("resolves the configured PICO buttons per hand", () => {
   assert.equal(resolveButtonAction({ ...right, buttonIndex: 4 }), "reject");
   assert.equal(resolveButtonAction({ ...right, buttonIndex: 5 }), "pass");
   assert.equal(resolveButtonAction({ ...left, buttonIndex: 4 }), "manual");
-  assert.equal(resolveButtonAction({ ...left, buttonIndex: 5 }), "auto");
+  assert.equal(resolveButtonAction({ ...left, buttonIndex: 5 }), "capture");
   assert.equal(resolveButtonAction({ ...left, buttonIndex: 3 }), "reset-zoom");
   assert.equal(resolveButtonAction({ ...right, buttonIndex: 1 }), "sweep");
   assert.equal(resolveButtonAction({ handedness: "left", buttonIndex: 1 }), "sweep");
@@ -161,6 +162,33 @@ test("resolves the configured PICO buttons per hand", () => {
   assert.equal(resolveButtonAction({ ...right, buttonIndex: 3 }), null);
   assert.equal(resolveButtonAction({ ...left, buttonIndex: 2 }), null);
   assert.equal(resolveButtonAction({ handedness: "", buttonIndex: 3 }), null);
+});
+
+test("puts capture on the left secondary button and keeps the other shortcuts", () => {
+  assert.deepEqual({ ...DEFAULT_CONTROLLER_SHORTCUTS.buttons }, {
+    squeeze: "sweep",
+    rightPrimary: "reject",
+    rightSecondary: "pass",
+    leftPrimary: "manual",
+    leftSecondary: "capture",
+    leftStick: "reset-zoom"
+  });
+});
+
+test("left Y asks for a capture and no longer switches to Auto", () => {
+  const session = createFakeSession();
+  const actions = [];
+  attachXrControllerShortcuts({ session, onAction: (action) => actions.push(action) });
+
+  // Y is the registered PICO secondary button (index 5); X is index 4.
+  session.inputSources = [pad("left", { buttons: [false, false, false, false, false, true] })];
+  session.frame(0);
+  assert.deepEqual(actions, ["capture"]);
+
+  // X still selects Manual; its own key is not held back by Y's cooldown.
+  session.inputSources = [pad("left", { buttons: [false, false, false, false, true, false] })];
+  session.frame(100);
+  assert.deepEqual(actions, ["capture", "manual"]);
 });
 
 test("fires once per press and honours the cooldown", () => {

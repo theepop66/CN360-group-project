@@ -1,8 +1,9 @@
-import { getContainedImageRect, getCoveredImageRect, mapBoxToDisplay, parseDetectionPayload } from "./overlay.js";
+import { describeResult, getContainedImageRect, getCoveredImageRect, mapBoxToDisplay, parseDetectionPayload } from "./overlay.js";
 import { cameraConfig } from "./camera-config.js";
 import { createPhoneCameraControls } from "./phone-camera-controls.js";
 import { createDetectionOrderTracker } from "./detection-order.js";
 import { sendPrompt } from "./prompt.js";
+import { requestCapture, CAPTURE_TIMEOUT_MS } from "./capture.js";
 import { parseCameraMessage } from "./camera-message.js";
 import { VIEW_MODES, xrContextError, isImmersiveArSupported, isImmersiveVrSupported } from "./xr-modes.js";
 import { startArPassthrough } from "./ar-passthrough.js";
@@ -47,6 +48,7 @@ const elements = {
   promptUrl: document.querySelector("#prompt-url"),
   servoUrl: document.querySelector("#servo-url"),
   modeUrl: document.querySelector("#mode-url"),
+  captureUrl: document.querySelector("#capture-url"),
   resetSettings: document.querySelector("#reset-settings"),
   fullscreenButton: document.querySelector("#fullscreen-button"),
   zoomOut: document.querySelector("#camera-zoom-out"),
@@ -63,6 +65,7 @@ const elements = {
   servoPass: document.querySelector("#servo-pass"),
   servoReject: document.querySelector("#servo-reject"),
   servoFeedback: document.querySelector("#servo-feedback"),
+  captureNow: document.querySelector("#capture-now"),
   controllerInput: document.querySelector("#controller-input")
 };
 
@@ -122,21 +125,23 @@ function loadConfig() {
     localStorage.removeItem(STORAGE_KEY);
   }
 
-  const controllerShortcuts = loadControllerShortcuts(
-    saved.controllerShortcuts ?? defaults.controllerShortcuts ?? {}
-  );
+  // The button map comes from config.js only. Saved settings used to snapshot it, which
+  // kept an old mapping on a headset after config.js changed.
+  const controllerShortcuts = loadControllerShortcuts(defaults.controllerShortcuts ?? {});
   return {
     ...cameraConfig(saved, defaults, window.location),
     websocketUrl: saved.websocketUrl ?? defaults.n8nDetectionWebSocketUrl ?? "",
     promptUrl: saved.promptUrl ?? defaults.n8nPromptWebhookUrl ?? "",
     servoUrl: saved.servoUrl ?? defaults.controlUnitServoUrl ?? "",
     modeUrl: saved.modeUrl ?? defaults.controlUnitModeUrl ?? "",
+    captureUrl: saved.captureUrl ?? defaults.captureWebhookUrl ?? "",
     reconnectDelayMs: Number(defaults.reconnectDelayMs) || 2000,
     healthPollIntervalMs: Number(defaults.healthPollIntervalMs) || 2000,
     healthRequestTimeoutMs: Number(defaults.healthRequestTimeoutMs) || 1500,
     detectionTtlMs: Number(defaults.detectionTtlMs) || 3000,
     promptTimeoutMs: Number(defaults.promptTimeoutMs) || 8000,
     servoRequestTimeoutMs: Number(defaults.servoRequestTimeoutMs) || 5000,
+    captureTimeoutMs: Number(defaults.captureTimeoutMs) || CAPTURE_TIMEOUT_MS,
     controllerShortcuts
   };
 }
@@ -186,6 +191,7 @@ function populateSettings() {
   elements.promptUrl.value = config.promptUrl;
   elements.servoUrl.value = config.servoUrl;
   elements.modeUrl.value = config.modeUrl;
+  elements.captureUrl.value = config.captureUrl;
 }
 
 function setPlaceholder(message) {
@@ -755,12 +761,13 @@ function connectWebSocket() {
       }
 
       latestResult = parsed;
-      const count = parsed.detections.length;
       const eventTime = parsed.timestamp ? new Date(parsed.timestamp) : new Date();
-      setSummary(parsed.reviewRequired ? "Human review required · controller reject · model suggestion: " + (parsed.modelSuggestion ?? "unavailable") : count === 0
-        ? "AI reports no detections"
-        : `${count} detection${count === 1 ? "" : "s"} · ${eventTime.toLocaleTimeString()}`);
-      setStatus(elements.socketStatus, "AI data: receiving", "ok");
+      setSummary(describeResult(parsed, { timeText: eventTime.toLocaleTimeString() }));
+      setStatus(
+        elements.socketStatus,
+        parsed.inspectionFailed ? "AI: inspection failed" : "AI data: receiving",
+        parsed.inspectionFailed ? "error" : "ok"
+      );
 
       if (cameraMessage?.kind === "frame" && config.cameraSource === "remote") {
         showN8nFrame(cameraMessage.imageUrl, { deferOverlay: true });
@@ -770,10 +777,14 @@ function connectWebSocket() {
       }
 
       window.clearTimeout(staleTimer);
-      staleTimer = window.setTimeout(() => {
-        clearDetections();
-        if (isN8nFrameVisible() || pendingN8nFrame) restoreLiveRemoteFeed();
-      }, config.detectionTtlMs);
+      // A failed inspection stays on screen until the next result. Letting it expire would
+      // turn "the AI could not look" into "No recent detections".
+      if (!parsed.inspectionFailed) {
+        staleTimer = window.setTimeout(() => {
+          clearDetections();
+          if (isN8nFrameVisible() || pendingN8nFrame) restoreLiveRemoteFeed();
+        }, config.detectionTtlMs);
+      }
     } catch (error) {
       console.warn("Ignored invalid detection message:", error);
       setStatus(elements.socketStatus, "AI data: invalid message", "error");
@@ -1205,7 +1216,52 @@ async function pushControllerAngle(angle) {
   }
 }
 
+// One inspection at a time: a second press while n8n is still working would only queue
+// another model run. The result line reuses the servo feedback, which the VR scene mirrors.
+let captureInFlight = false;
+
+async function runCapture() {
+  if (captureInFlight) {
+    elements.servoFeedback.className = "feedback";
+    elements.servoFeedback.textContent = "Capture already running · wait for the result.";
+    mirrorServoFeedbackToVr();
+    return null;
+  }
+
+  captureInFlight = true;
+  elements.captureNow.disabled = true;
+  elements.servoFeedback.className = "feedback";
+  elements.servoFeedback.textContent = "Capturing and inspecting…";
+  mirrorServoFeedbackToVr();
+
+  try {
+    const outcome = await requestCapture({ url: config.captureUrl, timeoutMs: config.captureTimeoutMs });
+    elements.servoFeedback.className = outcome.kind === "ok"
+      ? "feedback feedback--ok"
+      : outcome.kind === "review" ? "feedback" : "feedback feedback--error";
+    elements.servoFeedback.textContent = outcome.message;
+    return outcome;
+  } catch (error) {
+    elements.servoFeedback.className = "feedback feedback--error";
+    elements.servoFeedback.textContent = error.name === "AbortError"
+      ? "Capture failed · timed out waiting for n8n"
+      : `Capture failed · ${error.message}`;
+    return null;
+  } finally {
+    captureInFlight = false;
+    elements.captureNow.disabled = false;
+    mirrorServoFeedbackToVr();
+  }
+}
+
 async function handleControllerAction(action) {
+  // Taking a photo talks to n8n, not to the control unit, so it neither waits for a servo
+  // command nor holds one up while the model runs.
+  if (action === "capture") {
+    await runCapture();
+    return;
+  }
+
   // Do not race a mode change with a sweep or another controller command.
   if (controllerActionBusy || controllerAngleSending) {
     elements.servoFeedback.textContent = "Wait for the current control request to finish, then press again.";
@@ -1326,6 +1382,8 @@ elements.servoReject.addEventListener("click", () => {
   );
 });
 
+elements.captureNow.addEventListener("click", () => void runCapture());
+
 elements.settingsForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const previousCameraSource = config.cameraSource;
@@ -1338,9 +1396,12 @@ elements.settingsForm.addEventListener("submit", (event) => {
     websocketUrl: elements.websocketUrl.value.trim(),
     promptUrl: elements.promptUrl.value.trim(),
     servoUrl: elements.servoUrl.value.trim(),
-    modeUrl: elements.modeUrl.value.trim()
+    modeUrl: elements.modeUrl.value.trim(),
+    captureUrl: elements.captureUrl.value.trim()
   };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+  // The button map is owned by config.js; keep it out of saved settings.
+  const { controllerShortcuts: _ownedByConfigJs, ...persisted } = config;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(persisted));
   if (
     config.cameraSource !== previousCameraSource ||
     config.websocketUrl !== previousWebsocketUrl

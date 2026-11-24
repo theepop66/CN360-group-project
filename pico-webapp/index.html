@@ -139,6 +139,9 @@
             <label for="mode-url">Control unit mode URL</label>
             <input id="mode-url" name="modeUrl" type="text" inputmode="url" required />
 
+            <label for="capture-url">n8n capture (inspect-now) URL</label>
+            <input id="capture-url" name="captureUrl" type="text" inputmode="url" />
+
             <div class="settings-actions">
               <button class="secondary-button" type="button" id="reset-settings">Use defaults</button>
               <button class="primary-button" type="submit">Save &amp; reconnect</button>
@@ -166,6 +169,11 @@
           <input id="servo-angle" type="range" min="0" max="180" step="1" value="0" />
         </div>
 
+        <div class="servo-row">
+          <span class="servo-row-label">Inspection</span>
+          <button type="button" class="primary-button" id="capture-now">Capture &amp; inspect</button>
+        </div>
+
         <div class="servo-actions">
           <button type="button" class="secondary-button" id="servo-sweep">Sweep</button>
           <button type="button" class="secondary-button" id="servo-pass">Pass now</button>
@@ -175,7 +183,7 @@
         <p id="controller-input" class="feedback" hidden></p>
         <p id="servo-feedback" class="feedback" role="status" aria-live="polite">
           Switch to Manual to move the servo directly. Reject/Pass apply while the unit is awaiting a verdict.
-          In AR/VR, the right thumbstick jogs the servo. The left thumbstick controls the conveyor up/down and camera zoom left/right (click to reset). Controller buttons send Reject, Pass, Sweep and mode changes.
+          In AR/VR, the right thumbstick jogs the servo. The left thumbstick controls the conveyor up/down and camera zoom left/right (click to reset). Controller buttons send Reject, Pass, Sweep and Manual; the left Y button captures a photo and asks the AI to inspect it.
         </p>
       </section>
 

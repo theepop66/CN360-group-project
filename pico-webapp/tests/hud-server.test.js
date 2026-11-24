@@ -16,12 +16,12 @@ async function listen(t, handler) {
   return `http://127.0.0.1:${server.address().port}`;
 }
 
-function send(base, pathname, { method = "GET", body = "" } = {}) {
+function send(base, pathname, { method = "GET", body = "", headers } = {}) {
   return new Promise((resolve, reject) => {
     const req = request(base, {
       path: pathname,
       method,
-      headers: body ? { "content-type": "application/json" } : {}
+      headers: headers ?? (body ? { "content-type": "application/json" } : {})
     }, (res) => {
       const chunks = [];
       res.on("data", (chunk) => chunks.push(chunk));
@@ -111,4 +111,122 @@ test("reports an unreachable control unit as an HTTP failure", async (t) => {
   const result = await send(base, "/esp/servo", { method: "POST", body: '{"sweep":true}' });
   assert.equal(result.status, 504);
   assert.equal(JSON.parse(result.body).error, "control unit unreachable");
+});
+
+
+function collectUpstream(received, respond) {
+  return (req, res) => {
+    let body = "";
+    req.on("data", (chunk) => { body += chunk; });
+    req.on("end", () => {
+      received.push({ method: req.method, url: req.url, body, type: req.headers["content-type"] });
+      respond(res);
+    });
+  };
+}
+
+test("forwards a capture request to n8n as an unpaired inspect-now", async (t) => {
+  const received = [];
+  const n8n = await listen(t, collectUpstream(received, (res) => {
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end('{"status":"success","result":"pass","item":null}');
+  }));
+  const root = await publicRoot(t);
+  const base = await listen(t, createHandler({ root, controlUnit: "http://127.0.0.1:1", n8nOrigin: n8n }));
+
+  // Whatever the browser sends, n8n only ever receives an empty object, so the request cannot
+  // carry an item identity and become a paired inspection.
+  const result = await send(base, "/n8n/inspect-now?x=1", {
+    method: "POST", body: '{"controller_session":"abc","item_id":"7","testCaseId":"x"}'
+  });
+  assert.equal(result.status, 200);
+  assert.deepEqual(JSON.parse(result.body), { status: "success", result: "pass", item: null });
+  assert.equal(result.headers["cache-control"], "no-store");
+  assert.deepEqual(received, [{
+    method: "POST", url: "/webhook/inspect-now", body: "{}", type: "application/json"
+  }]);
+});
+
+test("only accepts JSON POST requests on the capture path", async (t) => {
+  const received = [];
+  const n8n = await listen(t, collectUpstream(received, (res) => { res.writeHead(200); res.end("{}"); }));
+  const root = await publicRoot(t);
+  const base = await listen(t, createHandler({ root, controlUnit: "http://127.0.0.1:1", n8nOrigin: n8n }));
+
+  const get = await send(base, "/n8n/inspect-now");
+  assert.equal(get.status, 405);
+  assert.equal(get.headers.allow, "POST");
+
+  for (const type of ["application/x-www-form-urlencoded", "text/plain", "multipart/form-data"]) {
+    const result = await send(base, "/n8n/inspect-now", { method: "POST", body: "{}", headers: { "content-type": type } });
+    assert.equal(result.status, 415, type);
+  }
+  const noType = await send(base, "/n8n/inspect-now", { method: "POST", body: "{}", headers: {} });
+  assert.equal(noType.status, 415);
+
+  const tooLarge = await send(base, "/n8n/inspect-now", { method: "POST", body: " ".repeat(5000) });
+  assert.equal(tooLarge.status, 413);
+  assert.deepEqual(received, []);
+});
+
+test("passes n8n errors through and reports an unreachable n8n", async (t) => {
+  const n8n = await listen(t, (req, res) => {
+    req.resume();
+    res.writeHead(404, { "content-type": "application/json" });
+    res.end('{"code":404,"message":"The requested webhook is not registered."}');
+  });
+  const root = await publicRoot(t);
+  const inactive = await listen(t, createHandler({ root, controlUnit: "http://127.0.0.1:1", n8nOrigin: n8n }));
+  const notFound = await send(inactive, "/n8n/inspect-now", { method: "POST", body: "{}" });
+  assert.equal(notFound.status, 404);
+  assert.equal(JSON.parse(notFound.body).code, 404);
+
+  const down = await listen(t, createHandler({ root, controlUnit: "http://127.0.0.1:1", n8nOrigin: "http://127.0.0.1:1" }));
+  const unreachable = await send(down, "/n8n/inspect-now", { method: "POST", body: "{}" });
+  assert.equal(unreachable.status, 504);
+  assert.equal(JSON.parse(unreachable.body).error, "n8n unreachable");
+});
+
+test("runs one inspection at a time", async (t) => {
+  let releaseUpstream;
+  const gate = new Promise((resolve) => { releaseUpstream = resolve; });
+  let markArrived;
+  const firstArrived = new Promise((resolve) => { markArrived = resolve; });
+  let calls = 0;
+  const n8n = await listen(t, (req, res) => {
+    req.resume();
+    calls += 1;
+    markArrived();
+    gate.then(() => {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end('{"status":"success","result":"reject"}');
+    });
+  });
+  const root = await publicRoot(t);
+  const base = await listen(t, createHandler({ root, controlUnit: "http://127.0.0.1:1", n8nOrigin: n8n }));
+
+  const first = send(base, "/n8n/inspect-now", { method: "POST", body: "{}" });
+  await firstArrived;
+  const second = await send(base, "/n8n/inspect-now", { method: "POST", body: "{}" });
+  assert.equal(second.status, 429);
+  assert.equal(JSON.parse(second.body).error, "an inspection is already running");
+  assert.equal(calls, 1);
+
+  releaseUpstream();
+  assert.equal((await first).status, 200);
+  // The slot is freed when the upstream request closes, a moment after the answer is relayed.
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  const third = await send(base, "/n8n/inspect-now", { method: "POST", body: "{}" });
+  assert.equal(third.status, 200);
+  assert.equal(calls, 2);
+});
+
+test("rejects an n8n origin that carries a path or credentials", () => {
+  for (const origin of ["http://n8n:5678/webhook", "http://user:pw@n8n:5678", "ftp://n8n", "not a url", "http://n8n:5678/?a=1"]) {
+    assert.throws(
+      () => createHandler({ root: ".", controlUnit: "http://127.0.0.1:1", n8nOrigin: origin }),
+      /--n8n-origin must be an HTTP\(S\) origin/,
+      origin
+    );
+  }
 });

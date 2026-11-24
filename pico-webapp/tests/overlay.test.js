@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  describeResult,
   getContainedImageRect,
   getCoveredImageRect,
   mapBoxToDisplay,
@@ -47,6 +48,87 @@ test("accepts normalized boxes without frame dimensions", () => {
   assert.equal(result.source, null);
   assert.equal(result.detections[0].normalized, true);
   assert.equal(result.detections[0].color, "#68efb3");
+});
+
+test("flags an inspection that did not reach a model verdict as failed", () => {
+  for (const reason of ["model_timeout", "model_unreachable", "frame_capture_failed", "some_new_reason"]) {
+    const result = parseDetectionPayload({
+      type: "detections",
+      status: "reject",
+      reason,
+      frame: { width: 640, height: 480, id: "s:1", sessionId: "s", sequence: 1 },
+      detections: []
+    });
+    assert.equal(result.inspectionFailed, true, reason);
+    assert.equal(result.failureReason, reason);
+    assert.equal(describeResult(result, { timeText: "10:15:02" }), `AI unavailable · ${reason} · 10:15:02`);
+  }
+});
+
+test("does not flag a model verdict, a review outcome or a plain payload as failed", () => {
+  for (const reason of ["defect_detected", "no_defect_detected", "manual_review_required"]) {
+    const result = parseDetectionPayload({
+      status: "pass", reason, frame: { width: 10, height: 10 }, detections: []
+    });
+    assert.equal(result.inspectionFailed, undefined, reason);
+  }
+  // Payloads from other producers carry no reason and keep their old meaning.
+  const plain = parseDetectionPayload({ frame: { width: 10, height: 10 }, detections: [] });
+  assert.equal(plain.inspectionFailed, undefined);
+  assert.equal(plain.failureReason, undefined);
+});
+
+test("treats a payload with status error as failed even without a reason", () => {
+  const result = parseDetectionPayload({ status: "error", frame: { width: 10, height: 10 }, detections: [] });
+  assert.equal(result.inspectionFailed, true);
+  assert.equal(result.failureReason, "error");
+});
+
+test("a failed inspection is never described as no detections", () => {
+  // With an inspection policy n8n also marks the failure as needing review; the failure still wins.
+  const failed = parseDetectionPayload({
+    status: "reject",
+    reason: "model_timeout",
+    reviewRequired: true,
+    reviewReason: "model_timeout",
+    modelSuggestion: null,
+    frame: { width: 640, height: 480 },
+    detections: []
+  });
+  assert.match(describeResult(failed), /^AI unavailable · model_timeout/);
+  assert.doesNotMatch(describeResult(failed), /no detections/i);
+});
+
+test("keeps the existing wording for evaluated results", () => {
+  const clean = parseDetectionPayload({
+    status: "pass", reason: "no_defect_detected", frame: { width: 10, height: 10 }, detections: []
+  });
+  assert.equal(describeResult(clean, { timeText: "10:15:02" }), "AI reports no detections");
+
+  const one = parseDetectionPayload({
+    status: "reject",
+    reason: "defect_detected",
+    frame: { width: 100, height: 100 },
+    detections: [{ label: "scratch", box: [1, 1, 50, 50] }]
+  });
+  assert.equal(describeResult(one, { timeText: "10:15:02" }), "1 detection · 10:15:02");
+
+  const two = parseDetectionPayload({
+    status: "reject",
+    frame: { width: 100, height: 100 },
+    detections: [{ box: [1, 1, 50, 50] }, { box: [60, 60, 90, 90] }]
+  });
+  assert.equal(describeResult(two, { timeText: "10:15:02" }), "2 detections · 10:15:02");
+
+  const review = parseDetectionPayload({
+    status: "reject",
+    reason: "manual_review_required",
+    reviewRequired: true,
+    modelSuggestion: "pass",
+    frame: { width: 10, height: 10 },
+    detections: []
+  });
+  assert.equal(describeResult(review), "Human review required · controller reject · model suggestion: pass");
 });
 
 test("maps normalized boxes using the video aspect ratio", () => {

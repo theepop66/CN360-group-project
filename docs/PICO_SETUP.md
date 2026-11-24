@@ -188,7 +188,7 @@ verify your own wiring, power, direction and stopping behavior after setup.
 | Input | Command | Requirement |
 | --- | --- | --- |
 | X, left | Manual mode | Controller idle |
-| Y, left | Auto mode | Controller idle |
+| Y, left | Capture & inspect: take a photo and let the AI inspect it (advice only, no machine command) | n8n workflow active; the HUD server can reach n8n (`--n8n-origin`) |
 | Side Grip, either hand | Servo Sweep | Manual and idle; one command per press |
 | A, right | Reject | Current item awaiting Verdict |
 | B, right | Pass | Current item awaiting Verdict |
@@ -210,7 +210,7 @@ in the default firmware. The bench flag and item/timeout requirements are
 documented in [360ControlUnit/README.md](../360ControlUnit/README.md). A/B do
 not manufacture an item identity when no item is awaiting a Verdict. In Manual,
 a reject Verdict alerts without moving the servo; use Grip for a deliberate
-manual Sweep.
+manual Sweep. Auto no longer has a controller button; use the **Auto** toggle in the 2D HUD panel.
 
 ## 7. Optional: phone camera over WebRTC
 
@@ -297,6 +297,12 @@ activate the AI workflow:
 - [Model service](../model-service/README.md)
 - [Raspberry Pi streaming](../raspberry-pi-streaming/README.md)
 - [ThingsBoard monitoring](../thingsboard/README.md)
+
+The left **Y** button (and **Capture & inspect** in the 2D HUD) asks n8n for one inspection through the HUD
+server's `/n8n/inspect-now` route. The default target is `http://127.0.0.1:5678` (n8n on this PC); for n8n on
+another PC start `hud-server.mjs` with `--n8n-origin http://<n8n-host>:5678`. The n8n workflow must be active:
+only the production webhook URL answers. The result is advice only and never moves the belt or servo. See
+[Capture & inspect](../pico-webapp/README.md#capture--inspect-take-a-photo).
 
 ## 10. Troubleshooting
 

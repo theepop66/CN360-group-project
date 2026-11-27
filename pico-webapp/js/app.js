@@ -1,21 +1,19 @@
-import { getContainedImageRect, getCoveredImageRect, mapBoxToDisplay, parseDetectionPayload } from "./overlay.js";
+import { getCoveredImageRect, mapBoxToDisplay, parseDetectionPayload } from "./overlay.js";
 import { cameraConfig } from "./camera-config.js";
 import { createPhoneCameraControls } from "./phone-camera-controls.js";
 import { createDetectionOrderTracker } from "./detection-order.js";
 import { sendPrompt } from "./prompt.js";
 import { parseCameraMessage } from "./camera-message.js";
-import { VIEW_MODES, xrContextError, isImmersiveArSupported, isImmersiveVrSupported } from "./xr-modes.js";
+import { VIEW_MODES, isImmersiveArSupported, isImmersiveVrSupported } from "./xr-modes.js";
 import { startArPassthrough } from "./ar-passthrough.js";
-import { startVrCinema } from "./vr-cinema.js?v=4";
+import { startVrCinema } from "./vr-cinema.js?v=6";
 import { installXrEmulatorIfRequested } from "./dev-xr-emulator.js";
 import { setMode, setServoAngle, runSweep, sendVerdict } from "./servo.js";
-import { createConveyorSender } from "./conveyor.js";
-import { controlFeedback } from "./control-feedback.js";
 import {
   attachXrControllerShortcuts,
   clampAngle,
   DEFAULT_CONTROLLER_SHORTCUTS
-} from "./xr-controller.js?v=4";
+} from "./xr-controller.js";
 import { createWebRtcReceiver } from "./webrtc-camera.js";
 
 const STORAGE_KEY = "cn360-hud-connections";
@@ -62,8 +60,7 @@ const elements = {
   servoSweep: document.querySelector("#servo-sweep"),
   servoPass: document.querySelector("#servo-pass"),
   servoReject: document.querySelector("#servo-reject"),
-  servoFeedback: document.querySelector("#servo-feedback"),
-  controllerInput: document.querySelector("#controller-input")
+  servoFeedback: document.querySelector("#servo-feedback")
 };
 
 // Where the prompt form lives outside fullscreen, so it can be moved back
@@ -108,11 +105,7 @@ let controllerAngle = 0;
 let pendingControllerAngle = null;
 let controllerAngleSending = false;
 const controllerTrigger = { disabled: false };
-let controllerActionBusy = false;
-const viewParams = new URLSearchParams(window.location.search);
-const xrDebugEnabled = viewParams.has("xrdebug");
-const cameraFit = viewParams.get("fit") === "contain" ? "contain" : "cover";
-elements.stage.dataset.cameraFit = cameraFit;
+const xrDebugEnabled = new URLSearchParams(window.location.search).has("xrdebug");
 
 function loadConfig() {
   let saved = {};
@@ -172,7 +165,6 @@ function syncXrHud() {
   if (!activeXrController) return;
   activeXrController.setSummaryText?.(elements.summary.textContent);
   activeXrController.setServoStatusText?.(elements.servoFeedback.textContent);
-  activeXrController.setControllerInputText?.(elements.controllerInput?.textContent ?? "");
   for (const [kind, status] of Object.entries(lastStatus)) {
     if (status) activeXrController.setStatusText?.(kind, status.text, status.state);
   }
@@ -661,7 +653,6 @@ async function pollCameraHealth(generation) {
     } else if (elements.stream.naturalWidth > 0 && !awaitingFreshFrame) {
       revealFreshVideo(elements.stream);
       setStatus(elements.streamStatus, "Camera: remote live", "ok");
-      if (latestResult && isPhoneCameraSource()) drawDetections();
     } else {
       setStatus(elements.streamStatus, "Camera: ready", "busy");
     }
@@ -830,17 +821,9 @@ function drawDetectionBoxes(context, viewport, mediaDimensions) {
     width: mediaDimensions.width || viewport.width,
     height: mediaDimensions.height || viewport.height
   };
-  let displaySource = overlaySource;
-  if (isPhoneCameraSource() && mediaDimensions.width > 0 && mediaDimensions.height > 0) {
-    const displayedAspect = mediaDimensions.width / mediaDimensions.height;
-    const detectedAspect = overlaySource.width / overlaySource.height;
-    // A result for a different orientation or crop cannot be placed on this feed.
-    if (Math.abs(detectedAspect / displayedAspect - 1) > 0.01) return;
-    displaySource = mediaDimensions;
-  }
 
   for (const detection of latestResult.detections) {
-    const displayBox = mapBoxToDisplay(detection, overlaySource, viewport, cameraFit, displaySource);
+    const displayBox = mapBoxToDisplay(detection, overlaySource, viewport, "cover");
 
     context.strokeStyle = detection.color;
     context.fillStyle = detection.color;
@@ -866,11 +849,13 @@ function drawDetectionBoxes(context, viewport, mediaDimensions) {
 // from mid-session spams `glCopySubTextureCHROMIUM: Offset overflows
 // texture dimensions` GL errors every frame (confirmed while testing
 // this mode against a WebXR emulator).
-const highDetailVr = viewParams.get("vr") === "1080";
-const VR_CANVAS_WIDTH = highDetailVr ? 1920 : 1280;
-const VR_CANVAS_HEIGHT = highDetailVr ? 1080 : 720;
+const VR_CANVAS_WIDTH = 1280;
+const VR_CANVAS_HEIGHT = 720;
 
 function compositeVrFrame() {
+  if (elements.vrCompositeCanvas.width !== VR_CANVAS_WIDTH) elements.vrCompositeCanvas.width = VR_CANVAS_WIDTH;
+  if (elements.vrCompositeCanvas.height !== VR_CANVAS_HEIGHT) elements.vrCompositeCanvas.height = VR_CANVAS_HEIGHT;
+
   const context = elements.vrCompositeCanvas.getContext("2d");
   const media = activeMediaElement();
   const mediaDimensions = activeMediaDimensions();
@@ -879,8 +864,10 @@ function compositeVrFrame() {
   if (mediaDimensions.width > 0 && mediaDimensions.height > 0 && !media.classList.contains("video-feed--hidden")) {
     context.fillStyle = "#e3edfb";
     context.fillRect(0, 0, VR_CANVAS_WIDTH, VR_CANVAS_HEIGHT);
-    const fitImage = cameraFit === "contain" ? getContainedImageRect : getCoveredImageRect;
-    const destRect = fitImage(viewport, mediaDimensions);
+    const destRect = getCoveredImageRect(
+      viewport,
+      mediaDimensions
+    );
     context.drawImage(media, destRect.x, destRect.y, destRect.width, destRect.height);
     drawDetectionBoxes(context, viewport, mediaDimensions);
   } else {
@@ -1027,12 +1014,6 @@ async function enterViewMode(targetMode) {
 
   if (targetMode === VIEW_MODES.FLAT) return;
 
-  const contextError = xrContextError(targetMode);
-  if (contextError) {
-    setStatus(elements.streamStatus, contextError, "error");
-    return;
-  }
-
   if (targetMode === VIEW_MODES.AR) {
     if (!(await isImmersiveArSupported())) {
       setStatus(elements.streamStatus, "AR passthrough is not supported on this browser/device.", "error");
@@ -1049,7 +1030,7 @@ async function enterViewMode(targetMode) {
       setModeButtonsState(VIEW_MODES.AR);
     } catch (error) {
       console.warn("Could not start AR passthrough:", error);
-      setStatus(elements.streamStatus, `Could not start AR passthrough: ${error?.message || "unknown error"}`, "error");
+      setStatus(elements.streamStatus, "Could not start AR passthrough.", "error");
     }
     return;
   }
@@ -1060,9 +1041,6 @@ async function enterViewMode(targetMode) {
       return;
     }
     try {
-      elements.vrCompositeCanvas.width = VR_CANVAS_WIDTH;
-      elements.vrCompositeCanvas.height = VR_CANVAS_HEIGHT;
-      compositeVrFrame();
       activeXrController = await startVrCinema({
         compositeCanvasId: elements.vrCompositeCanvas.id,
         onFrame: compositeVrFrame,
@@ -1075,7 +1053,7 @@ async function enterViewMode(targetMode) {
       setModeButtonsState(VIEW_MODES.VR);
     } catch (error) {
       console.warn("Could not start VR cinema mode:", error);
-      setStatus(elements.streamStatus, `Could not start VR cinema: ${error?.message || "unknown error"}`, "error");
+      setStatus(elements.streamStatus, "Could not start VR cinema mode.", "error");
     }
   }
 }
@@ -1118,16 +1096,23 @@ elements.promptForm.addEventListener("submit", async (event) => {
 // (wrong mode, or the unit is mid-cycle) — surfaced as feedback rather
 // than treated as a thrown error like a network failure or timeout.
 async function runServoAction(trigger, action, describeSuccess) {
-  if (trigger.disabled) return null;
   const wasDisabled = trigger.disabled;
   trigger.disabled = true;
   elements.servoFeedback.className = "feedback";
   elements.servoFeedback.textContent = "Sending…";
-  mirrorServoFeedbackToVr();
 
   try {
     const result = await action();
-    renderControlFeedback(result, describeSuccess);
+    if (result?.accepted === null || result?.accepted === undefined) {
+      elements.servoFeedback.className = "feedback feedback--error";
+      elements.servoFeedback.textContent = "Control acceptance is unknown. Check the current item before trying again.";
+    } else if (result.accepted === false) {
+      elements.servoFeedback.className = "feedback";
+      elements.servoFeedback.textContent = `Control unit ignored this request (${result.reason ?? "wrong mode, or mid-cycle"}).`;
+    } else {
+      elements.servoFeedback.className = "feedback feedback--ok";
+      elements.servoFeedback.textContent = describeSuccess(result);
+    }
     return result;
   } catch (error) {
     elements.servoFeedback.className = "feedback feedback--error";
@@ -1137,14 +1122,7 @@ async function runServoAction(trigger, action, describeSuccess) {
     return null;
   } finally {
     trigger.disabled = wasDisabled;
-    mirrorServoFeedbackToVr();
   }
-}
-
-function renderControlFeedback(result, describeSuccess) {
-  const { state, text } = controlFeedback(result, describeSuccess);
-  elements.servoFeedback.className = `feedback${state === "idle" ? "" : ` feedback--${state}`}`;
-  elements.servoFeedback.textContent = text;
 }
 
 async function setServoMode(mode) {
@@ -1188,7 +1166,14 @@ async function pushControllerAngle(angle) {
           angle: next,
           timeoutMs: config.servoRequestTimeoutMs
         });
-        renderControlFeedback(result, () => `Servo angle command accepted: ${next}°.`);
+        if (result?.accepted === false) {
+          elements.servoFeedback.className = "feedback";
+          elements.servoFeedback.textContent =
+            `Angle ${next}° ignored (switch to Manual, or wait for the cycle).`;
+        } else {
+          elements.servoFeedback.className = "feedback feedback--ok";
+          elements.servoFeedback.textContent = `Servo set to ${next}°.`;
+        }
       } catch (error) {
         elements.servoFeedback.className = "feedback feedback--error";
         elements.servoFeedback.textContent = error.name === "AbortError"
@@ -1201,42 +1186,32 @@ async function pushControllerAngle(angle) {
     }
   } finally {
     controllerAngleSending = false;
-    mirrorServoFeedbackToVr();
   }
 }
 
 async function handleControllerAction(action) {
-  // Do not race a mode change with a sweep or another controller command.
-  if (controllerActionBusy || controllerAngleSending) {
-    elements.servoFeedback.textContent = "Wait for the current control request to finish, then press again.";
-    mirrorServoFeedbackToVr();
+  if (action === "reject" || action === "pass") {
+    await runServoAction(
+      controllerTrigger,
+      () => sendVerdict({
+        servoUrl: config.servoUrl,
+        action,
+        timeoutMs: config.servoRequestTimeoutMs
+      }),
+      (res) => (action === "reject" ? `Marked as ${res.status ?? "reject"}.` : "Marked as pass.")
+    );
+  } else if (action === "sweep") {
+    await runServoAction(
+      controllerTrigger,
+      () => runSweep({ url: config.servoUrl, timeoutMs: config.servoRequestTimeoutMs }),
+      () => "Sweep triggered."
+    );
+  } else if (action === "manual" || action === "auto") {
+    await setServoMode(action);
+  } else {
     return;
   }
-  controllerActionBusy = true;
-  try {
-    if (action === "reject" || action === "pass") {
-      await runServoAction(
-        controllerTrigger,
-        () => sendVerdict({
-          servoUrl: config.servoUrl,
-          action,
-          timeoutMs: config.servoRequestTimeoutMs
-        }),
-        (res) => (action === "reject" ? `Marked as ${res.status ?? "reject"}.` : "Marked as pass.")
-      );
-    } else if (action === "sweep") {
-      await runServoAction(
-        controllerTrigger,
-        () => runSweep({ url: config.servoUrl, timeoutMs: config.servoRequestTimeoutMs }),
-        () => "Sweep command accepted."
-      );
-    } else if (action === "manual" || action === "auto") {
-      await setServoMode(action);
-    }
-  } finally {
-    controllerActionBusy = false;
-    mirrorServoFeedbackToVr();
-  }
+  mirrorServoFeedbackToVr();
 }
 
 function startControllerShortcuts(session) {
@@ -1245,25 +1220,12 @@ function startControllerShortcuts(session) {
     return null;
   }
 
-  const conveyor = createConveyorSender({
-    servoUrl: config.servoUrl,
-    onError: () => {
-      elements.servoFeedback.textContent = "Conveyor connection lost. Release the stick before retrying.";
-      mirrorServoFeedbackToVr();
-    }
-  });
   return attachXrControllerShortcuts({
     session,
     shortcuts: config.controllerShortcuts,
     initialAngle: controllerAngle,
     onCameraZoom: action => { void phoneCameraControls.send(action); },
-    onConveyor: (direction) => conveyor.setDirection(direction),
-    onStop: () => conveyor.stop(),
     onAngle: (angle) => {
-      if (controllerActionBusy) {
-        activeControllerShortcuts?.setAngle?.(controllerAngle);
-        return;
-      }
       controllerAngle = angle;
       syncAngleUi(angle);
       void pushControllerAngle(angle);
@@ -1274,11 +1236,8 @@ function startControllerShortcuts(session) {
     onDebug: xrDebugEnabled
       ? (text) => {
           console.info(`[xr-controller] ${text}`);
-          if (elements.controllerInput) {
-            elements.controllerInput.hidden = false;
-            elements.controllerInput.textContent = `Input: ${text}`;
-          }
-          activeXrController?.setControllerInputText?.(`Input: ${text}`);
+          elements.servoFeedback.textContent = `Controller: ${text}`;
+          activeXrController?.setServoStatusText?.(`Controller: ${text}`);
         }
       : null
   });

@@ -22,6 +22,36 @@ const THEME = Object.freeze({
 
 const PX_PER_METER = 400;
 const CARD_Z = -2.4;
+const CARD_CENTER_Y = 1.5;
+
+// Depth layers of the card, in metres in front of the card backing. Planes
+// that overlap on screen must never share a layer or they z-fight (flicker).
+const Z_FRAME = 0.01;   // white frame behind the camera screen
+const Z_SCREEN = 0.02;  // live camera canvas
+const Z_SMALL = 0.03;   // pills, summary bar, shortcut chips
+const Z_TEXT = 0.04;    // every text label and status dot
+
+// The whole HUD card is authored at 2.8 m x 2.44 m, 2.4 m in front of the
+// viewer (~60 deg wide x ~54 deg tall). That fills the lens edge to edge on a
+// Pico 4, so it is shrunk about its own centre to roughly the footprint of
+// the flat 2D HUD page. Override per session for tuning on the headset with
+// `?vrscale=0.6` on the page URL (accepted range 0.3 - 1.2).
+export const DEFAULT_CARD_SCALE = 0.7;
+const MIN_CARD_SCALE = 0.3;
+const MAX_CARD_SCALE = 1.2;
+
+export function resolveCardScale(search = globalThis.location?.search ?? "") {
+  try {
+    const raw = new URLSearchParams(search).get("vrscale");
+    if (raw !== null && raw.trim() !== "") {
+      const value = Number(raw);
+      if (Number.isFinite(value) && value >= MIN_CARD_SCALE && value <= MAX_CARD_SCALE) return value;
+    }
+  } catch {
+    // Malformed query string: fall through to the default.
+  }
+  return DEFAULT_CARD_SCALE;
+}
 
 let aframeLoadPromise = null;
 
@@ -203,12 +233,29 @@ export async function startVrCinema({ compositeCanvasId, onEnd, onFrame } = {}) 
 
   entity(scene, "a-sky", { src: makeSkyTexture() });
 
-  const root = entity(scene, "a-entity", { id: "vr-hud-root" });
+  // Everything below is positioned in absolute scene coordinates around the
+  // card centre. The pivot sits on that centre and carries the scale, and the
+  // root counter-offsets it, so shrinking the card keeps its centre exactly
+  // where it was and nothing else needs re-measuring.
+  const cardScale = resolveCardScale();
+  const pivot = entity(scene, "a-entity", {
+    id: "vr-hud-pivot",
+    position: `0 ${CARD_CENTER_Y} ${CARD_Z}`,
+    // Z stays 1: every layer of the card (backing panel, screen frame, text,
+    // pills) is a flat plane only 1-2 cm apart in depth. Scaling Z too would
+    // squeeze those gaps below the depth-buffer precision and make the layers
+    // flicker through each other (z-fighting).
+    scale: `${cardScale} ${cardScale} 1`
+  });
+  const root = entity(pivot, "a-entity", {
+    id: "vr-hud-root",
+    position: `0 ${-CARD_CENTER_Y} ${-CARD_Z}`
+  });
 
   // --- Card ---------------------------------------------------------------
   const CARD_W = 2.8;
   const CARD_H = 2.44;
-  const CARD_Y = 1.5;
+  const CARD_Y = CARD_CENTER_Y;
   const L = -1.2; // left text edge
 
   panel(root, {
@@ -227,29 +274,29 @@ export async function startVrCinema({ compositeCanvasId, onEnd, onFrame } = {}) 
 
   // --- Title block --------------------------------------------------------
   label(root, "Adaptive AI Quality Control HUD · LIVE INSPECTION", {
-    x: L, y: 2.63, z: CARD_Z + 0.02, width: 1.75, wrapCount: 52, color: THEME.blue
+    x: L, y: 2.65, z: CARD_Z + Z_TEXT, width: 1.75, wrapCount: 52, color: THEME.blue
   });
   label(root, "Quality Control HUD", {
-    x: L, y: 2.5, z: CARD_Z + 0.02, width: 1.5, wrapCount: 20, color: THEME.ink
+    x: L, y: 2.54, z: CARD_Z + Z_TEXT, width: 1.5, wrapCount: 20, color: THEME.ink
   });
 
   // --- Status pills (camera / AI data) ------------------------------------
-  const pillSpec = { width: 0.95, height: 0.105, radius: 0.052, fill: "rgba(255,255,255,0.96)", stroke: THEME.line };
-  const pillX = 0.88;
+  const pillSpec = { width: 0.85, height: 0.105, radius: 0.052, fill: "rgba(255,255,255,0.96)", stroke: THEME.line };
+  const pillX = 0.95;
   const makePill = (y, initialText) => {
-    panel(root, pillSpec, { x: pillX, y, z: CARD_Z + 0.01 });
+    panel(root, pillSpec, { x: pillX, y, z: CARD_Z + Z_SMALL });
     const dot = entity(root, "a-circle", {
       radius: 0.015,
-      position: `${pillX - pillSpec.width / 2 + 0.06} ${y} ${CARD_Z + 0.02}`
+      position: `${pillX - pillSpec.width / 2 + 0.06} ${y} ${CARD_Z + Z_TEXT}`
     });
     dot.setAttribute("material", { shader: "flat", color: THEME.states.idle });
     const text = label(root, initialText, {
-      x: pillX - pillSpec.width / 2 + 0.1, y, z: CARD_Z + 0.02, width: 0.8, wrapCount: 34, color: THEME.ink
+      x: pillX - pillSpec.width / 2 + 0.1, y, z: CARD_Z + Z_TEXT, width: 0.72, wrapCount: 31, color: THEME.ink
     });
     return { dot, text };
   };
-  const cameraPill = makePill(2.6, "Camera: waiting");
-  const socketPill = makePill(2.47, "AI data: waiting");
+  const cameraPill = makePill(2.62, "Camera: waiting");
+  const socketPill = makePill(2.5, "AI data: waiting");
 
   // --- Camera screen (live composite canvas) ------------------------------
   const SCREEN_Y = 1.72;
@@ -259,33 +306,30 @@ export async function startVrCinema({ compositeCanvasId, onEnd, onFrame } = {}) 
     radius: 0.05,
     fill: "#ffffff",
     stroke: "rgba(60, 100, 165, 0.55)"
-  }, { x: 0, y: SCREEN_Y, z: CARD_Z + 0.01 });
+  }, { x: 0, y: SCREEN_Y, z: CARD_Z + Z_FRAME });
 
   const screen = entity(root, "a-plane", {
     "screen-texture-updater": "",
     geometry: "primitive: plane; width: 2.4; height: 1.35",
     material: `shader: flat; src: #${compositeCanvasId}`,
-    position: `0 ${SCREEN_Y} ${CARD_Z + 0.02}`
+    position: `0 ${SCREEN_Y} ${CARD_Z + Z_SCREEN}`
   });
   screen.setAttribute("id", "vr-camera-screen");
 
   // --- Summary bar (detections + zoom) ------------------------------------
-  const BAR_Y = 0.94;
+  const BAR_Y = 0.9; // bar spans 0.80-1.0 m, the camera frame starts at 1.01 m
   panel(root, {
     width: 2.46, height: 0.19, radius: 0.095, fill: "rgba(255,255,255,0.96)", stroke: THEME.line
-  }, { x: 0, y: BAR_Y, z: CARD_Z + 0.01 });
+  }, { x: 0, y: BAR_Y, z: CARD_Z + Z_SMALL });
   const hudSummary = label(root, "No recent detections", {
-    x: L + 0.02, y: BAR_Y, z: CARD_Z + 0.02, width: 1.4, wrapCount: 46, color: THEME.ink
+    x: L + 0.02, y: BAR_Y, z: CARD_Z + Z_TEXT, width: 1.4, wrapCount: 46, color: THEME.ink
   });
 
   const zoomStatus = label(root, "Phone camera zoom: waiting", {
-    x: 0, y: 0.78, z: CARD_Z + 0.02, width: 2.3, wrapCount: 84, color: THEME.inkSoft, align: "center", anchor: "center"
+    x: 0, y: 0.745, z: CARD_Z + Z_TEXT, width: 2.3, wrapCount: 84, color: THEME.inkSoft, align: "center", anchor: "center"
   });
   const servoStatus = label(root, "", {
-    x: 0, y: 0.67, z: CARD_Z + 0.02, width: 2.3, wrapCount: 84, color: THEME.blue, align: "center", anchor: "center"
-  });
-  const controllerInput = label(root, "", {
-    x: 0, y: 0.57, z: CARD_Z + 0.02, width: 2.3, wrapCount: 100, color: THEME.inkSoft, align: "center", anchor: "center"
+    x: 0, y: 0.65, z: CARD_Z + Z_TEXT, width: 2.3, wrapCount: 84, color: THEME.blue, align: "center", anchor: "center"
   });
 
   // --- Controller legend (mirrors the HUD buttons) -------------------------
@@ -310,16 +354,18 @@ export async function startVrCinema({ compositeCanvasId, onEnd, onFrame } = {}) 
       radius: 0.065,
       fill: chip.primary ? THEME.navy : "rgba(255,255,255,0.96)",
       stroke: chip.primary ? THEME.navy : THEME.line
-    }, { x: cx, y: 0.46, z: CARD_Z + 0.01 });
+    }, { x: cx, y: 0.46, z: CARD_Z + Z_SMALL });
     label(root, chip.text, {
-      x: cx, y: 0.46, z: CARD_Z + 0.02, width: w - 0.1, wrapCount: Math.max(14, chip.text.length + 2),
+      x: cx, y: 0.46, z: CARD_Z + Z_TEXT, width: w - 0.1, wrapCount: Math.max(14, chip.text.length + 2),
       color: chip.primary ? THEME.white : THEME.ink, align: "center", anchor: "center"
     });
   }
 
   // Head-locked hint stays out of the way: nothing is attached to the camera
   // except look/wasd controls, so the card is the only HUD in the scene.
-  entity(scene, "a-entity", { camera: "", "look-controls": "", "wasd-controls": "", position: "0 1.6 0" });
+  // The default near plane (0.005 m) leaves too little depth precision on a
+  // mobile GPU for layers 1 cm apart 2.4 m away, so push it out to 0.1 m.
+  entity(scene, "a-entity", { camera: "near: 0.1; far: 10000", "look-controls": "", "wasd-controls": "", position: "0 1.6 0" });
 
   document.body.appendChild(scene);
 
@@ -359,9 +405,6 @@ export async function startVrCinema({ compositeCanvasId, onEnd, onFrame } = {}) 
     },
     setServoStatusText(text) {
       setText(servoStatus, truncate(text, 110));
-    },
-    setControllerInputText(text) {
-      setText(controllerInput, truncate(text, 110));
     },
     setZoomText(text) {
       setText(zoomStatus, truncate(text, 110));
